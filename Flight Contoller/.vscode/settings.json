@@ -1,0 +1,18 @@
+{
+    "python.formatting.provider": "black",
+    "files.associations": {
+        "cstdint": "cpp",
+        "*.tcc": "cpp",
+        "exception": "cpp",
+        "fstream": "cpp",
+        "iosfwd": "cpp",
+        "new": "cpp",
+        "ostream": "cpp",
+        "sstream": "cpp",
+        "streambuf": "cpp"
+    },
+    "python.pythonPath": "C:\\Users\\raymo\\AppData\\Local\\Programs\\Python\\Python37\\python.exe",
+    "cSpell.words": [
+        "ptime"
+    ],
+}
