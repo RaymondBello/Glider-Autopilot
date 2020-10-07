@@ -1,3 +1,6 @@
+from datetime import datetime
+from communication import Comms
+import multiprocessing
 import socket
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
@@ -6,15 +9,20 @@ import numpy as np
 import time
 import sys
 sys.path.append(".")
-import multiprocessing
-from communication import Comms
-from datetime import datetime
 
 comms = Comms()
 
-# State management
-SYSTEM_STATE = (0, 1, 2, 3, 4, 5)
-CURRENT_STATE = 1 # IDLE STATE
+# State Management
+SYSTEM_STATE_POOL = (0, 1, 2, 3, 4, 5, 6)
+CURRENT_STATE = 1
+
+# State Constants
+ABORT_STATE = 0
+IDLE_STATE = 1
+LOGGING_STATE = 2
+ORIGIN_STATE = 3
+TAKE_OFF_STATE = 4
+# RETURN_TO_HOME = 5
 
 
 # GUI WINDOW SIZE CONSTANTS
@@ -27,7 +35,7 @@ data3 = [0] * 100
 
 client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # UDP
 client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-client.bind(("", 64886))
+client.bind(("192.168.0.12", 64886))
 
 # while True:
 #     packet, addr = client.recvfrom(100)
@@ -35,48 +43,76 @@ client.bind(("", 64886))
 #     print(clean_packet)
 
 
-
 win = pg.GraphicsWindow(size=(WINDOW_WIDTH, WINDOW_HEIGHT))
 win.setWindowTitle("GNC Telemetry Data")
+win.setBackground((36, 37, 41))
+win.setAspectLocked(True)
 
-text = """
-\t\tPROJECT:BAKU\t\tGROUND STATION
-\t\t\tDashboard of all relevant control data along with real time sensor data
-"""
-
-#Font
+# Font
 font1 = QtGui.QFont()
 font1.setPixelSize(50)
 font1.setWeight(100)
 
 font2 = QtGui.QFont()
-font2.setPixelSize(50)
+font2.setPixelSize(35)
+font2.setWeight(100)
 
 # buttons style
-ButtonStyle_begin = "background-color:rgb(0, 100, 0);color:rgb(0,0,0);font-size:26px;font-weight:bold"
+ButtonStyle_white = "background-color:rgb(255, 255, 255);color:rgb(0,0,0);font-size:26px;font-weight:bold"
 
-ButtonStyle_abort = "background-color:rgb(200, 0, 0);color:rgb(0,0,0);font-size:26px;font-weight:bold"
+ButtonStyle_red = "background-color:rgb(200, 0, 0);color:rgb(0,0,0);font-size:26px;font-weight:bold"
 
-ButtonStyle_state = "background-color:rgb(255, 255, 255);color:rgb(0,0,0);font-size:26px;font-weight:bold"
+ButtonStyle_green = "background-color:rgb(0, 155, 0);color:rgb(0,0,0);font-size:26px;font-weight:bold"
+
+ButtonStyle_yellow = "background-color:rgb(255, 255, 0);color:rgb(0,0,0);font-size:26px;font-weight:bold"
 
 topSection = win.addLayout(colspan=10)
+
 
 def abort():
     global CURRENT_STATE
     CURRENT_STATE = int(not bool(CURRENT_STATE))
+
+
 def idle():
     global CURRENT_STATE
-    CURRENT_STATE = 1
+    if CURRENT_STATE == IDLE_STATE:
+        CURRENT_STATE = ORIGIN_STATE
+    if CURRENT_STATE == ABORT_STATE:
+        CURRENT_STATE = IDLE_STATE
+    if CURRENT_STATE == ORIGIN_STATE:
+        CURRENT_STATE = ORIGIN_STATE
+    if CURRENT_STATE == LOGGING_STATE:
+        CURRENT_STATE = ORIGIN_STATE
+
+
 def armed():
     global CURRENT_STATE
-    CURRENT_STATE = 2
+    if CURRENT_STATE == IDLE_STATE:
+        CURRENT_STATE = LOGGING_STATE
+    else:
+        CURRENT_STATE = IDLE_STATE
+
+
 def take_off():
     global CURRENT_STATE
-    CURRENT_STATE = 3
+    if CURRENT_STATE == TAKE_OFF_STATE:
+        CURRENT_STATE = IDLE_STATE
+    if CURRENT_STATE == ABORT_STATE:
+        CURRENT_STATE = IDLE_STATE
+    if CURRENT_STATE == ORIGIN_STATE:
+        CURRENT_STATE = TAKE_OFF_STATE
+    if CURRENT_STATE == LOGGING_STATE:
+        CURRENT_STATE = TAKE_OFF_STATE
+
+
+def return_home():
+    pass
+
 
 proxy3 = QtGui.QGraphicsProxyWidget()
 button_abort = QtGui.QPushButton('ABORT')
-button_abort.setStyleSheet(ButtonStyle_abort)
+button_abort.setStyleSheet(ButtonStyle_red)
 button_abort.clicked.connect(abort)
 proxy3.setWidget(button_abort)
 topSection.addItem(proxy3)
@@ -84,8 +120,8 @@ topSection.addItem(proxy3)
 topSection.nextCol()
 
 proxy2 = QtGui.QGraphicsProxyWidget()
-button_data_log_start = QtGui.QPushButton('LOG BEGIN')
-button_data_log_start.setStyleSheet(ButtonStyle_begin)
+button_data_log_start = QtGui.QPushButton('LOG TOGGLE')
+button_data_log_start.setStyleSheet(ButtonStyle_white)
 button_data_log_start.clicked.connect(armed)
 proxy2.setWidget(button_data_log_start)
 topSection.addItem(proxy2)
@@ -93,8 +129,8 @@ topSection.addItem(proxy2)
 topSection.nextCol()
 
 proxy = QtGui.QGraphicsProxyWidget()
-button_initialize = QtGui.QPushButton('LOG END')
-button_initialize.setStyleSheet(ButtonStyle_begin)
+button_initialize = QtGui.QPushButton('SET ORIGIN')
+button_initialize.setStyleSheet(ButtonStyle_white)
 button_initialize.clicked.connect(idle)
 proxy.setWidget(button_initialize)
 topSection.addItem(proxy)
@@ -102,13 +138,22 @@ topSection.addItem(proxy)
 topSection.nextCol()
 
 proxy4 = QtGui.QGraphicsProxyWidget()
-button_state = QtGui.QPushButton('TAKE-OFF')
-button_state.setStyleSheet(ButtonStyle_state)
-button_state.clicked.connect(take_off)
-proxy4.setWidget(button_state)
+button_start = QtGui.QPushButton('START')
+button_start.setStyleSheet(ButtonStyle_green)
+button_start.clicked.connect(take_off)
+proxy4.setWidget(button_start)
 topSection.addItem(proxy4)
 
 win.nextRow()
+
+proxy5 = QtGui.QGraphicsProxyWidget()
+button_return_to_home = QtGui.QPushButton('RETURN')
+button_return_to_home.setStyleSheet(ButtonStyle_yellow)
+button_return_to_home.clicked.connect(return_home)
+proxy5.setWidget(button_return_to_home)
+topSection.addItem(proxy5)
+
+topSection.nextCol()
 
 
 graph1 = win.addPlot(title="Accelerometer X")
@@ -127,25 +172,27 @@ graph1_curve = graph1.plot(
     name="Accel_X",
     labels={
         "left": graph1.setLabel("left", text="Acceleration ", units="m/s^2"),
-        "bottom": graph1.setLabel("bottom", text="Time", units="s"),
+        # "bottom": graph1.setLabel("bottom", text="Time", units="s"),
     },
 )
 graph2_curve = graph2.plot(
     data2,
     pen=(0, 150, 0),
     name="Accel_Y",
-    labels={"bottom": graph2.setLabel("bottom", text="Time", units="s"),},
+    # labels={"bottom": graph2.setLabel("bottom", text="Time", units="s"),},
 )
 graph3_curve = graph3.plot(
     data3,
     pen=(0, 0, 150),
     name="Accel_Z",
-    labels={"bottom": graph3.setLabel("bottom", text="Time", units="s"),},
+    # labels={"bottom": graph3.setLabel("bottom", text="Time", units="s"),},
 )
 ptr1 = 0
 
+
 def shift_array(array):
     array[:-1] = array[1:]
+
 
 def update_row_1(acc_values):
     """Update graph-> shifts data in the array one sample left, appends new value"""
@@ -157,7 +204,7 @@ def update_row_1(acc_values):
     shift_array(data3)
     # data2[:-1] = data2[1:]
 
-    if ptr1 < 100:
+    if ptr1 < 50:
         data1[-1] = np.random.normal()
         data2[-1] = np.random.normal()
         data3[-1] = np.random.normal()
@@ -169,7 +216,7 @@ def update_row_1(acc_values):
                 data2_value = round(float(acc_values[1]), 3)
                 data3_value = round(float(acc_values[2]), 3)
 
-                data1[-1] = data1_value  #int(float(acc_values[2]))
+                data1[-1] = data1_value  # int(float(acc_values[2]))
                 data2[-1] = data2_value
                 data3[-1] = data3_value
             except ValueError as error:
@@ -184,7 +231,8 @@ def update_row_1(acc_values):
 
     graph3_curve.setData(data3)
     graph3_curve.setPos(ptr1, 0)
-    
+
+
 StateGraphic = win.addPlot(title="Flag")
 StateGraphic.setRange(QtCore.QRectF(-50, -50, 100, 100))
 StateGraphic.hideAxis('bottom')
@@ -215,7 +263,7 @@ graph4_curve = graph4.plot(
     name="Gyro_X",
     labels={
         "left": graph4.setLabel("left", text="Angular Velocity", units="°/s"),
-        "bottom": graph4.setLabel("bottom", text="Time", units="s"),
+        # "bottom": graph4.setLabel("bottom", text="Time", units="s"),
     },
 )
 
@@ -224,7 +272,7 @@ graph5.setLimits(xMax=0)
 graph5_curve = graph5.plot(
     pen=(0, 150, 0),
     name="Gyro_X",
-    labels={"bottom": graph5.setLabel("bottom", text="Time", units="s"),},
+    # labels={"bottom": graph5.setLabel("bottom", text="Time", units="s"),},
 )
 
 graph6.setRange(xRange=[-200, 0])
@@ -232,7 +280,7 @@ graph6.setLimits(xMax=0)
 graph6_curve = graph6.plot(
     pen=(0, 0, 150),
     name="Gyro_X",
-    labels={"bottom": graph6.setLabel("bottom", text="Time", units="s"),},
+    # labels={"bottom": graph6.setLabel("bottom", text="Time", units="s"),},
 )
 
 data4 = np.empty(100)
@@ -255,7 +303,7 @@ def update_row_2(gyro_values):
 
     global data4, data5, data6, ptr2
 
-    if ptr2 < 100:
+    if ptr2 < 50:
         data4[ptr2] = np.random.normal()
         data5[ptr2] = np.random.normal()
         data6[ptr2] = np.random.normal()
@@ -266,12 +314,12 @@ def update_row_2(gyro_values):
                 data5_value = round(float(gyro_values[1]), 3)
                 data6_value = round(float(gyro_values[2]), 3)
 
-                data4[ptr2] = data4_value  #round(float(gyro_values[0]), 3)
+                data4[ptr2] = data4_value  # round(float(gyro_values[0]), 3)
                 data5[ptr2] = data5_value
                 data6[ptr2] = data6_value
             except ValueError as error:
                 print(f"[VALUE ERROR]: {error}")
-            
+
     ptr2 += 1
 
     if ptr2 >= data4.shape[0]:
@@ -295,6 +343,7 @@ def update_row_2(gyro_values):
     graph5_curve.setPos(-ptr2, 0)
     graph6_curve.setPos(-ptr2, 0)
 
+
 # Plot in chunks, adding one new plot curve for every 100 samples
 chunkSize = 100
 
@@ -306,12 +355,13 @@ startTime = pg.ptime.time()
 win.nextRow()
 
 graph7 = win.addPlot(colspan=1, title="Internal Temperature")
-graph7.setLabel("bottom", "Time", "s")
+# graph7.setLabel("bottom", "Time", "s")
 graph7.setXRange(-10, 0)
 
 curves = []
 data7 = np.empty((chunkSize + 1, 2))
 ptr3 = 0
+
 
 def update_row_3(temp_values):
     global graph7, data7, ptr3, curves
@@ -347,9 +397,10 @@ def update_row_3(temp_values):
             data7[i + 1, 1] = data7_value
         except ValueError as error:
             print(f"[VALUE ERROR]: {error}")
-            
+
     graph7_curve.setData(x=data7[: i + 2, 0], y=data7[: i + 2, 1])
     ptr3 += 1
+
 
 TimeGraphic = win.addPlot(title="Time (H:M:S)")
 TimeGraphic.setRange(QtCore.QRectF(-50, -50, 100, 100))
@@ -357,7 +408,8 @@ TimeGraphic.setRange(QtCore.QRectF(-50, -50, 100, 100))
 TimeGraphic.hideAxis('bottom')
 TimeGraphic.hideAxis('left')
 now = datetime.now()
-texttoTime = pg.TextItem(f"{now.strftime('%H:%M:%S')}", anchor=(0.5, 0.5), color='w')
+texttoTime = pg.TextItem(f"{now.strftime('%H:%M:%S')}",
+                         anchor=(0.5, 0.5), color='w')
 texttoTime.setFont(font1)
 TimeGraphic.addItem(texttoTime)
 
@@ -379,42 +431,71 @@ AltitudeGraphic.addItem(texttoAltitude)
 # win.nextCol()
 
 
-def get_udp_packet_data():
+def udp_get_packet_data():
     """Receive udp packet, parses data and returns clean_data_packet"""
 
-    global client
+    global client, addr
     packet, addr = client.recvfrom(100)
     clean_packet = str(packet).split("'")[1].split(",")
+    # print(addr)
+    print(clean_packet[:3], clean_packet[3:4], clean_packet[4:], addr)
 
-    # print(clean_packet[:3], clean_packet[3:4], clean_packet[4:])
+    MSG = "Test String"
+
+    client.sendto(bytes(MSG, "utf-8"), addr)
+
     # print(round(float(clean_packet[0]), 2))
     return clean_packet
 
 
+def udp_send_packet_data():
+    global client, addr
+
+    MSG = "Test String"
+
+    client.sendto(bytes(MSG, "utf-8"), addr)
+
+
 serial_data = [1] * 7
 count = 0
+
 
 def update_time():
     global texttoTime
 
     TimeGraphic.removeItem(texttoTime)
     now = datetime.now()
-    texttoTime = pg.TextItem(f"{now.strftime('%H:%M:%S')}", anchor=(0.5, 0.5), color="w")
+    texttoTime = pg.TextItem(
+        f"{now.strftime('%H:%M:%S')}", anchor=(0.5, 0.5), color="w")
     texttoTime.setFont(font1)
     TimeGraphic.addItem(texttoTime)
+
 
 def update_gps():
     pass
 
 # State Switch Case Functions
+
+
 def ABORT():
     return "ABORT"
+
+
 def IDLE():
     return "IDLE"
+
+
 def ARMED():
     return "LOGGING"
+
+
+def ORIGIN():
+    return "HOME SET"
+
+
 def TAKEOFF():
     return "TAKE-OFF"
+
 
 def update_state():
     global CURRENT_STATE, texttoState
@@ -424,37 +505,44 @@ def update_state():
         0: ABORT,
         1: IDLE,
         2: ARMED,
-        3: TAKEOFF,
-    }   
+        3: ORIGIN,
+        4: TAKEOFF,
+    }
     state_string = options[STATE]()
     StateGraphic.removeItem(texttoState)
     texttoState = pg.TextItem(str(state_string), anchor=(0.5, 0.5), color='w')
     texttoState.setFont(font2)
     StateGraphic.addItem(texttoState)
 
+
 def update_battery():
     pass
+
+
 def update_altitude():
     pass
 
 # update all plots
+
+
 def update():
     """Update all the data"""
     global serial_interface, serial_data, count, comms, now, CURRENT_STATE
-    
-    
 
     start = time.perf_counter()
 
-    # for _ in range(1):
-    #     serial_data = get_udp_packet_data()
+    try:
+        serial_data = udp_get_packet_data()
+        # udp_send_packet_data()
+    except Exception as error:
+        print(error)
 
     # if comms.isOpen():
     #     serial_data = comms.getData()
 
     update_state()
 
-    if CURRENT_STATE in [1,2,3]:
+    if CURRENT_STATE in (IDLE_STATE, LOGGING_STATE, ORIGIN_STATE, TAKE_OFF_STATE):
         update_row_1(serial_data[:3])
         update_row_2(serial_data[4:])
         update_row_3(serial_data[3:4])
@@ -470,13 +558,13 @@ def update():
 
     finish = time.perf_counter()
     # print(f"[GRAPH] Update Rate: {round(time.perf_counter()-start,5)} seconds ")
-    
+
     count += 1
 
 
 timer = pg.QtCore.QTimer()
 timer.timeout.connect(update)
-# timer.timeout.connect(get_udp_packet_data)
+# timer.timeout.connect(udp_get_packet_data)
 timer.start()
 
 

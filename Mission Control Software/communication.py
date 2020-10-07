@@ -19,10 +19,10 @@ class Comms:
 
         self.portName = "COM9"
 
-        try:
-            self.ser = serial.Serial(self.portName, self.baudrate)
-        except serial.serialutil.SerialException:
-            print("Could not open: ", self.portName)
+        # try:
+        #     self.ser = serial.Serial(self.portName, self.baudrate)
+        # except serial.serialutil.SerialException:
+        #     print("Could not open: ", self.portName)
 
     def close(self):
         '''close serial connection'''
