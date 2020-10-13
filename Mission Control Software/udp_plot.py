@@ -46,7 +46,7 @@ data3 = [0] * 200
 
 client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # UDP
 client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-client.bind(("192.168.0.12", 64886))
+# client.bind(("192.168.0.12", 64886))
 
 # while True:
 #     packet, addr = client.recvfrom(100)
