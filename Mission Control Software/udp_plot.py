@@ -1,6 +1,6 @@
 from datetime import datetime
 from communication import Comms
-import multiprocessing
+from TCP import TCP_Manager
 import socket
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
@@ -8,20 +8,31 @@ from PyQt5.QtWidgets import QPushButton
 import numpy as np
 import time
 import sys
-sys.path.append(".")
 
-comms = Comms()
+USE_TCP = False
+
+# Serial connection is setup here
+# comms = Comms()
+
+# TCP connection is setup here
+if USE_TCP:
+    print("[SET-UP] : Setting up TCP connection")
+    try:
+        tcp_socket = TCP_Manager()
+        print(["[SET-UP] : TCP Connection Establied!"])
+    except expression as identifier:
+        print(identifier)
 
 # State Management
 SYSTEM_STATE_POOL = (0, 1, 2, 3, 4, 5, 6)
 CURRENT_STATE = 1
 
 # State Constants
-ABORT_STATE = 0
-IDLE_STATE = 1
+ABORT_state = 0
+IDLE_state = 1
 LOGGING_STATE = 2
 ORIGIN_STATE = 3
-TAKE_OFF_STATE = 4
+TAKE_OFF_state = 4
 # RETURN_TO_HOME = 5
 
 
@@ -29,9 +40,9 @@ TAKE_OFF_STATE = 4
 WINDOW_WIDTH = 1000
 WINDOW_HEIGHT = 700
 
-data1 = [0] * 100
-data2 = [0] * 100
-data3 = [0] * 100
+data1 = [0] * 200
+data2 = [0] * 200
+data3 = [0] * 200
 
 client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # UDP
 client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
@@ -69,52 +80,53 @@ ButtonStyle_yellow = "background-color:rgb(255, 255, 0);color:rgb(0,0,0);font-si
 topSection = win.addLayout(colspan=10)
 
 
-def abort():
+def abort_state():
     global CURRENT_STATE
     CURRENT_STATE = int(not bool(CURRENT_STATE))
+    tcp_handleshack("STATE",CURRENT_STATE)
 
 
-def idle():
+def idle_state():
     global CURRENT_STATE
-    if CURRENT_STATE == IDLE_STATE:
+    if CURRENT_STATE == IDLE_state:
         CURRENT_STATE = ORIGIN_STATE
-    if CURRENT_STATE == ABORT_STATE:
-        CURRENT_STATE = IDLE_STATE
+    if CURRENT_STATE == ABORT_state:
+        CURRENT_STATE = IDLE_state
     if CURRENT_STATE == ORIGIN_STATE:
         CURRENT_STATE = ORIGIN_STATE
     if CURRENT_STATE == LOGGING_STATE:
         CURRENT_STATE = ORIGIN_STATE
 
 
-def armed():
+def armed_state():
     global CURRENT_STATE
-    if CURRENT_STATE == IDLE_STATE:
+    if CURRENT_STATE == IDLE_state:
         CURRENT_STATE = LOGGING_STATE
     else:
-        CURRENT_STATE = IDLE_STATE
+        CURRENT_STATE = IDLE_state
 
 
-def take_off():
+def take_off_state():
     global CURRENT_STATE
-    if CURRENT_STATE == TAKE_OFF_STATE:
-        CURRENT_STATE = IDLE_STATE
-    if CURRENT_STATE == ABORT_STATE:
-        CURRENT_STATE = IDLE_STATE
+    if CURRENT_STATE == TAKE_OFF_state:
+        CURRENT_STATE = IDLE_state
+    if CURRENT_STATE == ABORT_state:
+        CURRENT_STATE = IDLE_state
     if CURRENT_STATE == ORIGIN_STATE:
-        CURRENT_STATE = TAKE_OFF_STATE
+        CURRENT_STATE = TAKE_OFF_state
     if CURRENT_STATE == LOGGING_STATE:
-        CURRENT_STATE = TAKE_OFF_STATE
+        CURRENT_STATE = TAKE_OFF_state
 
 
-def return_home():
+def return_home_state():
     pass
 
 
 proxy3 = QtGui.QGraphicsProxyWidget()
-button_abort = QtGui.QPushButton('ABORT')
-button_abort.setStyleSheet(ButtonStyle_red)
-button_abort.clicked.connect(abort)
-proxy3.setWidget(button_abort)
+button_abort_state = QtGui.QPushButton('ABORT')
+button_abort_state.setStyleSheet(ButtonStyle_red)
+button_abort_state.clicked.connect(abort_state)
+proxy3.setWidget(button_abort_state)
 topSection.addItem(proxy3)
 
 topSection.nextCol()
@@ -122,7 +134,7 @@ topSection.nextCol()
 proxy2 = QtGui.QGraphicsProxyWidget()
 button_data_log_start = QtGui.QPushButton('LOG TOGGLE')
 button_data_log_start.setStyleSheet(ButtonStyle_white)
-button_data_log_start.clicked.connect(armed)
+button_data_log_start.clicked.connect(armed_state)
 proxy2.setWidget(button_data_log_start)
 topSection.addItem(proxy2)
 
@@ -131,7 +143,7 @@ topSection.nextCol()
 proxy = QtGui.QGraphicsProxyWidget()
 button_initialize = QtGui.QPushButton('SET ORIGIN')
 button_initialize.setStyleSheet(ButtonStyle_white)
-button_initialize.clicked.connect(idle)
+button_initialize.clicked.connect(idle_state)
 proxy.setWidget(button_initialize)
 topSection.addItem(proxy)
 
@@ -140,7 +152,7 @@ topSection.nextCol()
 proxy4 = QtGui.QGraphicsProxyWidget()
 button_start = QtGui.QPushButton('START')
 button_start.setStyleSheet(ButtonStyle_green)
-button_start.clicked.connect(take_off)
+button_start.clicked.connect(take_off_state)
 proxy4.setWidget(button_start)
 topSection.addItem(proxy4)
 
@@ -149,7 +161,7 @@ win.nextRow()
 proxy5 = QtGui.QGraphicsProxyWidget()
 button_return_to_home = QtGui.QPushButton('RETURN')
 button_return_to_home.setStyleSheet(ButtonStyle_yellow)
-button_return_to_home.clicked.connect(return_home)
+button_return_to_home.clicked.connect(return_home_state)
 proxy5.setWidget(button_return_to_home)
 topSection.addItem(proxy5)
 
@@ -237,7 +249,7 @@ StateGraphic = win.addPlot(title="Flag")
 StateGraphic.setRange(QtCore.QRectF(-50, -50, 100, 100))
 StateGraphic.hideAxis('bottom')
 StateGraphic.hideAxis('left')
-texttoState = pg.TextItem(f"IDLE", anchor=(0.5, 0.5), color='w')
+texttoState = pg.TextItem(f"IDLE_state", anchor=(0.5, 0.5), color='w')
 texttoState.setFont(font2)
 StateGraphic.addItem(texttoState)
 
@@ -283,9 +295,9 @@ graph6_curve = graph6.plot(
     # labels={"bottom": graph6.setLabel("bottom", text="Time", units="s"),},
 )
 
-data4 = np.empty(100)
-data5 = np.empty(100)
-data6 = np.empty(100)
+data4 = np.empty(200)
+data5 = np.empty(200)
+data6 = np.empty(200)
 
 ptr2 = 0
 
@@ -524,6 +536,23 @@ def update_altitude():
 
 # update all plots
 
+def tcp_handleshack(commandType: str, commandData: str): 
+    ''' Takes the command type and command data and returns raw data'''
+    global CURRENT_STATE
+    
+
+    tcp_socket.send_data(commandType, commandData)
+    raw_data = tcp_socket.receive_data()
+    # print(raw_data)
+
+    return raw_data
+
+def update_system_state(state):
+    '''update system state and return tcp sensor data'''
+    return tcp_handleshack("STATE", state)
+
+    
+    
 
 def update():
     """Update all the data"""
@@ -531,18 +560,11 @@ def update():
 
     start = time.perf_counter()
 
-    try:
-        serial_data = udp_get_packet_data()
-        # udp_send_packet_data()
-    except Exception as error:
-        print(error)
-
-    # if comms.isOpen():
-    #     serial_data = comms.getData()
-
+    if USE_TCP:
+        serial_data = update_system_state(CURRENT_STATE)
     update_state()
-
-    if CURRENT_STATE in (IDLE_STATE, LOGGING_STATE, ORIGIN_STATE, TAKE_OFF_STATE):
+    
+    if CURRENT_STATE in (IDLE_state, LOGGING_STATE, ORIGIN_STATE, TAKE_OFF_state):
         update_row_1(serial_data[:3])
         update_row_2(serial_data[4:])
         update_row_3(serial_data[3:4])
