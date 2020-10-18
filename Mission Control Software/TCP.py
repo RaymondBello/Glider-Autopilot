@@ -3,12 +3,12 @@ import time
 
 class TCP_Manager:
     def __init__(self):
-        self.targetIP = "192.168.0.26"
+        self.targetIP = "192.168.0.37"
         self.handler = websocket.WebSocket()
         try:
             self.handler.connect(f"ws://{self.targetIP}")
             print(f"Connected to IP: {self.targetIP}")
-        except expression as error:
+        except Exception as error:
             print(error)
     
     def send_data(self, data_type, data):
@@ -18,7 +18,7 @@ class TCP_Manager:
         try:
             self.handler.send(packet_out)
             return True
-        except expression as error:
+        except Exception as error:
             print(error)
         return False
 

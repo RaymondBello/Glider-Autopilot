@@ -10,7 +10,7 @@
 #define LED_BLUE D7
 
 #define GPSBaud 9600               //GPS Baud rate
-#define Serial_Monitor_Baud 115200 //this is baud rate used for the Arduino IDE Serial
+#define Serial_Monitor_Baud 115200 
 
 // #define RX_PIN D4                  // White Wire
 // #define TX_PIN D3                  // Green Wire

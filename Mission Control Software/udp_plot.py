@@ -19,7 +19,7 @@ if USE_TCP:
     print("[SET-UP] : Setting up TCP connection")
     try:
         tcp_socket = TCP_Manager()
-        print(["[SET-UP] : TCP Connection Establied!"])
+        print("[SET-UP] : TCP Connection Establied!")
     except expression as identifier:
         print(identifier)
 
@@ -46,7 +46,7 @@ data3 = [0] * 200
 
 client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # UDP
 client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-# client.bind(("192.168.0.12", 64886))
+client.bind(("192.168.0.12", 64886))
 
 # while True:
 #     packet, addr = client.recvfrom(100)
@@ -543,9 +543,9 @@ def tcp_handleshack(commandType: str, commandData: str):
 
     tcp_socket.send_data(commandType, commandData)
     raw_data = tcp_socket.receive_data()
-    # print(raw_data)
+    print(raw_data)
 
-    return raw_data
+    # return raw_data
 
 def update_system_state(state):
     '''update system state and return tcp sensor data'''
@@ -561,7 +561,8 @@ def update():
     start = time.perf_counter()
 
     if USE_TCP:
-        serial_data = update_system_state(CURRENT_STATE)
+        tcp_handleshack("STATE", CURRENT_STATE)
+        pass
     update_state()
     
     if CURRENT_STATE in (IDLE_state, LOGGING_STATE, ORIGIN_STATE, TAKE_OFF_state):
@@ -587,7 +588,7 @@ def update():
 timer = pg.QtCore.QTimer()
 timer.timeout.connect(update)
 # timer.timeout.connect(udp_get_packet_data)
-timer.start()
+timer.start(10)
 
 
 if __name__ == "__main__":
