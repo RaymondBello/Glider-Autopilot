@@ -1,0 +1,13 @@
+clear;clc;close all;
+
+% Load gyro data
+load('newdata.mat')
+
+p = table2array(AngularVelocity(:,1));
+q = table2array(AngularVelocity(:,2));
+r = table2array(AngularVelocity(:,3));
+t = linspace(0,length(p),0
+% Define initial conditions for Euler angles
+phi0 = -0.2365;
+theta0 = 0.0059;
+psi0 = -0.1487;

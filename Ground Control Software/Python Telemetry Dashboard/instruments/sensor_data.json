@@ -1,0 +1,53 @@
+{
+   "packet": [
+      {
+         "name": "Accelerometer",
+         "data": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 23.2
+         }
+      },
+      {
+         "name": "Gyrometer",
+         "data": {
+            "x": 2.34,
+            "y": 2.31,
+            "z": 23.2
+         }
+      },
+      {
+         "name": "Magnetometer",
+         "data": {
+            "x": 2.34,
+            "y": 2.31,
+            "z": 23.2
+         }
+      },
+      {
+         "name": "Quaternion",
+         "data": {
+            "w": 2.34,
+            "x": 2.31,
+            "y": 23.2,
+            "z": 23.2
+         }
+      },
+      {
+         "name": "Barometer",
+         "data": {
+            "Pressure": 101462.781,
+            "Altitude": 93.927,
+            "Temperature": 26.32
+         }
+      },
+      {
+         "name": "AHRS",
+         "data": {
+            "Pitch": 6.021,
+            "Roll": -5.265,
+            "Yaw": -82.817
+         }
+      }
+   ]
+}
