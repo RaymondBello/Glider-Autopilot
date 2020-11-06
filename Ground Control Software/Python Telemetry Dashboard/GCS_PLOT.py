@@ -10,7 +10,7 @@ import time
 import sys
 import json
 
-USE_TCP = True            # Boolean Flag for whether to use TCP Socket from class TCP_Manager in 'TCP.py'
+USE_TCP = False            # Boolean Flag for whether to use TCP Socket from class TCP_Manager in 'TCP.py'
 RANDOM_PLOT_STEP = 100     # The number of steps random data will be plotted on GUI start-up. Change to 1 if unwanted.
 
 # Serial connection is setup here

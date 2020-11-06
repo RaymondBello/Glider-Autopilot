@@ -18,6 +18,7 @@
 #define GPSBaud 9600 //GPS Baud rate
 #define Serial_Monitor_Baud 115200
 
+float a_offset[3], g_offset[3];
 float acc[3], gyro[3], mag[3];
 float qrt[4] = {1.0f, 0.0f, 0.0f, 0.0f};
 float pitch, yaw, roll;
@@ -36,6 +37,7 @@ const char *password = "randy053";
 
 char buffer_udp_out[150];
 char buffer_udp_in[150];
+char buffer_serial_out[150];
 
 // Called when receiving websocket packet
 void onWebSocketEvent(u_int num, WStype_t type, uint8_t *payload, size_t length)
@@ -150,19 +152,20 @@ void start_websocket_loop()
 
 void IMU_update()
 {
+//  memset(buffer_serial_out, 0, sizeof buffer_serial_out);
   static uint32_t prev_ms = millis();
 
   if ((millis() - prev_ms) > 16)
   {
     mpu.update();
 
-    acc[0] = mpu.getAcc(0);
-    acc[1] = mpu.getAcc(1);
-    acc[2] = mpu.getAcc(2);
+    acc[0] = mpu.getAcc(0) - a_offset[0];
+    acc[1] = mpu.getAcc(1) - a_offset[1];
+    acc[2] = mpu.getAcc(2) - a_offset[2];
 
-    gyro[0] = mpu.getGyro(0);
-    gyro[1] = mpu.getGyro(1);
-    gyro[2] = mpu.getGyro(2);
+    gyro[0] = mpu.getGyro(0) - g_offset[0];
+    gyro[1] = mpu.getGyro(1) - g_offset[1];
+    gyro[2] = mpu.getGyro(2) - g_offset[2];
 
     mag[0] = mpu.getMag(0);
     mag[1] = mpu.getMag(1);
@@ -179,6 +182,9 @@ void IMU_update()
 
     prev_ms = millis();
   }
+
+//  sprintf(buffer_serial_out, "%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f", acc[0], acc[1], acc[2], gyro[0], gyro[1], gyro[2], mag[0], mag[1], mag[2], qrt[0], qrt[1], qrt[2], qrt[3], pressure, altitude, temp, pitch, roll, yaw);
+//  Serial.println(buffer_serial_out);
 }
 
 void baro_update()
@@ -188,16 +194,49 @@ void baro_update()
   altitude = bmp.readAltitude(1026);
 }
 
+void IMU_calibrate(){
+   float a_raw[3],g_raw[3];
+   int i;
+
+   for (i=0; i<100; i++){
+    mpu.update();
+
+    a_raw[0] += mpu.getAcc(0);
+    a_raw[1] += mpu.getAcc(1);
+    a_raw[2] += mpu.getAcc(2);
+
+    g_raw[0] += mpu.getGyro(0);
+    g_raw[1] += mpu.getGyro(1);
+    g_raw[2] += mpu.getGyro(2);
+    delay(2);
+   }
+   
+   a_offset[0] = a_raw[0]/100;
+   a_offset[1] = a_raw[1]/100;
+   a_offset[2] = a_raw[2]/100;
+
+   g_offset[0] = g_raw[0]/100;
+   g_offset[1] = g_raw[1]/100;
+   g_offset[2] = g_raw[2]/100;  
+
+   Serial.print("Offsets: ");
+   Serial.print(a_offset[0]); Serial.print(",");
+   Serial.print(a_offset[1]); Serial.print(",");
+   Serial.print(a_offset[2]); Serial.print(",");
+   Serial.print(g_offset[0]); Serial.print(",");
+   Serial.print(g_offset[1]); Serial.print(",");
+   Serial.print(g_offset[2]); Serial.println(" ");
+}
+
 void setup()
 {
   system_update_cpu_freq(160);
   Serial.begin(Serial_Monitor_Baud);
   start_led_state_indicator();
-  while (!Serial) {
-    ;
-  }
+  while (!Serial) {;}
   I2C_sensors_begin();
   init_WiFi();
+  IMU_calibrate();
 }
 
 void loop()
