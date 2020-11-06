@@ -10,7 +10,13 @@ import time
 import sys
 import json
 
-USE_TCP = False            # Boolean Flag for whether to use TCP Socket from class TCP_Manager in 'TCP.py'
+
+if sys.argv[-1].lower() in ["true", "t"]:
+    USE_TCP = True
+else:
+    # Boolean Flag for whether to use TCP Socket from class TCP_Manager in 'TCP.py'
+    USE_TCP = False
+      
 RANDOM_PLOT_STEP = 100     # The number of steps random data will be plotted on GUI start-up. Change to 1 if unwanted.
 
 # Serial connection is setup here
@@ -22,7 +28,7 @@ if USE_TCP:
     try:
         tcp_socket = TCP_Manager()
         print("[SET-UP] : TCP Connection Establied!")
-    except expression as identifier:
+    except Exception as identifier:
         print(identifier)
 
 # State Management
@@ -73,7 +79,8 @@ topSection = win.addLayout(colspan=10)
 def abort_state():
     global CURRENT_STATE
     CURRENT_STATE = int(not bool(CURRENT_STATE))
-    tcp_handleshack("STATE",CURRENT_STATE)
+    if USE_TCP:
+        tcp_handleshack("STATE",CURRENT_STATE)
 
 def idle_state():
     global CURRENT_STATE
