@@ -67,11 +67,8 @@ font2.setWeight(100)
 
 # buttons style
 ButtonStyle_white = "background-color:rgb(255, 255, 255);color:rgb(0,0,0);font-size:26px;font-weight:bold"
-
 ButtonStyle_red = "background-color:rgb(200, 0, 0);color:rgb(0,0,0);font-size:26px;font-weight:bold"
-
 ButtonStyle_green = "background-color:rgb(0, 155, 0);color:rgb(0,0,0);font-size:26px;font-weight:bold"
-
 ButtonStyle_yellow = "background-color:rgb(255, 255, 0);color:rgb(0,0,0);font-size:26px;font-weight:bold"
 
 topSection = win.addLayout(colspan=10)
