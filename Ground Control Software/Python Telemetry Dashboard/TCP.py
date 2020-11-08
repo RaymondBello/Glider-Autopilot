@@ -3,7 +3,7 @@ import time
 
 class TCP_Manager:
     def __init__(self):
-        self.targetIP = "192.168.0.28"
+        self.targetIP = "192.168.0.33"
         self.handler = websocket.WebSocket()
         try:
             self.handler.connect(f"ws://{self.targetIP}")

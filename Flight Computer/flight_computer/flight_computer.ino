@@ -6,9 +6,6 @@
 #include <MPU9250.h>
 #include <Adafruit_BMP280.h>
 
-#define LED_RED D5
-#define LED_GREEN D6
-#define LED_BLUE D7
 
 #define BMP_SCK  (13)
 #define BMP_MISO (12)
@@ -80,12 +77,7 @@ void onWebSocketEvent(u_int num, WStype_t type, uint8_t *payload, size_t length)
   }
 }
 
-void start_led_state_indicator()
-{
-  pinMode(LED_BLUE, OUTPUT);
-  pinMode(LED_RED, OUTPUT);
-  pinMode(LED_GREEN, OUTPUT);
-}
+
 
 void I2C_sensors_begin()
 {
@@ -133,17 +125,7 @@ void serial_print_GPS_values()
   // }
 }
 
-void update_led_state_indicator()
-{
-  digitalWrite(LED_BLUE, HIGH);
-  digitalWrite(LED_RED, HIGH);
-  digitalWrite(LED_GREEN, HIGH);
-  // delay(500);
-  // digitalWrite(LED_BLUE, LOW);
-  // digitalWrite(LED_RED, LOW);
-  // digitalWrite(LED_GREEN, LOW);
-  // delay(500);
-}
+
 
 void start_websocket_loop()
 {
@@ -183,8 +165,8 @@ void IMU_update()
     prev_ms = millis();
   }
 
-//  sprintf(buffer_serial_out, "%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f", acc[0], acc[1], acc[2], gyro[0], gyro[1], gyro[2], mag[0], mag[1], mag[2], qrt[0], qrt[1], qrt[2], qrt[3], pressure, altitude, temp, pitch, roll, yaw);
-//  Serial.println(buffer_serial_out);
+  sprintf(buffer_serial_out, "%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f", acc[0], acc[1], acc[2], gyro[0], gyro[1], gyro[2], mag[0], mag[1], mag[2], qrt[0], qrt[1], qrt[2], qrt[3], pressure, altitude, temp, pitch, roll, yaw);
+  Serial.println(buffer_serial_out);
 }
 
 void baro_update()
@@ -232,7 +214,6 @@ void setup()
 {
   system_update_cpu_freq(160);
   Serial.begin(Serial_Monitor_Baud);
-  start_led_state_indicator();
   while (!Serial) {;}
   I2C_sensors_begin();
   init_WiFi();
@@ -242,7 +223,6 @@ void setup()
 void loop()
 {
   start_websocket_loop();
-  update_led_state_indicator();
   IMU_update();
   baro_update();
   delay(10);
