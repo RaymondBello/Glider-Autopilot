@@ -1,0 +1,34 @@
+
+table {
+    margin-top: 10px;
+    width: 80%;
+    
+}
+
+table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+  
+}
+
+th, td {
+  padding-inline-start: 6px;
+  padding-inline-end: 6px;
+  text-align: center;
+}
+th{
+    background-color: rgb(150, 207, 181);
+    font: small-caps  16px cursive;
+}
+td{
+    font: small-caps bold 14px cursive;
+}
+
+tr:hover {
+  background-color: rgb(99, 165, 134);
+}
+
+#mapid {
+  margin-top: 50px;
+  margin: 10px auto;
+}

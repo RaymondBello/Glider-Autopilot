@@ -1,0 +1,14 @@
+[
+  {
+    "id": "A00",
+    "pathName": "RAY>LEE",
+    "originCoord": [45.4041285310935, -75.71102868152072],
+    "midPoint": "45° 24′ 33″ N, 075° 41′ 30″ W",
+    "destCoord": [45.414029442859935, -75.67247276512195],
+    "climbRate": 3,
+    "cruiseALT": 50,
+    "cruiseSPD": 7,
+    "flightDistance": 3.205,
+    "flightDuration": 10.3
+  }
+]

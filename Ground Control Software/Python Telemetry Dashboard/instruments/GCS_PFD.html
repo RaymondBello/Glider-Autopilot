@@ -5,12 +5,25 @@
     <link rel="stylesheet" type="text/css" href="_examples_data/style.css" />
     <!-- Flight Indicators library styles -->
     <link rel="stylesheet" type="text/css" href="css/flightindicators.css" />
-    <title>GCS PFD</title>
+    <link rel="stylesheet" type="text/css" href="css/main.css" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+      integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+      crossorigin=""
+    />
+    <script
+      src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+      integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+      crossorigin=""
+    ></script>
+    <title>Ground Control Station & PFD</title>
+    
 </head>
 <body>
 <div class="container">
     
-    <h1><u>Ground Control Instruments</u></h1>
+    <h1>Flight Instruments</h1>
     <h1><u>.</u></h1>
     <h1><u>.</u></h1>
 
@@ -27,20 +40,46 @@
         </div>
     </div>
 </div>
+<div style="padding-top: 110px;"/>
+<div style="margin:0px">
+    <h1>Flight Planner Dashboard</h1>
+    <input type="button" onclick="updateJSON()" value="Update JSON" />
+    <input type="button" onclick="clearMarker()" value="Clear Markers" />
+    <input type="button" onclick="addToTable()" value="Add Row" />
+    <input type="button" onclick="deleteRow()" value="Remove Row" />
+
+    <table id="myTable">
+      <thead>
+        <tr>
+          <th>#ID</th>
+          <th>Flight Path Name</th>
+          <th>Origin Coord.</th>
+          <th>Destination Coord.</th>
+          <th>Climb Rate</th>
+          <th>Cruising ALT</th>
+          <th>Cruising SPD</th>
+          <th>Distance (m)</th>
+          <th>Duration (sec)</th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
+    
+    <div id="mapid" style="width: 100%; height: 500px"></div>
+</div>
+
 
 <footer>
     Ray '20<br/>
     <a href="https://github.com/RaymondBello/Glider-Autopilot">Github Link</a>
 </footer>
 
-<!-- Importing jQuery library -->
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js"></script>
 <!-- Importing the FlightIndicators library -->
 <script src="js/jquery.flightindicators.js"></script>
 <script type="text/javascript" src="/eel.js" ></script>
 <script type="text/javascript" >
-
-
 
 // Dynamic examples
 var attitude = $.flightIndicator('#attitude', 'attitude', {roll:50, pitch:-20, size:200, showBox : true});
@@ -50,9 +89,6 @@ var airspeed = $.flightIndicator('#airspeed', 'airspeed', {showBox: true});
 var altimeter = $.flightIndicator('#altimeter', 'altimeter',{showBox:true});
 var turn_coordinator = $.flightIndicator('#turn_coordinator', 'turn_coordinator', {turn:0, showBox:true});
 
-
-
-// Update at 20Hz
 var increment = 0;
 
 var counter = 0;
@@ -97,7 +133,7 @@ setInterval(function() {
        r_off += roll_value;
        a_off += altitude_value;
        counter++;
-       console.log(p_off);
+    //    console.log(p_off);
    }
    if (increment == 50)
    {
@@ -139,5 +175,6 @@ setInterval(function() {
     variometer.setVario(2*Math.sin(increment/10));
 }, 100);
 </script>
+<script src="js/main.js"></script>
 </body>
 </html>

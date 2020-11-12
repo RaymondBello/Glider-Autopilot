@@ -5,6 +5,7 @@ import socket
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
 from PyQt5.QtWidgets import QPushButton
+import pyqtgraph.opengl as gl
 import numpy as np
 import time
 import sys
@@ -71,7 +72,7 @@ ButtonStyle_red = "background-color:rgb(200, 0, 0);color:rgb(0,0,0);font-size:26
 ButtonStyle_green = "background-color:rgb(0, 155, 0);color:rgb(0,0,0);font-size:26px;font-weight:bold"
 ButtonStyle_yellow = "background-color:rgb(255, 255, 0);color:rgb(0,0,0);font-size:26px;font-weight:bold"
 
-topSection = win.addLayout(colspan=10)
+topSection = win.addLayout(colspan=4,rowspan=1)
 
 def abort_state():
     global CURRENT_STATE
@@ -145,7 +146,7 @@ button_start.clicked.connect(take_off_state)
 proxy4.setWidget(button_start)
 topSection.addItem(proxy4)
 
-win.nextRow()
+topSection.nextCol()
 
 proxy5 = QtGui.QGraphicsProxyWidget()
 button_return_to_home = QtGui.QPushButton('RETURN')
@@ -154,7 +155,8 @@ button_return_to_home.clicked.connect(return_home_state)
 proxy5.setWidget(button_return_to_home)
 topSection.addItem(proxy5)
 
-topSection.nextCol()
+win.nextRow()
+
 
 
 graph1 = win.addPlot(title="Accelerometer X")
@@ -536,7 +538,10 @@ AltitudeGraphic.hideAxis('left')
 texttoAltitude = pg.TextItem(f"0.01m", anchor=(0.5, 0.5), color='w')
 texttoAltitude.setFont(font2)
 AltitudeGraphic.addItem(texttoAltitude)
-# win.nextCol()
+
+win.nextCol()
+
+
 
 
 def update_altitude(altitude):
