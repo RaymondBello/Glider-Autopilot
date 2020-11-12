@@ -38,7 +38,7 @@ var waypoints = [
   }
 ]
 
-waypointStack = new Array()
+var waypointStack = new Array()
 
 function createTable() {
 
@@ -114,47 +114,23 @@ mymap.on("click", function (e) {
 
 function mapFunction(id) {
   var rowData = document.getElementById("myTable").rows[id].cells;
+  var rowObj = waypointStack[id - 1]
 
-  // Debug output
-  console.log(
-    "ID: " +
-      rowData[0].innerHTML +
-      "\nOrigin: " +
-      rowData[2].innerHTML +
-      "\nDestination: " +
-      rowData[3].innerHTML
-  );
+  // Debug Output
+  console.log(rowObj)
 
-  // Get Coordinate Array
-  var origin = rowData[2].innerHTML.split(",").map(function (item) {
-    return parseFloat(item);
-  });
-  var destination = rowData[3].innerHTML.split(",").map(function (item) {
-    return parseFloat(item);
-  });
-
-  // Update Distance between points
-  var distance = calcDistance(origin, destination).toFixed(0);
-  rowData[7].innerHTML = distance;
-
-  // Clear Layer
+  // Clear Layers
   layerGroup.clearLayers();
 
-  // Add Poly line points
-  var startEnd = [
-    [origin[0], origin[1]],
-    [destination[0], destination[1]],
-  ];
-
   // Add to Map
-  poly = drawLine(startEnd);
+  poly = drawLine(rowObj.data);
   mymap.closePopup();
-  originMarker = L.marker([origin[0], origin[1]]).addTo(layerGroup);
-  destinationMarker = L.marker([destination[0], destination[1]]).addTo(
-    layerGroup
-  );
-  originMarker.bindPopup("#" + rowData[0].innerHTML + " ORIGIN").openPopup();
+  originMarker = L.marker(rowObj.origin).addTo(layerGroup);
+  destinationMarker = L.marker(rowObj.destination).addTo(layerGroup);
+  originMarker.bindPopup("#" + rowData[0].innerHTML +" | "+"ORIGIN"+" | "+"Distance: "+rowObj.distance+"m"+" | "+"Points: "+ rowObj.data.length).openPopup();
   destinationMarker.bindPopup("DESTINATION");
+
+
 }
 
 function calcDistance(origin, dest) {
@@ -174,6 +150,17 @@ function calcDistance(origin, dest) {
 function drawLine(marray) {
   var polyline = L.polyline(marray, { color: "red" }).addTo(mymap);
   polyline.addTo(layerGroup);
+  
+  if (marray.length > 2) {
+    for (var i = 1; i < marray.length - 1; i++){
+      L.circle(marray[i], {
+        color: 'red',
+        fillColor: '#f03',
+        fillOpacity: 0.5,
+        radius: 35
+      }).addTo(layerGroup);
+    }
+  }
 }
 
 function updateJSON() {
@@ -221,6 +208,7 @@ function addToTable() {
   row.insertCell(8).innerHTML = obj_.duration;
 
   waypointStack.push(obj_);
+  markerArray = []
 
   console.log(waypointStack);
 }
@@ -236,4 +224,5 @@ function calcDistancePoints(narray) {
 function deleteRow() {
   var rows = document.getElementById("myTable").rows;
   document.getElementById("myTable").deleteRow(rows.length - 1);
+  waypointStack.pop();
 }

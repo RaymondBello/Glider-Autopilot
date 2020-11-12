@@ -1,5 +1,4 @@
 {
-    "python.dataScience.jupyterServerURI": "local",
     "editor.showFoldingControls": "always",
     "editor.folding": true,
     "editor.foldingStrategy": "indentation",
@@ -7,5 +6,7 @@
         "AHRS",
         "jcontent"
     ],
+    "jupyter.jupyterServerType": "local",
+    "python.pythonPath": "C:\\Users\\raymo\\AppData\\Local\\Programs\\Python\\Python37-32\\python.exe",
     
 }
