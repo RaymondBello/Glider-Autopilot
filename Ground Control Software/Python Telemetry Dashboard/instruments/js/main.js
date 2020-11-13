@@ -41,10 +41,8 @@ var waypoints = [
 var waypointStack = new Array()
 
 function createTable() {
-
   var tableData = document.getElementById("myTable");
   var rows = document.getElementById("myTable").rows;
-
   
   for (var i = 0; i < waypoints.length; i++){
     
@@ -76,11 +74,13 @@ function getFlightDuration(obj) {
 
 createTable();
 
+var mymap = L.map("mapid").setView([45.41, -75.7], 13);
 
-var mymap = L.map("mapid").setView([45.41, -75.7], 10);
+// "https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}"
+// "pk.eyJ1IjoicmF5YmVsbCIsImEiOiJja2hjazhyd2wwN2l1MnN0M3RtdGd2aTRoIn0.4mpZFa8_T8XfLagyn7EsnQ"
 
 L.tileLayer(
-  "https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}",
+  "https://api.mapbox.com/styles/v1/raybell/ckhfmq5j30ad71anskil9i9tz/tiles/256/{z}/{x}/{y}@2x?access_token={accessToken}",
   {
     attribution:
       'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
@@ -95,7 +95,7 @@ L.tileLayer(
 
 var layerGroup = L.layerGroup().addTo(mymap);
 
-var markerArray = [];
+var markerArray = new Array();
 
 mymap.on("click", function (e) {
   var poplocation = e.latlng;
@@ -109,8 +109,6 @@ mymap.on("click", function (e) {
     marker.bindPopup("ORIGIN").openPopup();
   }
 });
-
-
 
 function mapFunction(id) {
   var rowData = document.getElementById("myTable").rows[id].cells;
