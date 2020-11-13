@@ -28,6 +28,18 @@ tr:hover {
   background-color: rgb(99, 165, 134);
 }
 
+.button {
+  background-color: rgb(150, 207, 181); /* Green */
+  border: none;
+  border-radius:30px ;
+  color:black;
+  padding: 10px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 17px;
+}
+
 #mapid {
   margin-top: 50px;
   margin: 10px auto;

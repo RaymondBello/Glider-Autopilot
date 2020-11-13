@@ -23,7 +23,6 @@
 <body>
 <div class="container">
     
-    <h1>Flight Instruments</h1>
     <h1><u>.</u></h1>
     <h1><u>.</u></h1>
 
@@ -41,14 +40,15 @@
     </div>
 </div>
 <div style="padding-top: 110px;"/>
-<div style="margin:0px">
+<div style="margin:10px">
     <h1>Flight Planner Dashboard</h1>
-    <input type="button" onclick="updateJSON()" value="Update JSON" />
-    <input type="button" onclick="clearMarker()" value="Clear Markers" />
-    <input type="button" onclick="addToTable()" value="Add Row" />
-    <input type="button" onclick="deleteRow()" value="Remove Row" />
 
-    <table id="myTable">
+    <input class="button" type="button"  onclick="updateJSON()" value="Update JSON" />
+    <input class="button" type="button" onclick="clearMarker()" value="Clear Markers" />
+    <input class="button" type="button" onclick="addToTable()" value="Add Row" />
+    <input class="button" type="button" onclick="deleteRow()" value="Remove Row" />
+
+    <table id="myTable" >
       <thead>
         <tr>
           <th>#ID</th>
