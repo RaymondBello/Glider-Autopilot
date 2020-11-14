@@ -1,75 +1,88 @@
 // Table DATA
 var waypoints = [
   {
-    "id": 0,
-    "pathName": "RAY>LEE",
-    "origin": [45.4041285310935, -75.71102868152072],
-    "destination": [45.414029442859935, -75.67247276512195],
-    "data": [[45.4041285310935, -75.71102868152072],
+    id: 0,
+    pathName: "RAY>LEE",
+    origin: [45.4041285310935, -75.71102868152072],
+    destination: [45.414029442859935, -75.67247276512195],
+    data: [
+      [45.4041285310935, -75.71102868152072],
       [45.414029442859935, -75.67247276512195],
     ],
-    "climbRate": 4,
-    "cruiseALT": 70,
-    "cruiseSPD": 15,
+    climbRate: 4,
+    cruiseALT: 70,
+    cruiseSPD: 15,
   },
   {
-    "id": 1,
-    "pathName": "YND>YOW",
-    "origin": [45.521389, -75.564167],
-    "destination": [45.3225, -75.669167],
-    "data": [[45.521389, -75.564167],
+    id: 1,
+    pathName: "YND>YOW",
+    origin: [45.521389, -75.564167],
+    destination: [45.3225, -75.669167],
+    data: [
+      [45.521389, -75.564167],
       [45.3225, -75.669167],
     ],
-    "climbRate": 2,
-    "cruiseALT": 82,
-    "cruiseSPD": 11.5,
+    climbRate: 2,
+    cruiseALT: 82,
+    cruiseSPD: 11.5,
   },
   {
-    "id": 2,
-    "pathName": "YOW>YYZ",
-    "origin": [45.3225, -75.669167],
-    "destination": [43.676667, -79.630556],
-    "data": [[45.3225, -75.669167],
+    id: 2,
+    pathName: "YOW>YYZ",
+    origin: [45.3225, -75.669167],
+    destination: [43.676667, -79.630556],
+    data: [
+      [45.3225, -75.669167],
       [43.676667, -79.630556],
     ],
-    "climbRate": 3,
-    "cruiseALT": 50,
-    "cruiseSPD": 20,
-  }
-]
+    climbRate: 3,
+    cruiseALT: 50,
+    cruiseSPD: 20,
+  },
+];
 
-var waypointStack = new Array()
+const ws = new WebSocket("ws://localhost:8082");
+
+ws.addEventListener("open", (e) => {
+  console.log("[INFO] Connected to localhost");
+
+  ws.send("[INFO] Ground Control Station (active)");
+});
+
+ws.addEventListener("message", ({data}) => {
+  console.log(data);
+});
+
+var waypointStack = new Array();
+var selectedWaypoint = 0;
 
 function createTable() {
   var tableData = document.getElementById("myTable");
   var rows = document.getElementById("myTable").rows;
-  
-  for (var i = 0; i < waypoints.length; i++){
-    
-    var row = tableData.insertRow(i+1);
+
+  for (var i = 0; i < waypoints.length; i++) {
+    var row = tableData.insertRow(i + 1);
     row.id = i + 1;
     row.setAttribute("onclick", "mapFunction(this.id);");
-    row.insertCell(0).innerHTML =
-      (i < 10 ? "A0" : "A") + waypoints[i].id;
+    row.insertCell(0).innerHTML = (i < 10 ? "A0" : "A") + waypoints[i].id;
     row.insertCell(1).innerHTML = waypoints[i].pathName;
     row.insertCell(2).innerHTML = waypoints[i].origin.toString();
     row.insertCell(3).innerHTML = waypoints[i].destination.toString();
     row.insertCell(4).innerHTML = waypoints[i].climbRate.toString();
     row.insertCell(5).innerHTML = waypoints[i].cruiseALT;
     row.insertCell(6).innerHTML = waypoints[i].cruiseSPD;
-    waypoints[i].distance = calcDistancePoints(waypoints[i].data).toFixed(0)
+    waypoints[i].distance = calcDistancePoints(waypoints[i].data).toFixed(0);
     row.insertCell(7).innerHTML = waypoints[i].distance;
-    waypoints[i].duration = getFlightDuration(waypoints[i])
+    waypoints[i].duration = getFlightDuration(waypoints[i]);
     row.insertCell(8).innerHTML = waypoints[i].duration;
 
-    waypointStack.push(waypoints[i])
+    waypointStack.push(waypoints[i]);
   }
-  console.log(waypointStack)
+  console.log("Current Waypoint stack",waypointStack);
 }
 
 function getFlightDuration(obj) {
-
-  return (obj.id * obj.id + 2 * obj.id - obj.id+ 2);
+  return obj.id * obj.id + 2 * obj.id - obj.id + 2;
 }
 
 createTable();
@@ -112,10 +125,10 @@ mymap.on("click", function (e) {
 
 function mapFunction(id) {
   var rowData = document.getElementById("myTable").rows[id].cells;
-  var rowObj = waypointStack[id - 1]
+  var rowObj = waypointStack[id - 1];
 
   // Debug Output
-  console.log(rowObj)
+  // console.log(rowObj);
 
   // Clear Layers
   layerGroup.clearLayers();
@@ -125,10 +138,24 @@ function mapFunction(id) {
   mymap.closePopup();
   originMarker = L.marker(rowObj.origin).addTo(layerGroup);
   destinationMarker = L.marker(rowObj.destination).addTo(layerGroup);
-  originMarker.bindPopup("#" + rowData[0].innerHTML +" | "+"ORIGIN"+" | "+"Distance: "+rowObj.distance+"m"+" | "+"Points: "+ rowObj.data.length).openPopup();
+  originMarker
+    .bindPopup(
+      "#" +
+        rowData[0].innerHTML +
+        " | " +
+        "ORIGIN" +
+        " | " +
+        "Distance: " +
+        rowObj.distance +
+        "m" +
+        " | " +
+        "Points: " +
+        rowObj.data.length
+    )
+    .openPopup();
   destinationMarker.bindPopup("DESTINATION");
 
-
+  selectedWaypoint = rowObj.id
 }
 
 function calcDistance(origin, dest) {
@@ -148,26 +175,40 @@ function calcDistance(origin, dest) {
 function drawLine(marray) {
   var polyline = L.polyline(marray, { color: "red" }).addTo(mymap);
   polyline.addTo(layerGroup);
-  
+
   if (marray.length > 2) {
-    for (var i = 1; i < marray.length - 1; i++){
+    for (var i = 1; i < marray.length - 1; i++) {
       L.circle(marray[i], {
-        color: 'red',
-        fillColor: '#f03',
+        color: "red",
+        fillColor: "#f03",
         fillOpacity: 0.5,
-        radius: 35
+        radius: 35,
       }).addTo(layerGroup);
     }
   }
 }
 
 function updateJSON() {
-  console.log(markerArray);
 
-  alert(
-    (markerArray.length > 0 ? markerArray : "Nothing ") +
-      " | Added to JSON File"
-  );
+  var selectedPathObj = waypointStack[selectedWaypoint];
+
+  if (ws.readyState == 0) {
+    alert(
+      "[ERROR] \nWebsocket not connected\nCannot send path: " + selectedPathObj.pathName
+    );
+  }
+  if (ws.readyState == 1) {
+    ws.send(JSON.stringify(selectedPathObj));
+    alert(
+      "[INFO] [SUCCESS]\nWebsocket connected\nSent path: " + selectedPathObj.pathName
+    );
+  }
+  if (ws.readyState == 2) {
+    alert("[ERROR] \nWebsocket closing\nCannot send path: " + selectedPathObj.pathName);
+  }
+  if (ws.readyState == 3) {
+    alert("[ERROR] \nWebsocket Closed\nRe-launch server and try again.");
+  }
 }
 
 function clearMarker() {
@@ -179,22 +220,23 @@ function addToTable() {
   var table = document.getElementById("myTable");
   var rows = document.getElementById("myTable").rows;
   var row = table.insertRow(rows.length);
-  row.id = (rows.length - 1);
+  row.id = rows.length - 1;
   row.setAttribute("onclick", "mapFunction(this.id);");
-  
+
   var obj_ = {};
-  obj_.id = row.id-1;
-  obj_.pathName = (rows.length - 2 < 10 ? "CST>00" : "CST>0") + (rows.length - 2);
-  obj_.origin = markerArray[0]
-  obj_.destination = markerArray[markerArray.length - 1]
-  obj_.data = markerArray
+  obj_.id = row.id - 1;
+  obj_.pathName =
+    (rows.length - 2 < 10 ? "CST>00" : "CST>0") + (rows.length - 2);
+  obj_.origin = markerArray[0];
+  obj_.destination = markerArray[markerArray.length - 1];
+  obj_.data = markerArray;
   obj_.climbRate = 0;
   obj_.cruiseALT = 0;
   obj_.cruiseSPD = 0;
-  obj_.distance = calcDistancePoints(obj_.data).toFixed(0)
-  obj_.duration = getFlightDuration(obj_)
+  obj_.distance = calcDistancePoints(obj_.data).toFixed(0);
+  obj_.duration = getFlightDuration(obj_);
 
-  row.insertCell(0).innerHTML = 
+  row.insertCell(0).innerHTML =
     (rows.length - 2 < 10 ? "A0" : "A") + (rows.length - 2);
   row.insertCell(1).innerHTML = obj_.pathName;
   row.insertCell(2).innerHTML = obj_.origin;
@@ -206,7 +248,7 @@ function addToTable() {
   row.insertCell(8).innerHTML = obj_.duration;
 
   waypointStack.push(obj_);
-  markerArray = []
+  markerArray = [];
 
   console.log(waypointStack);
 }

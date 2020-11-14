@@ -4,6 +4,9 @@ table {
     width: 80%;
     
 }
+h1 {
+  font: small-caps bold 40px cursive
+}
 
 table, th, td {
   border: 1px solid black;
@@ -38,6 +41,7 @@ tr:hover {
   text-decoration: none;
   display: inline-block;
   font-size: 17px;
+  font: small-caps bold 20px cursive
 }
 
 #mapid {
