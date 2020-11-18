@@ -631,14 +631,14 @@ def update_system_state(state):
     return tcp_handleshack("STATE", state)
 
 
-def write_json(data, filename="instruments/sensor_data.json"):
+def write_json(data, filename="web/sensor_data.json"):
     with open(filename, "w") as f:
         json.dump(data, f, indent=3)
 
 
 def write_data_to_JSON(jcontent):
 
-    with open("instruments/sensor_data.json") as json_file:
+    with open("web/sensor_data.json") as json_file:
         data = json.load(json_file)
         temp = data["packet"]
         temp[4]["data"]["Pressure"] = float(jcontent[13])
