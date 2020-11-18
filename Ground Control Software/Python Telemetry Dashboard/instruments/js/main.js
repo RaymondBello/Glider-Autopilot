@@ -49,7 +49,7 @@ ws.addEventListener("open", (e) => {
   ws.send("[INFO] Ground Control Station (active)");
 });
 
-ws.addEventListener("message", ({data}) => {
+ws.addEventListener("message", ({ data }) => {
   console.log(data);
 });
 
@@ -78,7 +78,7 @@ function createTable() {
 
     waypointStack.push(waypoints[i]);
   }
-  console.log("Current Waypoint stack",waypointStack);
+  console.log("Current Waypoint stack", waypointStack);
 }
 
 function getFlightDuration(obj) {
@@ -155,7 +155,7 @@ function mapFunction(id) {
     .openPopup();
   destinationMarker.bindPopup("DESTINATION");
 
-  selectedWaypoint = rowObj.id
+  selectedWaypoint = rowObj.id;
 }
 
 function calcDistance(origin, dest) {
@@ -189,22 +189,30 @@ function drawLine(marray) {
 }
 
 function updateJSON() {
-
   var selectedPathObj = waypointStack[selectedWaypoint];
 
   if (ws.readyState == 0) {
     alert(
-      "[ERROR] \nWebsocket not connected\nCannot send path: " + selectedPathObj.pathName
+      "[ERROR] \nWebsocket not connected\nCannot send path: " +
+        selectedPathObj.pathName
     );
   }
   if (ws.readyState == 1) {
-    ws.send(JSON.stringify(selectedPathObj));
+    try {
+      ws.send(JSON.stringify(selectedPathObj));
+    } catch (e) {
+      console.log("[ERROR] " + e.message);
+    }
     alert(
-      "[INFO] [SUCCESS]\nWebsocket connected\nSent path: " + selectedPathObj.pathName
+      "[INFO][SUCCESS] \nWebsocket connected\nSent path: " +
+        selectedPathObj.pathName
     );
   }
   if (ws.readyState == 2) {
-    alert("[ERROR] \nWebsocket closing\nCannot send path: " + selectedPathObj.pathName);
+    alert(
+      "[ERROR] \nWebsocket closing\nCannot send path: " +
+        selectedPathObj.pathName
+    );
   }
   if (ws.readyState == 3) {
     alert("[ERROR] \nWebsocket Closed\nRe-launch server and try again.");

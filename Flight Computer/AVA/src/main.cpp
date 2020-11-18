@@ -225,16 +225,25 @@ void IMU_calibrate()
   Serial.println(" ");
 }
 
-void logger(enum debugFlags level, const char *msg)
+void serialDebug(enum debugFlags level, const char *msg)
 {
-  //const char* level,char* msg
-  Serial.print(level);
-  if (DEBUG)
+  switch (level)
   {
-    Serial.printf("[DEBUG] %s", msg);
+    case 1:
+      Serial.printf("[DEBUG] %s", msg);
+      break;
+    case 2:
+      Serial.printf("[INFO] %s", msg);
+      break;
+    case 4:
+      Serial.printf("[WARN] %s", msg);
+      break;
+    case 8:
+      Serial.printf("[ERROR] %s", msg);
+      break;
+    case 16:
+      Serial.printf("[FATAL] %s", msg);
   }
-  Serial.print(" ");
-  Serial.print(msg);
 }
 
 void setup()
@@ -248,7 +257,6 @@ void setup()
   // I2C_sensors_begin();
   // IMU_calibrate();
   init_WiFi();
-  logger(DEBUG, "Blah Blah");
 }
 
 void loop()
@@ -258,7 +266,8 @@ void loop()
    *******************************/
   // IMU_update();
   // baro_update();
-
+  
   start_websocket_loop();
+  serialDebug(INFO, "Serial ready");
   delay(10);
 }
