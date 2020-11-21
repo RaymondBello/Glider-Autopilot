@@ -127,7 +127,7 @@ setInterval(function() {
 
    });
 
-   if (increment<=50 )
+   if (increment<=20 )
    {
        p_off += pitch_value;
        r_off += roll_value;
@@ -135,7 +135,7 @@ setInterval(function() {
        counter++;
     //    console.log(p_off);
    }
-   if (increment == 50)
+   if (increment == 20)
    {
        pitch_offset = p_off/counter;
        roll_offset = r_off/counter;
@@ -173,7 +173,7 @@ setInterval(function() {
     
     // Vario update
     variometer.setVario(2*Math.sin(increment/10));
-}, 100);
+}, 500);
 </script>
 <script src="js/main.js"></script>
 </body>

@@ -1,6 +1,6 @@
 const WebSocket = require("ws");
 var fs = require("fs");
-var rawData = fs.readFileSync("../sensor_data.json");
+var rawData = fs.readFileSync("../web/sensor_data.json");
 var JSONdata = JSON.parse(rawData);
 
 const wss = new WebSocket.Server({ port: 8082 });
@@ -34,10 +34,10 @@ function saveToJSON(data) {
     console.log("[RECEIVED]", data);
     
     function finished(err) {
-        console.log("[INFO] Wrote JSON file (../trajectory.json)");
+        console.log("[INFO] Wrote JSON file (../web/trajectory.json)");
     }
 
-    fs.writeFile("../trajectory.json", JSON.stringify(data), finished);
+    fs.writeFile("../web/trajectory.json", JSON.stringify(data), finished);
 }
 
 console.log(JSONdata);

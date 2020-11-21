@@ -3,7 +3,7 @@ import time
 
 class TCP_Manager:
     def __init__(self):
-        self.targetIP = "192.168.0.33"
+        self.targetIP = "192.168.0.25"
         self.handler = websocket.WebSocket()
         try:
             self.handler.connect(f"ws://{self.targetIP}")
@@ -33,21 +33,3 @@ class TCP_Manager:
         self.handler.close()
         return True
 
-
-
-# TCP = TCP_Manager()
-
-# i = 0
-# start_time = time.perf_counter()
-# while i < 100:
-#     TCP.send_data("Command", "Instruction")
-#     packet = TCP.receive_data()
-#     print(packet)
-    
-#     i+=1
-
-# end = time.perf_counter()
-# time_per_hadshake = (end - start_time) / 100
-# print(f"Time per handshake: {time_per_hadshake} seconds")
-
-# TCP.handler.close()

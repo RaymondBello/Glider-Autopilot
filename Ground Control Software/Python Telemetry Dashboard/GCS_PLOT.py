@@ -1,6 +1,7 @@
 from datetime import datetime
 from communication import Comms
 from TCP import TCP_Manager
+from AVA import AVA
 import socket
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
@@ -18,7 +19,7 @@ else:
     # Boolean Flag for whether to use TCP Socket from class TCP_Manager in 'TCP.py'
     USE_TCP = False
       
-RANDOM_PLOT_STEP = 100     # The number of steps random data will be plotted on GUI start-up. Change to 1 if unwanted.
+RANDOM_PLOT_STEP = 50     # The number of steps random data will be plotted on GUI start-up. Change to 1 if unwanted.
 
 # Serial connection is setup here
 # comms = Comms()
@@ -42,7 +43,7 @@ IDLE_state = 1
 LOGGING_STATE = 2
 ORIGIN_STATE = 3
 TAKE_OFF_state = 4
-# RETURN_TO_HOME = 5
+RETURN_TO_HOME = 5
 
 # GUI WINDOW SIZE CONSTANTS
 WINDOW_WIDTH = 1100
@@ -193,7 +194,6 @@ ptr1 = 0
 def shift_array(array):
     array[:-1] = array[1:]
 
-
 def update_row_accel(acc_values):
     """Update graph-> shifts data in the array one sample left, appends new value"""
 
@@ -231,7 +231,6 @@ def update_row_accel(acc_values):
 
     graph3_curve.setData(data3)
     graph3_curve.setPos(ptr1, 0)
-
 
 StateGraphic = win.addPlot(title="Flag")
 StateGraphic.setRange(QtCore.QRectF(-50, -50, 100, 100))
@@ -452,7 +451,6 @@ def update_row_mag(mag_values):
     graph9_curve.setPos(-ptr4, 0)
     graph10_curve.setPos(-ptr4, 0)
         
-
 win.nextRow()
 
 # Plot in chunks, adding one new plot curve for every 100 samples
@@ -463,7 +461,6 @@ maxChunks = 10
 
 startTime = pg.ptime.time()
 
-
 graph7 = win.addPlot(colspan=1, title="Internal Temperature")
 # graph7.setLabel("bottom", "Time", "s")
 graph7.setXRange(-10, 0)
@@ -471,7 +468,6 @@ graph7.setXRange(-10, 0)
 curves = []
 data7 = np.empty((chunkSize + 1, 2))
 ptr3 = 0
-
 
 def update_row_temp(temp_values):
     global graph7, data7, ptr3, curves
@@ -511,7 +507,6 @@ def update_row_temp(temp_values):
     graph7_curve.setData(x=data7[: i + 2, 0], y=data7[: i + 2, 1])
     ptr3 += 1
 
-
 TimeGraphic = win.addPlot(title="Time (H:M:S)")
 TimeGraphic.setRange(QtCore.QRectF(-50, -50, 100, 100))
 
@@ -541,9 +536,6 @@ AltitudeGraphic.addItem(texttoAltitude)
 
 win.nextCol()
 
-
-
-
 def update_altitude(altitude):
     global texttoAltitude
 
@@ -555,6 +547,8 @@ def update_altitude(altitude):
 serial_data = [1] * 19
 count = 0
 
+if USE_TCP:
+    AVA_model = AVA(tcp_socket.targetIP, CURRENT_STATE, SYSTEM_STATE_POOL)
 
 def update_time():
     global texttoTime
@@ -566,7 +560,6 @@ def update_time():
     texttoTime.setFont(font1)
     TimeGraphic.addItem(texttoTime)
 
-
 def update_gps():
     pass
 
@@ -574,22 +567,17 @@ def update_gps():
 def ABORT():
     return "ABORT"
 
-
 def IDLE():
     return "IDLE"
-
 
 def ARMED():
     return "LOGGING"
 
-
 def ORIGIN():
     return "HOME SET"
 
-
 def TAKEOFF():
     return "TAKE-OFF"
-
 
 def update_state():
     global CURRENT_STATE, texttoState
@@ -608,21 +596,15 @@ def update_state():
     texttoState.setFont(font2)
     StateGraphic.addItem(texttoState)
 
-
 def update_battery():
     pass
-
-
-# update all plots
 
 def tcp_handleshack(commandType: str, commandData: str): 
     ''' Takes the command type and command data and returns raw data'''
     global CURRENT_STATE
     
-
     tcp_socket.send_data(commandType, commandData)
     raw_data = tcp_socket.receive_data()
-    # print(raw_data)
 
     return raw_data
 
@@ -630,11 +612,9 @@ def update_system_state(state):
     '''update system state and return tcp sensor data'''
     return tcp_handleshack("STATE", state)
 
-
 def write_json(data, filename="web/sensor_data.json"):
     with open(filename, "w") as f:
         json.dump(data, f, indent=3)
-
 
 def write_data_to_JSON(jcontent):
 
@@ -651,16 +631,15 @@ def write_data_to_JSON(jcontent):
     write_json(data)
     # print(jcontent)
 
-
 def update():
     """Update all the data"""
-    global serial_interface, serial_data, count, comms, now, CURRENT_STATE
+    global serial_interface, serial_data, count, comms, now, CURRENT_STATE, flag
 
     start = time.perf_counter()
 
     if USE_TCP:
         serial_data =tcp_handleshack("STATE", CURRENT_STATE)
-        print(serial_data)
+        serial_data = AVA_model.update(serial_data,CURRENT_STATE)
         
     update_state()
     
@@ -685,12 +664,8 @@ def update():
     finish = time.perf_counter()
     # print(f"[GRAPH] Update Rate: {round(time.perf_counter()-start,5)} seconds ")
 
-    count += 1
-
-
 timer = pg.QtCore.QTimer()
 timer.timeout.connect(update)
-# timer.timeout.connect(udp_get_packet_data)
 timer.start(20)
 
 
@@ -699,7 +674,3 @@ if __name__ == "__main__":
     # Start Qt event loop unless running in interactive mode
     if (sys.flags.interactive != 1) or not hasattr(QtCore, "PYQT_VERSION"):
         QtGui.QApplication.instance().exec_()
-
-
-
-    

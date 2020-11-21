@@ -12,7 +12,7 @@
 #define BMP_CS (10)
 
 #define GPSBaud 9600 //GPS Baud rate
-#define Serial_Monitor_Baud 115200
+#define Serial_Monitor_Baud 9600
 
 float a_offset[3], g_offset[3];
 float acc[3], gyro[3], mag[3];
@@ -45,6 +45,26 @@ enum debugFlags
   FATAL = 16
 };
 
+void serialDebug(enum debugFlags level, const char *msg)
+{
+  switch (level)
+  {
+  case 1:
+    Serial.printf("[DEBUG] %s \n", msg);
+    break;
+  case 2:
+    Serial.printf("[INFO] %s \n", msg);
+    break;
+  case 4:
+    Serial.printf("[WARN] %s \n", msg);
+    break;
+  case 8:
+    Serial.printf("[ERROR] %s \n", msg);
+    break;
+  case 16:
+    Serial.printf("[FATAL] %s \n", msg);
+  }
+}
 // Called when receiving websocket packet
 void onWebSocketEvent(u_int num, WStype_t type, uint8_t *payload, size_t length)
 {
@@ -144,17 +164,17 @@ void IMU_update()
   //  memset(buffer_serial_out, 0, sizeof buffer_serial_out);
   static uint32_t prev_ms = millis();
 
-  if ((millis() - prev_ms) > 16)
+  if ((millis() - prev_ms) > 10)
   {
     mpu.update();
 
-    acc[0] = mpu.getAcc(0) - a_offset[0];
-    acc[1] = mpu.getAcc(1) - a_offset[1];
-    acc[2] = mpu.getAcc(2) - a_offset[2];
+    acc[0] = mpu.getAcc(0); //- a_offset[0];
+    acc[1] = mpu.getAcc(1); //- a_offset[1];
+    acc[2] = mpu.getAcc(2); //- a_offset[2];
 
-    gyro[0] = mpu.getGyro(0) - g_offset[0];
-    gyro[1] = mpu.getGyro(1) - g_offset[1];
-    gyro[2] = mpu.getGyro(2) - g_offset[2];
+    gyro[0] = mpu.getGyro(0); //- g_offset[0];
+    gyro[1] = mpu.getGyro(1); //- g_offset[1];
+    gyro[2] = mpu.getGyro(2); //- g_offset[2];
 
     mag[0] = mpu.getMag(0);
     mag[1] = mpu.getMag(1);
@@ -173,77 +193,73 @@ void IMU_update()
   }
 
   sprintf(buffer_serial_out, "%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f", acc[0], acc[1], acc[2], gyro[0], gyro[1], gyro[2], mag[0], mag[1], mag[2], qrt[0], qrt[1], qrt[2], qrt[3], pressure, altitude, temp, pitch, roll, yaw);
-  Serial.println(buffer_serial_out);
+  // Serial.println(buffer_serial_out);
+  // mpu.print();
 }
 
 void baro_update()
 {
-  temp = bmp.readTemperature();
-  pressure = bmp.readPressure();
-  altitude = bmp.readAltitude(1026);
+  static uint32_t prev_ms = millis();
+
+  if ((millis() - prev_ms) > 10)
+  {
+    temp = bmp.readTemperature();
+    pressure = bmp.readPressure();
+    altitude = bmp.readAltitude(1026);
+
+    prev_ms = millis();
+  }
+
 }
 
 void IMU_calibrate()
 {
-  float a_raw[3], g_raw[3];
-  int i;
+  // float a_raw[3], g_raw[3];
+  // int i;
 
-  for (i = 0; i < 100; i++)
-  {
-    mpu.update();
+  // for (i = 0; i < 100; i++)
+  // {
+  //   mpu.update();
 
-    a_raw[0] += mpu.getAcc(0);
-    a_raw[1] += mpu.getAcc(1);
-    a_raw[2] += mpu.getAcc(2);
+  //   a_raw[0] += mpu.getAcc(0);
+  //   a_raw[1] += mpu.getAcc(1);
+  //   a_raw[2] += mpu.getAcc(2);
 
-    g_raw[0] += mpu.getGyro(0);
-    g_raw[1] += mpu.getGyro(1);
-    g_raw[2] += mpu.getGyro(2);
-    delay(2);
-  }
+  //   g_raw[0] += mpu.getGyro(0);
+  //   g_raw[1] += mpu.getGyro(1);
+  //   g_raw[2] += mpu.getGyro(2);
+  //   delay(2);
+  // }
 
-  a_offset[0] = a_raw[0] / 100;
-  a_offset[1] = a_raw[1] / 100;
-  a_offset[2] = a_raw[2] / 100;
+  // a_offset[0] = a_raw[0] / 100;
+  // a_offset[1] = a_raw[1] / 100;
+  // a_offset[2] = a_raw[2] / 100;
 
-  g_offset[0] = g_raw[0] / 100;
-  g_offset[1] = g_raw[1] / 100;
-  g_offset[2] = g_raw[2] / 100;
+  // g_offset[0] = g_raw[0] / 100;
+  // g_offset[1] = g_raw[1] / 100;
+  // g_offset[2] = g_raw[2] / 100;
 
-  Serial.print("Offsets: ");
-  Serial.print(a_offset[0]);
-  Serial.print(",");
-  Serial.print(a_offset[1]);
-  Serial.print(",");
-  Serial.print(a_offset[2]);
-  Serial.print(",");
-  Serial.print(g_offset[0]);
-  Serial.print(",");
-  Serial.print(g_offset[1]);
-  Serial.print(",");
-  Serial.print(g_offset[2]);
-  Serial.println(" ");
-}
+  /**
+   * IMU LAST CALIBRATED {11/20/2020 11:33PM}
+   */
+  // mpu.calibrateAccelGyro();
+  // delay(500);
+  // mpu.calibrateMag();
+  serialDebug(INFO, "IMU is calibrated");
 
-void serialDebug(enum debugFlags level, const char *msg)
-{
-  switch (level)
-  {
-    case 1:
-      Serial.printf("[DEBUG] %s", msg);
-      break;
-    case 2:
-      Serial.printf("[INFO] %s", msg);
-      break;
-    case 4:
-      Serial.printf("[WARN] %s", msg);
-      break;
-    case 8:
-      Serial.printf("[ERROR] %s", msg);
-      break;
-    case 16:
-      Serial.printf("[FATAL] %s", msg);
-  }
+  // Serial.print("Offsets: ");
+  // Serial.print(a_offset[0]);
+  // Serial.print(",");
+  // Serial.print(a_offset[1]);
+  // Serial.print(",");
+  // Serial.print(a_offset[2]);
+  // Serial.print(",");
+  // Serial.print(g_offset[0]);
+  // Serial.print(",");
+  // Serial.print(g_offset[1]);
+  // Serial.print(",");
+  // Serial.print(g_offset[2]);
+  // Serial.println(" ");
 }
 
 void setup()
@@ -254,8 +270,8 @@ void setup()
   {
     ;
   }
-  // I2C_sensors_begin();
-  // IMU_calibrate();
+  I2C_sensors_begin();
+  IMU_calibrate();
   init_WiFi();
 }
 
@@ -264,10 +280,8 @@ void loop()
   /*******************************
    *  Sensor update functions
    *******************************/
-  // IMU_update();
-  // baro_update();
-  
+  IMU_update();
+  baro_update();
   start_websocket_loop();
-  serialDebug(INFO, "Serial ready");
-  delay(10);
+  // delay(10);
 }
