@@ -666,7 +666,7 @@ def update():
 
 timer = pg.QtCore.QTimer()
 timer.timeout.connect(update)
-timer.start(20)
+timer.start(25)
 
 
 if __name__ == "__main__":

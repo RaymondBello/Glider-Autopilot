@@ -18,7 +18,6 @@ class Comms:
             print(("{}".format(port)))
 
         self.portName = "COM9"
-
         # try:
         #     self.ser = serial.Serial(self.portName, self.baudrate)
         # except serial.serialutil.SerialException:
