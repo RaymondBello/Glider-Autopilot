@@ -1,5 +1,4 @@
 import websocket
-import time
 
 class TCP_Manager:
     def __init__(self):
@@ -14,7 +13,6 @@ class TCP_Manager:
     def send_data(self, data_type, data):
         '''Send data to tagertIP, return True if sent else Return False'''
         packet_out = (str(data_type) + ":" + str(data))
-
         try:
             self.handler.send(packet_out)
             return True
@@ -25,7 +23,6 @@ class TCP_Manager:
     def receive_data(self):
         '''Receive packet from targetIP return the received packet as an array'''
         packet_in = self.handler.recv()
-
         return packet_in.split(",")
     
     def close_connection(self):

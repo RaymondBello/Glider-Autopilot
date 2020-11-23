@@ -31,20 +31,19 @@ class AVA:
 
             self.previous = time.perf_counter()
             # print(f"{format(1/self.t_delta_ms,'.2f')} hz")
-        
         return self.data
     
     @staticmethod
     def swapIdx_NED(data: list):
         """
-        Swaps X&Y axis to Maintain North East Down Convention
+        Swaps X axis to Maintain North East Down Convention
         """
         # Accel
-        data[0], data[1] = data[1], data[0]
+        data[0] = -float(data[0])
         # Gyro
-        data[3], data[4] = data[4], data[3]
+        data[3] = -float(data[1])
         # Mag
-        data[6], data[7] = data[7], data[6]
+        data[6] = -float(data[6])
 
         return data
 
@@ -58,6 +57,6 @@ class AVA:
         self.accel = self.data[:3]
         self.gyro = self.data[3:6]
         self.mag = self.data[6:9]
-        print(self.data[6:9])
+        print(self.data[:9])
 
         
