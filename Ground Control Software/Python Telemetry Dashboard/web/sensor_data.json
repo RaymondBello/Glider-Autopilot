@@ -36,17 +36,17 @@
       {
          "name": "Barometer",
          "data": {
-            "Pressure": 101084.422,
-            "Altitude": 125.366,
-            "Temperature": 30.21
+            "Pressure": 101601.719,
+            "Altitude": 82.406,
+            "Temperature": 30.24
          }
       },
       {
          "name": "AHRS",
          "data": {
-            "Pitch": 3.502,
-            "Roll": -5.566,
-            "Yaw": -98.085
+            "Pitch": 0.043,
+            "Roll": -0.013,
+            "Yaw": -91.992
          }
       },
       {
