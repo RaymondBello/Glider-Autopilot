@@ -1,8 +1,7 @@
-
 #include "kalman_filter.h"
 
-    // Kalman Filter constructor
-    KalmanFilter::KalmanFilter(double U)
+// Kalman Filter constructor
+KalmanFilter::KalmanFilter(double U)
 {
     SetKalmanFilter(U);
 }

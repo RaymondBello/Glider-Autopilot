@@ -2,7 +2,7 @@
 #include <Wire.h>
 #include <MPU9250.h>
 #include <Adafruit_BMP280.h>
-#include "kalman_filter.cpp"
+#include "kalman_filter.h"
 
 #define BMP_SCK (13)
 #define BMP_MISO (12)
