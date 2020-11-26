@@ -81,7 +81,6 @@ double kalman_gx(double U)
     // Update error covariance
     P = (1 - K * H) * P + Q;
 
-<<<<<<< HEAD
     //Return estimate of U - H * U_hat
     return U_hat;
 }
@@ -179,15 +178,6 @@ double kalman_mz(double U)
     static double P = 0;          // Inital error covariance (must be 0)
     static double U_hat = 0;      // Initial estimated state (assuming we dont know)
     static double K = 0;
-=======
-    // Noise Covariance
-    static constexpr double R = 40.0;
-    // Measurement Map Scalar
-    static constexpr double H = 1.0;
-
-    double Q = 10;
-    double P = 0;
->>>>>>> 72ad10cb0944f7099dc6581d683584b89bb68fc1
 
     // Initialize
     K = P * H / (H * P * H + R);         // Update kalman gain
@@ -196,13 +186,8 @@ double kalman_mz(double U)
     // Update error covariance
     P = (1 - K * H) * P + Q;
 
-<<<<<<< HEAD
     //Return estimate of U - H * U_hat
     return U_hat;
 }
 
-=======
-    double getKalman() { return m_U; }
-};
->>>>>>> 72ad10cb0944f7099dc6581d683584b89bb68fc1
 #endif
