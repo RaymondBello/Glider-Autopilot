@@ -1,10 +1,8 @@
 #include <MPU9250.h>
 #include <Adafruit_BMP280.h>
 #include "kalman_filter.h"
-#include "quaternion_filter.h"
 
 MPU9250 IMU(SPI, D0);
-QuaternionFilter qFilter;
 Adafruit_BMP280 bmp(D1); 
 
 int status;
@@ -85,11 +83,6 @@ void imu_update(){
   temp_imu = IMU.getTemperature_C();
 }
 
-void quaternion_filter()
-{
-  
-}
-
 void baro_update(){
   static uint32_t prev_ms = millis();
 
@@ -101,8 +94,6 @@ void baro_update(){
     prev_ms = millis();
   }
 }
-
-
 
 // Updates all the Kalman filter values
 void update_kalman_filter()
@@ -127,7 +118,6 @@ void setup()
   while (!Serial)
   {
   }
-
   sensors_init();
   // Calibration?
 }
