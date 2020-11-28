@@ -9,7 +9,7 @@
 #define BMP_MOSI (11)
 #define BMP_CS (10)
 
-#define Serial_Monitor_Baud 115200
+#define Serial_Monitor_Baud (115200)
 
 float a_offset[3], g_offset[3];
 float acc[3], gyro[3], mag[3];

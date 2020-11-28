@@ -190,38 +190,27 @@ function drawLine(marray) {
 
 function updateJSON() {
   var selectedPathObj = waypointStack[selectedWaypoint];
+  var textArea = document.getElementById("alltext");
 
   if (ws.readyState == 0) {
-    document.getElementById("alltext").value = "[ERROR] Websocket not connected. Cannot send path: "+ selectedPathObj.pathName
-    // alert(
-    //   "[ERROR] \nWebsocket not connected\nCannot send path: " +
-    //     selectedPathObj.pathName
-    // );
+    document.getElementById("alltext").value += "\n[ERROR] Websocket not connected. Cannot send path: "+ selectedPathObj.pathName
   }
   if (ws.readyState == 1) {
     try {
       ws.send(JSON.stringify(selectedPathObj));
-      document.getElementById("alltext").value = "[INFO][SUCCESS] Websocket connected. Sent path: " + selectedPathObj.pathName
+      document.getElementById("alltext").value += "\n[INFO][SUCCESS] Websocket connected. Sent path: " + selectedPathObj.pathName
     } catch (e) {
       console.log("[ERROR] " + e.message);
     }
-    // alert(
-    //   "[INFO][SUCCESS] \nWebsocket connected\nSent path: " +
-    //     selectedPathObj.pathName
-    // );
   }
   if (ws.readyState == 2) {
     document.getElementById("alltext").value = "[ERROR] Websocket closing. Cannot send path: " +
       selectedPathObj.pathName;
-    // alert(
-    //   "[ERROR] \nWebsocket closing\nCannot send path: " +
-    //     selectedPathObj.pathName
-    // );
   }
   if (ws.readyState == 3) {
     document.getElementById("alltext").value = "[ERROR] \nWebsocket Closed\nRe-launch server and try again.";
-    // alert("[ERROR] \nWebsocket Closed\nRe-launch server and try again.");
   }
+  textArea.scrollTop = textArea.scrollHeight;
 }
 
 function clearMarker() {
