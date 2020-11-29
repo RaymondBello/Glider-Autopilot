@@ -141,7 +141,7 @@ public:
         // acc[mg], gyro[deg/s], mag [mG]
         // gyro will be convert from [deg/s] to [rad/s] inside of this function
 
-        qFilter.update(-a[0], a[1], a[2], g[0], -g[1], -g[2], m[1], -m[0], m[2], q);
+        qFilter.update(-a[0], a[1], a[2], g[0], -g[1], -g[2], m[1], -m[0], m[2], q );
 
         // qFilter.MahonyQuaternionUpdate(-a[0], a[1], a[2], g[0], -g[1], -g[2], m[1], -m[0], m[2], q);
 
@@ -327,7 +327,7 @@ private:
 
         // Calculate the gyro value into actual degrees per second
         g[0] = (float)MPU9250Data[4] * gRes - gyroBias[0];  // get actual gyro value, this depends on scale being set
-        g[1] = (float)MPU9250Data[5] * gRes - gyroBias[1];
+        g[1] = (float)MPUyaw9250Data[5] * gRes - gyroBias[1];
         g[2] = (float)MPU9250Data[6] * gRes - gyroBias[2];
     }
 

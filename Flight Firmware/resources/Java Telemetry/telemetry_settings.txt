@@ -14,7 +14,7 @@ GUI Settings:
 
 Communication Settings:
 
-	port = UART: COM9
+	port = UART: ttyUSB0
 	uart baud rate = 115200
 	tcp/udp port number = 8080
 	packet type = CSV
@@ -267,14 +267,14 @@ Checksum:
 	location = -1
 	checksum processor = null
 
-11 Charts:
+13 Charts:
 
 	chart type = Time Domain
 	top left x = 0
 	top left y = 0
 	bottom right x = 1
 	bottom right y = 1
-	normal datasets = 0,1,2
+	normal datasets = 0,1
 	bitfield edge states = 
 	bitfield level states = 
 	duration type = Samples
@@ -340,7 +340,7 @@ Checksum:
 	top left y = 2
 	bottom right x = 1
 	bottom right y = 3
-	normal datasets = 21,22,23
+	normal datasets = 21,22
 	bitfield edge states = 
 	bitfield level states = 
 	duration type = Samples
@@ -495,6 +495,50 @@ Checksum:
 	bottom right x = 4
 	bottom right y = 6
 	normal datasets = 15
+	bitfield edge states = 
+	bitfield level states = 
+	duration type = Samples
+	duration = 1000
+	x-axis = Sample Count
+	autoscale y-axis minimum = true
+	manual y-axis minimum = -1.0
+	autoscale y-axis maximum = true
+	manual y-axis maximum = 1.0
+	show x-axis title = true
+	show x-axis scale = true
+	show y-axis title = true
+	show y-axis scale = true
+	show legend = true
+	cached mode = false
+
+	chart type = Time Domain
+	top left x = 2
+	top left y = 2
+	bottom right x = 3
+	bottom right y = 3
+	normal datasets = 24,25,26
+	bitfield edge states = 
+	bitfield level states = 
+	duration type = Samples
+	duration = 1000
+	x-axis = Sample Count
+	autoscale y-axis minimum = true
+	manual y-axis minimum = -1.0
+	autoscale y-axis maximum = true
+	manual y-axis maximum = 1.0
+	show x-axis title = true
+	show x-axis scale = true
+	show y-axis title = true
+	show y-axis scale = true
+	show legend = true
+	cached mode = false
+
+	chart type = Time Domain
+	top left x = 4
+	top left y = 2
+	bottom right x = 5
+	bottom right y = 3
+	normal datasets = 27,28,29
 	bitfield edge states = 
 	bitfield level states = 
 	duration type = Samples
