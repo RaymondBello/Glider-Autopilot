@@ -33,27 +33,12 @@ class AVA:
             # print(f"{format(1/self.t_delta_ms,'.2f')} hz")
         return self.data
     
-    @staticmethod
-    def swapIdx_NED(data: list):
-        """
-        Swaps X axis to Maintain North East Down Convention
-        """
-        # Accel
-        data[0] = -float(data[0])
-        # Gyro
-        data[3] = -float(data[1])
-        # Mag
-        data[6] = -float(data[6])
-
-        return data
-
     def update_variables(self):
         """
         Updates all the internal variables used for calculation
         """
         self.t_delta_ms = time.perf_counter() - self.previous
         self.sample_rate = 1 / self.t_delta_ms
-        self.data = self.swapIdx_NED(self.data)
         self.accel = self.data[:3]
         self.gyro = self.data[3:6]
         self.mag = self.data[6:9]
