@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 from datetime import datetime
 from communication import Comms
 from TCP import TCP_Manager
@@ -11,7 +13,6 @@ import numpy as np
 import time
 import sys
 import json
-
 
 if sys.argv[-1].lower() in ["true", "t"]:
     USE_TCP = True

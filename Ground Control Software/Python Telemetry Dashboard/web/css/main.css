@@ -30,6 +30,9 @@ td{
 tr:hover {
   background-color: rgb(99, 165, 134);
 }
+body {
+  background-color: #e9ecef;
+}
 
 .button {
   background-color: rgb(150, 207, 181); /* Green */
@@ -47,4 +50,7 @@ tr:hover {
 #mapid {
   margin-top: 50px;
   margin: 10px auto;
+}
+.scaled {
+  transform: scale(1.15, 1.15); 
 }

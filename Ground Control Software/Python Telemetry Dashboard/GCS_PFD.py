@@ -1,6 +1,6 @@
 import eel
 
-print("This might take a minute...")
+print("Opening webpage...")
 eel.init("web")
 eel.start("index.html")
 

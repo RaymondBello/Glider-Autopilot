@@ -27,8 +27,7 @@ wss.on("connection", (ws) => {
 
 /**
  * Saves JSON data to a local file.
- *
- * @param {JSON} data - Raw data to be saved into JSON file
+ * @param {JSON} data  Raw data to be saved into JSON file
  */
 function saveToJSON(data) {
     console.log("[RECEIVED]", data);
