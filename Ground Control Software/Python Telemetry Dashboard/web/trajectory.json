@@ -1,1 +1,1 @@
-{"id":1,"pathName":"YND>YOW","origin":[45.521389,-75.564167],"destination":[45.3225,-75.669167],"data":[[45.521389,-75.564167],[45.3225,-75.669167]],"climbRate":2,"cruiseALT":82,"cruiseSPD":11.5,"distance":"23585","duration":4}
+{"id":2,"pathName":"YOW>YYZ","origin":[45.3225,-75.669167],"destination":[43.676667,-79.630556],"data":[[45.3225,-75.669167],[43.676667,-79.630556]],"climbRate":3,"cruiseALT":50,"cruiseSPD":20,"distance":"363531","duration":8}
