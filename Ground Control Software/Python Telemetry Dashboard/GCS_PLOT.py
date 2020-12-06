@@ -390,7 +390,7 @@ data10 = np.empty(200)
 
 ptr4 = 0
 
-'''Space for Text Field'''
+'''Altitude and Pressure Graphic'''
 PressureGraphic = win.addPlot(title="Atm. Pressure")
 PressureGraphic.setRange(QtCore.QRectF(-50, -50, 100, 100))
 PressureGraphic.hideAxis('bottom')
