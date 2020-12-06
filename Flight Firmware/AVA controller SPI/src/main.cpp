@@ -1,13 +1,28 @@
 #include <MPU9250.h>
 #include <Adafruit_BMP280.h>
+#include <SoftwareSerial.h>
+#include <TinyGPS++.h>
 #include "kalman_filter.h"
 
 #define RAD2DEG 57.29578
 #define DEG2RAD 0.01745
 #define M_PI 3.14159265358979323846
 
-MPU9250 IMU(SPI, D0);
-Adafruit_BMP280 bmp(D1);
+#define IMU_SS D0
+#define BARO_SS D3 
+
+#define GPSTX D4
+#define GPSRX D9
+#define GPSBaud 9600               //GPS Baud rate
+#define Serial_Monitor_Baud 115200
+
+TinyGPSPlus gps;
+MPU9250 IMU(SPI, IMU_SS);
+Adafruit_BMP280 bmp(BARO_SS);
+SoftwareSerial ss(GPSRX, GPSTX);
+
+// For stats that happen every 5 seconds
+unsigned long last = 0UL;
 
 int status;
 static uint32_t t_delta = 0;
@@ -47,6 +62,167 @@ float magnetic_declination = -12.97;    // Ottawa, Nov 23 2020
 float temp_imu, temp, pressure, altitude;
 
 char buffer_serial_out[200];
+
+void gps_update()
+{
+  // Dispatch incoming characters
+  while (ss.available() > 0)
+    gps.encode(ss.read());
+
+  if (gps.location.isUpdated())
+  {
+    Serial.print(F("LOCATION   Fix Age="));
+    Serial.print(gps.location.age());
+    Serial.print(F("ms Raw Lat="));
+    Serial.print(gps.location.rawLat().negative ? "-" : "+");
+    Serial.print(gps.location.rawLat().deg);
+    Serial.print("[+");
+    Serial.print(gps.location.rawLat().billionths);
+    Serial.print(F(" billionths],  Raw Long="));
+    Serial.print(gps.location.rawLng().negative ? "-" : "+");
+    Serial.print(gps.location.rawLng().deg);
+    Serial.print("[+");
+    Serial.print(gps.location.rawLng().billionths);
+    Serial.print(F(" billionths],  Lat="));
+    Serial.print(gps.location.lat(), 6);
+    Serial.print(F(" Long="));
+    Serial.println(gps.location.lng(), 6);
+  }
+
+  else if (gps.date.isUpdated())
+  {
+    Serial.print(F("DATE       Fix Age="));
+    Serial.print(gps.date.age());
+    Serial.print(F("ms Raw="));
+    Serial.print(gps.date.value());
+    Serial.print(F(" Year="));
+    Serial.print(gps.date.year());
+    Serial.print(F(" Month="));
+    Serial.print(gps.date.month());
+    Serial.print(F(" Day="));
+    Serial.println(gps.date.day());
+  }
+
+  else if (gps.time.isUpdated())
+  {
+    Serial.print(F("TIME       Fix Age="));
+    Serial.print(gps.time.age());
+    Serial.print(F("ms Raw="));
+    Serial.print(gps.time.value());
+    Serial.print(F(" Hour="));
+    Serial.print(gps.time.hour());
+    Serial.print(F(" Minute="));
+    Serial.print(gps.time.minute());
+    Serial.print(F(" Second="));
+    Serial.print(gps.time.second());
+    Serial.print(F(" Hundredths="));
+    Serial.println(gps.time.centisecond());
+  }
+
+  else if (gps.speed.isUpdated())
+  {
+    Serial.print(F("SPEED      Fix Age="));
+    Serial.print(gps.speed.age());
+    Serial.print(F("ms Raw="));
+    Serial.print(gps.speed.value());
+    Serial.print(F(" Knots="));
+    Serial.print(gps.speed.knots());
+    Serial.print(F(" MPH="));
+    Serial.print(gps.speed.mph());
+    Serial.print(F(" m/s="));
+    Serial.print(gps.speed.mps());
+    Serial.print(F(" km/h="));
+    Serial.println(gps.speed.kmph());
+  }
+
+  else if (gps.course.isUpdated())
+  {
+    Serial.print(F("COURSE     Fix Age="));
+    Serial.print(gps.course.age());
+    Serial.print(F("ms Raw="));
+    Serial.print(gps.course.value());
+    Serial.print(F(" Deg="));
+    Serial.println(gps.course.deg());
+  }
+
+  else if (gps.altitude.isUpdated())
+  {
+    Serial.print(F("ALTITUDE   Fix Age="));
+    Serial.print(gps.altitude.age());
+    Serial.print(F("ms Raw="));
+    Serial.print(gps.altitude.value());
+    Serial.print(F(" Meters="));
+    Serial.print(gps.altitude.meters());
+    Serial.print(F(" Miles="));
+    Serial.print(gps.altitude.miles());
+    Serial.print(F(" KM="));
+    Serial.print(gps.altitude.kilometers());
+    Serial.print(F(" Feet="));
+    Serial.println(gps.altitude.feet());
+  }
+
+  else if (gps.satellites.isUpdated())
+  {
+    Serial.print(F("SATELLITES Fix Age="));
+    Serial.print(gps.satellites.age());
+    Serial.print(F("ms Value="));
+    Serial.println(gps.satellites.value());
+  }
+
+  else if (gps.hdop.isUpdated())
+  {
+    Serial.print(F("HDOP       Fix Age="));
+    Serial.print(gps.hdop.age());
+    Serial.print(F("ms raw="));
+    Serial.print(gps.hdop.value());
+    Serial.print(F(" hdop="));
+    Serial.println(gps.hdop.hdop());
+  }
+
+  else if (millis() - last > 5000)
+  {
+    Serial.println();
+    if (gps.location.isValid())
+    {
+      static const double LONDON_LAT = 51.508131, LONDON_LON = -0.128002;
+      double distanceToLondon =
+          TinyGPSPlus::distanceBetween(
+              gps.location.lat(),
+              gps.location.lng(),
+              LONDON_LAT,
+              LONDON_LON);
+      double courseToLondon =
+          TinyGPSPlus::courseTo(
+              gps.location.lat(),
+              gps.location.lng(),
+              LONDON_LAT,
+              LONDON_LON);
+
+      Serial.print(F("LONDON     Distance="));
+      Serial.print(distanceToLondon / 1000, 6);
+      Serial.print(F(" km Course-to="));
+      Serial.print(courseToLondon, 6);
+      Serial.print(F(" degrees ["));
+      Serial.print(TinyGPSPlus::cardinal(courseToLondon));
+      Serial.println(F("]"));
+    }
+
+    Serial.print(F("DIAGS      Chars="));
+    Serial.print(gps.charsProcessed());
+    Serial.print(F(" Sentences-with-Fix="));
+    Serial.print(gps.sentencesWithFix());
+    Serial.print(F(" Failed-checksum="));
+    Serial.print(gps.failedChecksum());
+    Serial.print(F(" Passed-checksum="));
+    Serial.println(gps.passedChecksum());
+
+    if (gps.charsProcessed() < 10)
+      Serial.println(F("WARNING: No GPS data.  Check wiring."));
+
+    last = millis();
+    Serial.println();
+  }
+}
 
 float convert_rad_s_to_deg_s(float rad_s)
 {
@@ -123,13 +299,17 @@ void sensors_init()
     {
       ;
     }
+  } else
+  {
+    /* Default settings from datasheet. */
+    bmp.setSampling(Adafruit_BMP280::MODE_NORMAL,   /* Operating Mode. */
+                    Adafruit_BMP280::SAMPLING_NONE, /* Temp. oversampling */
+                    Adafruit_BMP280::SAMPLING_NONE, /* Pressure oversampling */
+                    Adafruit_BMP280::FILTER_OFF,    /* Filtering. */
+                    Adafruit_BMP280::STANDBY_MS_1); /* Standby time. */
   }
-  /* Default settings from datasheet. */
-  bmp.setSampling(Adafruit_BMP280::MODE_NORMAL,   /* Operating Mode. */
-                  Adafruit_BMP280::SAMPLING_NONE, /* Temp. oversampling */
-                  Adafruit_BMP280::SAMPLING_NONE, /* Pressure oversampling */
-                  Adafruit_BMP280::FILTER_OFF,    /* Filtering. */
-                  Adafruit_BMP280::STANDBY_MS_1); /* Standby time. */
+  
+  
 }
 
 void imu_calibrate()
@@ -364,7 +544,7 @@ void update_quaternion()
     This is ok by aircraft orientation standards!
     Pass gyro rate as rad/s
   */
-  MahonyQuaternionUpdate(acc[0], acc[1], acc[2], gyro[0] * DEG_TO_RAD, gyro[1] * DEG_TO_RAD, gyro[2] * DEG_TO_RAD, mag[0], mag[1], mag[2]);
+  MahonyQuaternionUpdate(acc_k[0], acc_k[1], acc[2], gyro[0] * DEG_TO_RAD, gyro[1] * DEG_TO_RAD, gyro[2] * DEG_TO_RAD, mag[0], mag[1], mag[2]);
 
   // Calculate the yaw
   yaw_q = atan2(2.0f * (qrt[1] * qrt[2] + qrt[0] * qrt[3]), qrt[0] * qrt[0] + qrt[1] * qrt[1] - qrt[2] * qrt[2] - qrt[3] * qrt[3]);
@@ -432,11 +612,14 @@ void update_YPR()
 void setup()
 {
   // serial to display data
-  Serial.begin(115200);
+  Serial.begin(Serial_Monitor_Baud);
+  ss.begin(GPSBaud);
   while (!Serial)
   {
     ;
   }
+  Serial.print(F("Testing TinyGPS++ library v. "));
+  Serial.println(TinyGPSPlus::libraryVersion());
   sensors_init();
 
   /** 
@@ -448,6 +631,7 @@ void setup()
 
 void loop()
 {
+  
   // Start timer
   t_start = millis();
 
@@ -460,6 +644,9 @@ void loop()
   // Read the barometer 
   baro_update();
 
+  // Update GPS reading if available
+  gps_update();
+
   t_delta = millis() - t_start;
   if (t_delta > 0)
   {
@@ -467,6 +654,9 @@ void loop()
     sample_rate = 1 / (sample_rate / 1000);
   }
 
-  sprintf(buffer_serial_out, "%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%d,%.1f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f", acc[0], acc[1], acc[2], gyro[0], gyro[1], gyro[2], mag[0], mag[1], mag[2], qrt[0], qrt[1], -qrt[2], qrt[3], pressure, altitude, temp, pitch, roll, yaw, t_delta, sample_rate, acc_k[0], acc_k[1], acc_k[2], gyro_k[0], gyro_k[1], gyro_k[2], mag_k[0], mag_k[1], mag_k[2], heading_k, pitch_k, roll_k);
-  Serial.println(buffer_serial_out);
+  sprintf(buffer_serial_out, "%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%d,%.1f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f", acc[0], acc[1], acc[2], gyro[0], gyro[1], gyro[2], mag[0], mag[1], mag[2], qrt[0], qrt[1], qrt[2], qrt[3], pressure, altitude, temp, pitch, roll, yaw, t_delta, sample_rate, acc_k[0], acc_k[1], acc_k[2], gyro_k[0], gyro_k[1], gyro_k[2], mag_k[0], mag_k[1], mag_k[2], heading_k, pitch_k, roll_k);
+  // Serial.println(buffer_serial_out);
+
+  
+    
 }
