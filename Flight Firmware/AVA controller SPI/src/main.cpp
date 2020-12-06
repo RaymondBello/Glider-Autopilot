@@ -309,7 +309,6 @@ void sensors_init()
                     Adafruit_BMP280::STANDBY_MS_1); /* Standby time. */
   }
   
-  
 }
 
 void imu_calibrate()
@@ -618,8 +617,6 @@ void setup()
   {
     ;
   }
-  Serial.print(F("Testing TinyGPS++ library v. "));
-  Serial.println(TinyGPSPlus::libraryVersion());
   sensors_init();
 
   /** 
@@ -645,7 +642,7 @@ void loop()
   baro_update();
 
   // Update GPS reading if available
-  gps_update();
+  // gps_update();
 
   t_delta = millis() - t_start;
   if (t_delta > 0)
