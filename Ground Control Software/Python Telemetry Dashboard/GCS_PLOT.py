@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 
 from datetime import datetime
-from communication import Comms
-from TCP import TCP_Manager
+from SERIAL import Comms
+from TCP import WS_Manager
 from AVA import AVA
 import socket
 import pyqtgraph as pg
@@ -17,7 +17,7 @@ import json
 if sys.argv[-1].lower() in ["true", "t"]:
     USE_TCP = True
 else:
-    # Boolean Flag for whether to use TCP Socket from class TCP_Manager in 'TCP.py'
+    # Boolean Flag for whether to use TCP Socket from class WS_Manager in 'TCP.py'
     USE_TCP = False
       
 RANDOM_PLOT_STEP = 50     # The number of steps random data will be plotted on GUI start-up. Change to 1 if unwanted.
@@ -29,7 +29,7 @@ RANDOM_PLOT_STEP = 50     # The number of steps random data will be plotted on G
 if USE_TCP:
     print("[SET-UP] : Setting up TCP connection")
     try:
-        tcp_socket = TCP_Manager()
+        tcp_socket = WS_Manager()
         print("[SET-UP] : TCP Connection Establied!")
     except Exception as identifier:
         print(identifier)

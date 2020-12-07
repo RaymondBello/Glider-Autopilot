@@ -1,8 +1,9 @@
 #!/usr/bin/python3
 
 from datetime import datetime
-from communication import Comms
-from TCP import TCP_Manager
+from SERIAL import Comms
+from TCP import WS_Manager
+from UDP import UDP_Manager
 from AVA import AVA
 import socket
 import pyqtgraph as pg
@@ -57,16 +58,18 @@ class GCS_Plotter:
         if self.use_TCP:
             try:
                 print("[SET-UP] : Setting up TCP connection")
-                self.tcp_socket = TCP_Manager()
+                self.ws_socket = WS_Manager()
                 print("[SET-UP] : TCP Connection Establied!")
             except Exception as identifier:
                 print(f"[ERROR] : {identifier}")
 
             try:
-                self.AVA_model = AVA(self.tcp_socket.targetIP, self.current_state, self.system_state_pool)
+                self.AVA_model = AVA(self.ws_socket.targetIP, self.current_state, self.system_state_pool)
                 print("[SET-UP] : AVA model setup completed")
             except Exception as identifier:
                 print(f"[ERROR] : {identifier}")
+        
+        self.udp_socket = UDP_Manager()
 
         # Window Initialization
         self.win = pg.GraphicsWindow(size=(self.WINDOW_WIDTH, self.WINDOW_HEIGHT))
@@ -78,10 +81,17 @@ class GCS_Plotter:
         self.font1 = QtGui.QFont()
         self.font1.setPixelSize(50)
         self.font1.setWeight(100)
+        self.font1.setFamily('Fira Code')
         self.font2 = QtGui.QFont()
         self.font2.setPixelSize(35)
         self.font2.setWeight(100)
-        self.topSection = self.win.addLayout(colspan=4, rowspan=1)
+        self.font2.setFamily('Fira Code')
+        self.font3 = QtGui.QFont()
+        self.font3.setPixelSize(30)
+        self.font3.setWeight(100)
+        self.font3.setFamily('Fira Code')
+
+        self.topSection = self.win.addLayout(colspan=5, rowspan=1)
 
         # Top Row Buttons
         self.proxy1 = QtGui.QGraphicsProxyWidget()
@@ -129,18 +139,17 @@ class GCS_Plotter:
 
         self.win.nextRow()
 
-        # Graphs 
+        ''' Accelerometer Row '''
         self.graph1 = self.win.addPlot(title="Accelerometer X")
         self.graph2 = self.win.addPlot(title="Accelerometer Y")
         self.graph3 = self.win.addPlot(title="Accelerometer Z")
-        # self.graph1.addLegend(offset=(1, 1))
+        self.graph1.addLegend(offset=(1, 1))
         # self.graph2.addLegend(offset=(1, 1))
         # self.graph3.addLegend(offset=(1, 1))
-
         self.graph1_curve = self.graph1.plot(
             self.data1,
             pen=(150, 0, 0),
-            name="Accel_X",
+            name="ax (m/s^2)",
             labels={
                 "left": self.graph1.setLabel("left", text="Acceleration ", units="m/s^2"),
                 # "bottom": self.graph1.setLabel("bottom", text="Time", units="s"),
@@ -161,6 +170,16 @@ class GCS_Plotter:
         self.ptr1 = 0
 
         # State Flag Indicator
+        # DELETE THIS
+        self.StateGraphic = self.win.addPlot(title="Flag")
+        self.StateGraphic.setRange(QtCore.QRectF(-50, -50, 100, 100))
+        self.StateGraphic.hideAxis('bottom')
+        self.StateGraphic.hideAxis('left')
+        self.texttoState = pg.TextItem(f"IDLE\nstate", anchor=(0.5, 0.5), color='w')
+        self.texttoState.setFont(self.font3)
+        self.StateGraphic.addItem(self.texttoState)
+
+        ''' State Flag Indicator '''
         self.StateGraphic = self.win.addPlot(title="Flag")
         self.StateGraphic.setRange(QtCore.QRectF(-50, -50, 100, 100))
         self.StateGraphic.hideAxis('bottom')
@@ -172,20 +191,16 @@ class GCS_Plotter:
         self.win.nextRow()
 
         '''Gyroscope Row'''
-
         self.graph4 = self.win.addPlot(title="Gyroscope X")
         self.graph5 = self.win.addPlot(title="Gyroscope Y")
         self.graph6 = self.win.addPlot(title="Gyroscope Z")
-
-        # Use automatic downsampling and clipping to reduce the drawing load
+        # Used automatic downsampling and clipping to reduce the drawing load
         self.graph4.setDownsampling(mode="peak")
         self.graph5.setDownsampling(mode="peak")
         self.graph6.setDownsampling(mode="peak")
-
         self.graph4.setClipToView(True)
         self.graph5.setClipToView(True)
         self.graph6.setClipToView(True)
-
         self.graph4.setRange(xRange=[-200, 0])
         self.graph4.setLimits(xMax=0)
         self.graph4_curve = self.graph4.plot(
@@ -196,7 +211,6 @@ class GCS_Plotter:
                 # "bottom": self.graph4.setLabel("bottom", text="Time", units="s"),
             },
         )
-
         self.graph5.setRange(xRange=[-200, 0])
         self.graph5.setLimits(xMax=0)
         self.graph5_curve = self.graph5.plot(
@@ -204,7 +218,6 @@ class GCS_Plotter:
             name="Gyro_Y",
             # labels={"bottom": self.graph5.setLabel("bottom", text="Time", units="s"),},
         )
-
         self.graph6.setRange(xRange=[-200, 0])
         self.graph6.setLimits(xMax=0)
         self.graph6_curve = self.graph6.plot(
@@ -215,9 +228,9 @@ class GCS_Plotter:
         self.data4 = np.empty(200)
         self.data5 = np.empty(200)
         self.data6 = np.empty(200)
-
         self.ptr2 = 0
 
+        ''' Battery Text Item '''
         self.BatteryGraphic = self.win.addPlot(title="Battery Voltage ")
         self.BatteryGraphic.setRange(QtCore.QRectF(-50, -50, 100, 100))
         self.BatteryGraphic.hideAxis('bottom')
@@ -266,7 +279,7 @@ class GCS_Plotter:
 
         self.ptr4 = 0
 
-        '''Altitude and Pressure Graphic'''
+        '''Pressure Graphic'''
         self.PressureGraphic = self.win.addPlot(title="Atm. Pressure")
         self.PressureGraphic.setRange(QtCore.QRectF(-50, -50, 100, 100))
         self.PressureGraphic.hideAxis('bottom')
@@ -277,6 +290,7 @@ class GCS_Plotter:
 
         self.win.nextRow()
 
+        ''' Internal Temperature graph '''
         # Plot in chunks, adding one new plot curve for every 100 samples
         self.chunkSize = 100
         # Remove chunks after we have 10
@@ -289,25 +303,27 @@ class GCS_Plotter:
         self.data7 = np.empty((self.chunkSize + 1, 2))
         self.ptr3 = 0
 
+        ''' Time Text Item '''
         self.TimeGraphic = self.win.addPlot(title="Time (H:M:S)")
         self.TimeGraphic.setRange(QtCore.QRectF(-50, -50, 100, 100))
-
         self.TimeGraphic.hideAxis('bottom')
         self.TimeGraphic.hideAxis('left')
         now = datetime.now()
         self.texttoTime = pg.TextItem(f"{now.strftime('%H:%M:%S')}",
                                 anchor=(0.5, 0.5), color='w')
-        self.texttoTime.setFont(self.font1)
+        self.texttoTime.setFont(self.font3)
         self.TimeGraphic.addItem(self.texttoTime)
 
-        self.GPSDataGraphic = self.win.addPlot(title="GPS Data ")
+        ''' GPS Data Text Item'''
+        self.GPSDataGraphic = self.win.addPlot(title="GPS Data ",colspan=2, rowspan=1)
         self.GPSDataGraphic.setRange(QtCore.QRectF(-50, -50, 100, 100))
         self.GPSDataGraphic.hideAxis('bottom')
         self.GPSDataGraphic.hideAxis('left')
         self.texttoGPS = pg.TextItem(f"null", anchor=(0.5, 0.5), color='w')
-        self.texttoGPS.setFont(self.font2)
+        self.texttoGPS.setFont(self.font3)
         self.GPSDataGraphic.addItem(self.texttoGPS)
 
+        ''' Altitude Text Item '''
         self.AltitudeGraphic = self.win.addPlot(title="Altitude")
         self.AltitudeGraphic.setRange(QtCore.QRectF(-50, -50, 100, 100))
         self.AltitudeGraphic.hideAxis('bottom')
@@ -393,7 +409,7 @@ class GCS_Plotter:
     def update_pressure(self, pressure):
         self.PressureGraphic.removeItem(self.texttoPressure)
         self.texttoPressure = pg.TextItem(f"{str(round(float(pressure[0]),1))} Pa", anchor=(0.5, 0.5), color='w')
-        self.texttoPressure.setFont(self.font2)
+        self.texttoPressure.setFont(self.font3)
         self.PressureGraphic.addItem(self.texttoPressure)
     
     def update_row_mag(self, mag_values):
@@ -478,14 +494,14 @@ class GCS_Plotter:
     def update_altitude(self, altitude):
         self.AltitudeGraphic.removeItem(self.texttoAltitude)
         self.texttoAltitude = pg.TextItem(f"{str(round(float(altitude[0]),2))} m", anchor=(0.5, 0.5), color='w')
-        self.texttoAltitude.setFont(self.font2)
+        self.texttoAltitude.setFont(self.font3)
         self.AltitudeGraphic.addItem(self.texttoAltitude)
     
     def update_time(self):
         self.TimeGraphic.removeItem(self.texttoTime)
         now = datetime.now()
         self.texttoTime = pg.TextItem(f"{now.strftime('%H:%M:%S')}", anchor=(0.5, 0.5), color="w")
-        self.texttoTime.setFont(self.font1)
+        self.texttoTime.setFont(self.font3)
         self.TimeGraphic.addItem(self.texttoTime)
 
     def update_gps(self):
@@ -550,7 +566,7 @@ class GCS_Plotter:
         state_string = options[STATE]()
         self.StateGraphic.removeItem(self.texttoState)
         self.texttoState = pg.TextItem(str(state_string), anchor=(0.5, 0.5), color='w')
-        self.texttoState.setFont(self.font2)
+        self.texttoState.setFont(self.font3)
         self.StateGraphic.addItem(self.texttoState)
 
     def shift_array(self, array):
@@ -558,10 +574,15 @@ class GCS_Plotter:
     
     def tcp_handleshack(self, commandType: str, commandData: str):
         ''' Takes the command type and command data and returns raw data'''
-        self.tcp_socket.send_data(commandType, commandData)
-        raw_data = tcp_socket.receive_data()
+        self.ws_socket.send_data(commandType, commandData)
+        self.raw_data = self.ws_socket.receive_data()
 
-        return raw_data
+        return self.raw_data
+
+    def udp_broadcast(self, data):
+        ''' Send udp packet to telemetry viewer'''
+        self.udp_socket.send_data(data)
+        return True
 
     def abort_state(self):
         '''abort function'''
@@ -615,7 +636,8 @@ class GCS_Plotter:
 
         if self.use_TCP:
             self.serial_data = self.tcp_handleshack("STATE", self.current_state)
-            self.serial_data = self.AVA_model.update(self.serial_data)
+            self.serial_data = self.AVA_model.update(self.serial_data, self.current_state)
+            self.udp_broadcast(self.serial_data)
 
         self.update_state()
 
@@ -625,7 +647,7 @@ class GCS_Plotter:
             self.update_row_mag(self.serial_data[6:9])
             self.update_pressure(self.serial_data[13:14])
             self.update_altitude(self.serial_data[14:15])
-            self.update_row_temp(self.serial_data[15:16])
+            self.update_row_temp(self.serial_data[0:1])
             self.update_time()
             self.update_gps()
             self.update_battery()
@@ -636,7 +658,7 @@ class GCS_Plotter:
             self.update_battery()
 
         finish = time.perf_counter()
-        print(f"[GRAPH] Update Rate: {round(time.perf_counter()-start,5)} seconds ")
+        # print(f"[GRAPH] Update Rate: {round(time.perf_counter()-start,5)} seconds ")
 
     def animation(self):
         timer = pg.QtCore.QTimer()

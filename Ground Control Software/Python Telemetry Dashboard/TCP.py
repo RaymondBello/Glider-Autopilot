@@ -1,8 +1,8 @@
 import websocket
 
-class TCP_Manager:
+class WS_Manager:
     def __init__(self):
-        self.targetIP = "192.168.0.25"
+        self.targetIP = "192.168.0.29"
         self.handler = websocket.WebSocket()
         try:
             self.handler.connect(f"ws://{self.targetIP}")
@@ -17,7 +17,7 @@ class TCP_Manager:
             self.handler.send(packet_out)
             return True
         except Exception as error:
-            print(error)
+            print(f"[ERROR] : {error}")
         return False
 
     def receive_data(self):
