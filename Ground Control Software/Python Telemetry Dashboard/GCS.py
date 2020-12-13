@@ -90,6 +90,13 @@ class GCS_Plotter:
         self.font3.setPixelSize(30)
         self.font3.setWeight(100)
         self.font3.setFamily('Fira Code')
+        self.font_gps = QtGui.QFont()
+        self.font_gps.setPixelSize(15)
+        self.font_gps.setWeight(100)
+        self.font_gps.setFamily('Fira Code')
+        self.font_gps.setCapitalization(3)
+
+
 
         self.topSection = self.win.addLayout(colspan=5, rowspan=1)
 
@@ -143,7 +150,7 @@ class GCS_Plotter:
         self.graph1 = self.win.addPlot(title="Accelerometer X")
         self.graph2 = self.win.addPlot(title="Accelerometer Y")
         self.graph3 = self.win.addPlot(title="Accelerometer Z")
-        self.graph1.addLegend(offset=(1, 1))
+        # self.graph1.addLegend(offset=(1, 1))
         # self.graph2.addLegend(offset=(1, 1))
         # self.graph3.addLegend(offset=(1, 1))
         self.graph1_curve = self.graph1.plot(
@@ -170,23 +177,22 @@ class GCS_Plotter:
         self.ptr1 = 0
 
         # State Flag Indicator
-        # DELETE THIS
         self.StateGraphic = self.win.addPlot(title="Flag")
         self.StateGraphic.setRange(QtCore.QRectF(-50, -50, 100, 100))
         self.StateGraphic.hideAxis('bottom')
         self.StateGraphic.hideAxis('left')
-        self.texttoState = pg.TextItem(f"IDLE\nstate", anchor=(0.5, 0.5), color='w')
+        self.texttoState = pg.TextItem(f"IDLE", anchor=(0.5, 0.5), color='w')
         self.texttoState.setFont(self.font3)
         self.StateGraphic.addItem(self.texttoState)
 
-        ''' State Flag Indicator '''
-        self.StateGraphic = self.win.addPlot(title="Flag")
-        self.StateGraphic.setRange(QtCore.QRectF(-50, -50, 100, 100))
-        self.StateGraphic.hideAxis('bottom')
-        self.StateGraphic.hideAxis('left')
-        self.texttoState = pg.TextItem(f"IDLE_state", anchor=(0.5, 0.5), color='w')
-        self.texttoState.setFont(self.font2)
-        self.StateGraphic.addItem(self.texttoState)
+        ''' Pitch Indicator '''
+        self.PitchGraphic = self.win.addPlot(title="Pitch")
+        self.PitchGraphic.setRange(QtCore.QRectF(-50, -50, 100, 100))
+        self.PitchGraphic.hideAxis('bottom')
+        self.PitchGraphic.hideAxis('left')
+        self.texttoPitch = pg.TextItem("0.0°", anchor=(0.5, 0.5), color='w')
+        self.texttoPitch.setFont(self.font3)
+        self.PitchGraphic.addItem(self.texttoPitch)
 
         self.win.nextRow()
 
@@ -239,6 +245,17 @@ class GCS_Plotter:
         self.texttoBattery.setFont(self.font2)
         self.BatteryGraphic.addItem(self.texttoBattery)
 
+        ''' Roll Indicator '''
+        self.RollGraphic = self.win.addPlot(title="Roll")
+        self.RollGraphic.setRange(QtCore.QRectF(-50, -50, 100, 100))
+        self.RollGraphic.hideAxis('bottom')
+        self.RollGraphic.hideAxis('left')
+        self.texttoRoll = pg.TextItem("0.0°", anchor=(0.5, 0.5), color='w')
+        self.texttoRoll.setFont(self.font3)
+        self.RollGraphic.addItem(self.texttoRoll)
+
+        self.win.nextRow()
+
         self.win.nextRow()
 
         '''Magnetometer Row'''
@@ -288,6 +305,15 @@ class GCS_Plotter:
         self.texttoPressure.setFont(self.font2)
         self.PressureGraphic.addItem(self.texttoPressure)
 
+        ''' Heading Indicator '''
+        self.HeadingGraphic = self.win.addPlot(title="Heading")
+        self.HeadingGraphic.setRange(QtCore.QRectF(-50, -50, 100, 100))
+        self.HeadingGraphic.hideAxis('bottom')
+        self.HeadingGraphic.hideAxis('left')
+        self.texttoHeading = pg.TextItem("0.0°", anchor=(0.5, 0.5), color='w')
+        self.texttoHeading.setFont(self.font3)
+        self.HeadingGraphic.addItem(self.texttoHeading)
+
         self.win.nextRow()
 
         ''' Internal Temperature graph '''
@@ -319,7 +345,7 @@ class GCS_Plotter:
         self.GPSDataGraphic.setRange(QtCore.QRectF(-50, -50, 100, 100))
         self.GPSDataGraphic.hideAxis('bottom')
         self.GPSDataGraphic.hideAxis('left')
-        self.texttoGPS = pg.TextItem(f"null", anchor=(0.5, 0.5), color='w')
+        self.texttoGPS = pg.TextItem("null", anchor=(0.5, 0.5), color='w')
         self.texttoGPS.setFont(self.font3)
         self.GPSDataGraphic.addItem(self.texttoGPS)
 
@@ -504,11 +530,23 @@ class GCS_Plotter:
         self.texttoTime.setFont(self.font3)
         self.TimeGraphic.addItem(self.texttoTime)
 
-    def update_gps(self):
-        pass
+    @staticmethod
+    def GPS_text_template(values: list):
+        gps_temp = f"Lat: {values[0]}\tLng: {values[1]}\n# of Sat: {values[2]}\tSignal Str: {82}%\nAlt: {102} m\tSpeed: {0.8} m/s\nHeading: {310}°\tUpdated: {5} secs ago"
 
-    def update_battery(self):
-        pass
+        return pg.TextItem(gps_temp,anchor=(0.5, 0.5), color='w')
+    
+    def update_gps(self, gps_values):
+        self.GPSDataGraphic.removeItem(self.texttoGPS)
+        self.texttoGPS = self.GPS_text_template(gps_values)
+        self.texttoGPS.setFont(self.font_gps)
+        self.GPSDataGraphic.addItem(self.texttoGPS)
+
+    def update_battery(self,bat_val):
+        self.BatteryGraphic.removeItem(self.texttoBattery)
+        self.texttoBattery = pg.TextItem(f"{bat_val} V", anchor=(0.5, 0.5), color='w')
+        self.texttoBattery.setFont(self.font3)
+        self.BatteryGraphic.addItem(self.texttoBattery)
 
     def write_json(self, data, filename="web/sensor_data.json"):
         with open(filename, "w") as f:
@@ -649,13 +687,13 @@ class GCS_Plotter:
             self.update_altitude(self.serial_data[14:15])
             self.update_row_temp(self.serial_data[0:1])
             self.update_time()
-            self.update_gps()
-            self.update_battery()
+            self.update_gps([45.4534, 72.3424, 5])
+            self.update_battery(12)
             self.write_data_to_JSON(self.serial_data)
         else:
             self.update_time()
-            self.update_gps()
-            self.update_battery()
+            self.update_gps([45.4534, 72.3424, 5])
+            self.update_battery(12)
 
         finish = time.perf_counter()
         # print(f"[GRAPH] Update Rate: {round(time.perf_counter()-start,5)} seconds ")

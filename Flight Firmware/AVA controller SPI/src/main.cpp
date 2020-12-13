@@ -1,3 +1,4 @@
+#include <Wire.h>
 #include <MPU9250.h>
 #include <Adafruit_BMP280.h>
 #include <SoftwareSerial.h>
@@ -16,9 +17,17 @@
 #define GPSBaud 9600               //GPS Baud rate
 #define Serial_Monitor_Baud 115200
 
+#define SDA_PIN 4
+#define SCL_PIN 5
+
+const char *mac_addr_MEGA = "FC:F5:C4:2C:5D:5C";
+
+// Sensors
 TinyGPSPlus gps;
 MPU9250 IMU(SPI, IMU_SS);
 Adafruit_BMP280 bmp(BARO_SS);
+
+//Serial Communication
 SoftwareSerial ss(GPSRX, GPSTX);
 
 // For stats that happen every 5 seconds
@@ -283,13 +292,14 @@ void sensors_init()
     Serial.println(status);
     while (1)
     {
-      ;
+      Serial.println("[ERROR] : Failed to connect to IMU");
     }
   }
   else
   {
     setFullScaleRanges();
     setBiasesAndScaleFactors();
+    Serial.println("[SETUP] : IMU Scale Factor and Bias SET ");
   }
   // start communication to Barometer
   if (!bmp.begin())
@@ -297,6 +307,7 @@ void sensors_init()
     Serial.println(F("Could not find a valid BMP280 sensor, check wiring!"));
     while (1)
     {
+      Serial.println("[ERROR] : Failed to connect to Barometer");
       ;
     }
   } else
@@ -307,8 +318,8 @@ void sensors_init()
                     Adafruit_BMP280::SAMPLING_NONE, /* Pressure oversampling */
                     Adafruit_BMP280::FILTER_OFF,    /* Filtering. */
                     Adafruit_BMP280::STANDBY_MS_1); /* Standby time. */
+    Serial.println("[SETUP] : Barometer Sampling Settings SET");
   }
-  
 }
 
 void imu_calibrate()
@@ -608,16 +619,20 @@ void update_YPR()
   yaw = heading;          // Yaw from Quaternion
 }
 
+
 void setup()
 {
   // serial to display data
   Serial.begin(Serial_Monitor_Baud);
+
   ss.begin(GPSBaud);
+
   while (!Serial)
   {
     ;
   }
   sensors_init();
+
 
   /** 
     * Calibration? [Last Calibrated Nov 28. 2020]
@@ -652,8 +667,7 @@ void loop()
   }
 
   sprintf(buffer_serial_out, "%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%d,%.1f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f", acc[0], acc[1], acc[2], gyro[0], gyro[1], gyro[2], mag[0], mag[1], mag[2], qrt[0], qrt[1], qrt[2], qrt[3], pressure, altitude, temp, pitch, roll, yaw, t_delta, sample_rate, acc_k[0], acc_k[1], acc_k[2], gyro_k[0], gyro_k[1], gyro_k[2], mag_k[0], mag_k[1], mag_k[2], heading_k, pitch_k, roll_k);
-  // Serial.println(buffer_serial_out);
+  Serial.println(buffer_serial_out);
 
   
-    
 }

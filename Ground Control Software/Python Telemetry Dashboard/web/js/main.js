@@ -89,8 +89,6 @@ createTable();
 
 var mymap = L.map("mapid").setView([45.41, -75.7], 13);
 
-// "https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}"
-// "pk.eyJ1IjoicmF5YmVsbCIsImEiOiJja2hjazhyd2wwN2l1MnN0M3RtdGd2aTRoIn0.4mpZFa8_T8XfLagyn7EsnQ"
 
 L.tileLayer(
   "https://api.mapbox.com/styles/v1/raybell/ckhfmq5j30ad71anskil9i9tz/tiles/256/{z}/{x}/{y}@2x?access_token={accessToken}",

@@ -1,7 +1,12 @@
 #include <Arduino.h>
+#include <Wire.h>
 #include <WiFi.h>
 #include <WiFiMulti.h>
 #include <WebSocketsServer.h>
+#include <esp_now.h>
+
+#define RXD2 16
+#define TXD2 17
 
 float a_offset[3], g_offset[3];
 float acc[3], gyro[3], mag[3];
@@ -13,12 +18,16 @@ float sample_rate;
 
 WebSocketsServer webSocket = WebSocketsServer(80);
 
+const char *mac_addr_AVA = "50:02:91:DC:E3:7E";
+
 const char *ssid = "baca";
 const char *password = "randy053";
 
 char buffer_udp_out[150];
 char buffer_udp_in[150];
 char buffer_serial_out[150];
+
+int i = 0;
 
 // Called when receiving websocket packet
 void onWebSocketEvent(u_int num, WStype_t type, uint8_t *payload, size_t length)
@@ -89,14 +98,32 @@ void start_websocket_loop()
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
-  while (!Serial)
-  {
-    ;
-  }
+  Serial2.begin(57600, SERIAL_8N1, RXD2, TXD2);
+
   init_WiFi();
+  Serial.println(WiFi.macAddress());
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
   start_websocket_loop();
+
+  int start;
+  int end;
+
+  start = micros();
+  while (Serial2.available())
+  {
+    Serial.print(Serial2.read());
+  }
+  end = micros() - start;
+  Serial.println();
+  Serial.println(end);
+
+  i++;
+  delay(5);
 }
+
+
+
+
