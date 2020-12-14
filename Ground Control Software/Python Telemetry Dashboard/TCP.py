@@ -2,13 +2,13 @@ import websocket
 
 class WS_Manager:
     def __init__(self):
-        self.targetIP = "192.168.0.29"
+        self.targetIP = "192.168.0.31"
         self.handler = websocket.WebSocket()
         try:
             self.handler.connect(f"ws://{self.targetIP}")
             print(f"Connected to IP: {self.targetIP}")
         except Exception as error:
-            print(error)
+            print(f"[ERROR] : (connecting handler to ws) {error}")
     
     def send_data(self, data_type, data):
         '''Send data to tagertIP, return True if sent else Return False'''
@@ -17,7 +17,7 @@ class WS_Manager:
             self.handler.send(packet_out)
             return True
         except Exception as error:
-            print(f"[ERROR] : {error}")
+            print(f"[ERROR] : (sending ws) {error}")
         return False
 
     def receive_data(self):

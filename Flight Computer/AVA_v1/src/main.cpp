@@ -1,9 +1,14 @@
 #include <Wire.h>
 #include <MPU9250.h>
 #include <Adafruit_BMP280.h>
-// #include <SoftwareSerial.h>
+#include <WiFi.h>
+#include <WiFiMulti.h>
+#include <WebSocketsServer.h>
 #include <TinyGPS++.h>
 #include "kalman_filter.h"
+
+#define RXD2 16
+#define TXD2 17
 
 #define RAD2DEG 57.29578
 #define DEG2RAD 0.01745
@@ -12,24 +17,19 @@
 #define IMU_SS 5
 #define BARO_SS 4
 
-#define GPSTX 44
-#define GPSRX 99
 #define GPSBaud 9600 //GPS Baud rate
 #define Serial_Monitor_Baud 115200
+// For stats that happen every 5 seconds
+unsigned long last = 0UL;
 
-
-const char *mac_addr_MEGA = "FC:F5:C4:2C:5D:5C";
+const char *ssid = "baca";
+const char *password = "randy053";
 
 // Sensors
 TinyGPSPlus gps;
 MPU9250 IMU(SPI, IMU_SS);
 Adafruit_BMP280 bmp(BARO_SS);
-
-//Serial Communication
-// SoftwareSerial ss(GPSRX, GPSTX);
-
-// For stats that happen every 5 seconds
-unsigned long last = 0UL;
+WebSocketsServer webSocket = WebSocketsServer(80);
 
 int status;
 static uint32_t t_delta = 0;
@@ -57,7 +57,8 @@ unsigned long count = 0, sumCount = 0;
 float eInt[3] = {0.0f, 0.0f, 0.0f}; // vector to hold intergal error in mahony filter
 
 // Mahony free parameters
-//#define Kp 2.0f * 5.0f                // original Kp proportional feedback parameter in Mahony filter and fusion scheme
+//#define Kp 2.0f * 5.0f                
+// original Kp proportional feedback parameter in Mahony filter and fusion scheme
 #define Kp 40.0f // Kp proportional feedback parameter in Mahony filter and fusion scheme
 #define Ki 0.0f  // Ki integral parameter in Mahony filter and fusion scheme
 
@@ -68,168 +69,237 @@ float pitch_q, yaw_q, roll_q;
 float magnetic_declination = -12.97; // Ottawa, Nov 23 2020
 float temp_imu, temp, pressure, altitude;
 
+char buffer_udp_out[150];
+char buffer_udp_in[150];
 char buffer_serial_out[200];
 
-// void gps_update()
-// {
-//   // Dispatch incoming characters
-//   while (ss.available() > 0)
-//     gps.encode(ss.read());
+// Called when receiving websocket packet
+void onWebSocketEvent(u_int num, WStype_t type, uint8_t *payload, size_t length)
+{
 
-//   if (gps.location.isUpdated())
-//   {
-//     Serial.print(F("LOCATION   Fix Age="));
-//     Serial.print(gps.location.age());
-//     Serial.print(F("ms Raw Lat="));
-//     Serial.print(gps.location.rawLat().negative ? "-" : "+");
-//     Serial.print(gps.location.rawLat().deg);
-//     Serial.print("[+");
-//     Serial.print(gps.location.rawLat().billionths);
-//     Serial.print(F(" billionths],  Raw Long="));
-//     Serial.print(gps.location.rawLng().negative ? "-" : "+");
-//     Serial.print(gps.location.rawLng().deg);
-//     Serial.print("[+");
-//     Serial.print(gps.location.rawLng().billionths);
-//     Serial.print(F(" billionths],  Lat="));
-//     Serial.print(gps.location.lat(), 6);
-//     Serial.print(F(" Long="));
-//     Serial.println(gps.location.lng(), 6);
-//   }
+  // Determine type of Websocket event
+  switch (type)
+  {
+  case (WStype_DISCONNECTED):
+  {
+    IPAddress ip = webSocket.remoteIP(num);
+    Serial.printf("[%u] Disconnected.\n", num);
+    Serial.println(ip.toString());
+    break;
+  }
+  case (WStype_CONNECTED):
+  {
+    IPAddress ip = webSocket.remoteIP(num);
+    Serial.printf("[%u] Connection from ", num);
+    Serial.println(ip.toString());
+    break;
+  }
+  case (WStype_TEXT):
+  {
+    sprintf(buffer_udp_in, "%s", payload);
+    Serial.println(buffer_udp_in);
 
-//   else if (gps.date.isUpdated())
-//   {
-//     Serial.print(F("DATE       Fix Age="));
-//     Serial.print(gps.date.age());
-//     Serial.print(F("ms Raw="));
-//     Serial.print(gps.date.value());
-//     Serial.print(F(" Year="));
-//     Serial.print(gps.date.year());
-//     Serial.print(F(" Month="));
-//     Serial.print(gps.date.month());
-//     Serial.print(F(" Day="));
-//     Serial.println(gps.date.day());
-//   }
+    sprintf(buffer_udp_out, "%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f", acc[0], acc[1], acc[2], gyro[0], gyro[1], gyro[2], mag[0], mag[1], mag[2], qrt[0], qrt[1], qrt[2], qrt[3], pressure, altitude, temp, pitch, roll, yaw);
+    webSocket.sendTXT(num, buffer_udp_out);
+    break;
+  }
 
-//   else if (gps.time.isUpdated())
-//   {
-//     Serial.print(F("TIME       Fix Age="));
-//     Serial.print(gps.time.age());
-//     Serial.print(F("ms Raw="));
-//     Serial.print(gps.time.value());
-//     Serial.print(F(" Hour="));
-//     Serial.print(gps.time.hour());
-//     Serial.print(F(" Minute="));
-//     Serial.print(gps.time.minute());
-//     Serial.print(F(" Second="));
-//     Serial.print(gps.time.second());
-//     Serial.print(F(" Hundredths="));
-//     Serial.println(gps.time.centisecond());
-//   }
+  case (WStype_BIN):
+  case (WStype_ERROR):
+  case (WStype_FRAGMENT_TEXT_START):
+  case (WStype_FRAGMENT):
+  case (WStype_FRAGMENT_FIN):
+  default:
+    break;
+  }
+}
 
-//   else if (gps.speed.isUpdated())
-//   {
-//     Serial.print(F("SPEED      Fix Age="));
-//     Serial.print(gps.speed.age());
-//     Serial.print(F("ms Raw="));
-//     Serial.print(gps.speed.value());
-//     Serial.print(F(" Knots="));
-//     Serial.print(gps.speed.knots());
-//     Serial.print(F(" MPH="));
-//     Serial.print(gps.speed.mph());
-//     Serial.print(F(" m/s="));
-//     Serial.print(gps.speed.mps());
-//     Serial.print(F(" km/h="));
-//     Serial.println(gps.speed.kmph());
-//   }
+void gps_update()
+{
+  // Dispatch incoming characters
+  while (Serial2.available() > 0)
+    gps.encode(Serial2.read());
 
-//   else if (gps.course.isUpdated())
-//   {
-//     Serial.print(F("COURSE     Fix Age="));
-//     Serial.print(gps.course.age());
-//     Serial.print(F("ms Raw="));
-//     Serial.print(gps.course.value());
-//     Serial.print(F(" Deg="));
-//     Serial.println(gps.course.deg());
-//   }
+  if (gps.location.isUpdated())
+  {
+    Serial.print(F("LOCATION   Fix Age="));
+    Serial.print(gps.location.age());
+    Serial.print(F("ms Raw Lat="));
+    Serial.print(gps.location.rawLat().negative ? "-" : "+");
+    Serial.print(gps.location.rawLat().deg);
+    Serial.print("[+");
+    Serial.print(gps.location.rawLat().billionths);
+    Serial.print(F(" billionths],  Raw Long="));
+    Serial.print(gps.location.rawLng().negative ? "-" : "+");
+    Serial.print(gps.location.rawLng().deg);
+    Serial.print("[+");
+    Serial.print(gps.location.rawLng().billionths);
+    Serial.print(F(" billionths],  Lat="));
+    Serial.print(gps.location.lat(), 6);
+    Serial.print(F(" Long="));
+    Serial.println(gps.location.lng(), 6);
+  }
 
-//   else if (gps.altitude.isUpdated())
-//   {
-//     Serial.print(F("ALTITUDE   Fix Age="));
-//     Serial.print(gps.altitude.age());
-//     Serial.print(F("ms Raw="));
-//     Serial.print(gps.altitude.value());
-//     Serial.print(F(" Meters="));
-//     Serial.print(gps.altitude.meters());
-//     Serial.print(F(" Miles="));
-//     Serial.print(gps.altitude.miles());
-//     Serial.print(F(" KM="));
-//     Serial.print(gps.altitude.kilometers());
-//     Serial.print(F(" Feet="));
-//     Serial.println(gps.altitude.feet());
-//   }
+  else if (gps.date.isUpdated())
+  {
+    Serial.print(F("DATE       Fix Age="));
+    Serial.print(gps.date.age());
+    Serial.print(F("ms Raw="));
+    Serial.print(gps.date.value());
+    Serial.print(F(" Year="));
+    Serial.print(gps.date.year());
+    Serial.print(F(" Month="));
+    Serial.print(gps.date.month());
+    Serial.print(F(" Day="));
+    Serial.println(gps.date.day());
+  }
 
-//   else if (gps.satellites.isUpdated())
-//   {
-//     Serial.print(F("SATELLITES Fix Age="));
-//     Serial.print(gps.satellites.age());
-//     Serial.print(F("ms Value="));
-//     Serial.println(gps.satellites.value());
-//   }
+  else if (gps.time.isUpdated())
+  {
+    Serial.print(F("TIME       Fix Age="));
+    Serial.print(gps.time.age());
+    Serial.print(F("ms Raw="));
+    Serial.print(gps.time.value());
+    Serial.print(F(" Hour="));
+    Serial.print(gps.time.hour());
+    Serial.print(F(" Minute="));
+    Serial.print(gps.time.minute());
+    Serial.print(F(" Second="));
+    Serial.print(gps.time.second());
+    Serial.print(F(" Hundredths="));
+    Serial.println(gps.time.centisecond());
+  }
 
-//   else if (gps.hdop.isUpdated())
-//   {
-//     Serial.print(F("HDOP       Fix Age="));
-//     Serial.print(gps.hdop.age());
-//     Serial.print(F("ms raw="));
-//     Serial.print(gps.hdop.value());
-//     Serial.print(F(" hdop="));
-//     Serial.println(gps.hdop.hdop());
-//   }
+  else if (gps.speed.isUpdated())
+  {
+    Serial.print(F("SPEED      Fix Age="));
+    Serial.print(gps.speed.age());
+    Serial.print(F("ms Raw="));
+    Serial.print(gps.speed.value());
+    Serial.print(F(" Knots="));
+    Serial.print(gps.speed.knots());
+    Serial.print(F(" MPH="));
+    Serial.print(gps.speed.mph());
+    Serial.print(F(" m/s="));
+    Serial.print(gps.speed.mps());
+    Serial.print(F(" km/h="));
+    Serial.println(gps.speed.kmph());
+  }
 
-//   else if (millis() - last > 5000)
-//   {
-//     Serial.println();
-//     if (gps.location.isValid())
-//     {
-//       static const double LONDON_LAT = 51.508131, LONDON_LON = -0.128002;
-//       double distanceToLondon =
-//           TinyGPSPlus::distanceBetween(
-//               gps.location.lat(),
-//               gps.location.lng(),
-//               LONDON_LAT,
-//               LONDON_LON);
-//       double courseToLondon =
-//           TinyGPSPlus::courseTo(
-//               gps.location.lat(),
-//               gps.location.lng(),
-//               LONDON_LAT,
-//               LONDON_LON);
+  else if (gps.course.isUpdated())
+  {
+    Serial.print(F("COURSE     Fix Age="));
+    Serial.print(gps.course.age());
+    Serial.print(F("ms Raw="));
+    Serial.print(gps.course.value());
+    Serial.print(F(" Deg="));
+    Serial.println(gps.course.deg());
+  }
 
-//       Serial.print(F("LONDON     Distance="));
-//       Serial.print(distanceToLondon / 1000, 6);
-//       Serial.print(F(" km Course-to="));
-//       Serial.print(courseToLondon, 6);
-//       Serial.print(F(" degrees ["));
-//       Serial.print(TinyGPSPlus::cardinal(courseToLondon));
-//       Serial.println(F("]"));
-//     }
+  else if (gps.altitude.isUpdated())
+  {
+    Serial.print(F("ALTITUDE   Fix Age="));
+    Serial.print(gps.altitude.age());
+    Serial.print(F("ms Raw="));
+    Serial.print(gps.altitude.value());
+    Serial.print(F(" Meters="));
+    Serial.print(gps.altitude.meters());
+    Serial.print(F(" Miles="));
+    Serial.print(gps.altitude.miles());
+    Serial.print(F(" KM="));
+    Serial.print(gps.altitude.kilometers());
+    Serial.print(F(" Feet="));
+    Serial.println(gps.altitude.feet());
+  }
 
-//     Serial.print(F("DIAGS      Chars="));
-//     Serial.print(gps.charsProcessed());
-//     Serial.print(F(" Sentences-with-Fix="));
-//     Serial.print(gps.sentencesWithFix());
-//     Serial.print(F(" Failed-checksum="));
-//     Serial.print(gps.failedChecksum());
-//     Serial.print(F(" Passed-checksum="));
-//     Serial.println(gps.passedChecksum());
+  else if (gps.satellites.isUpdated())
+  {
+    Serial.print(F("SATELLITES Fix Age="));
+    Serial.print(gps.satellites.age());
+    Serial.print(F("ms Value="));
+    Serial.println(gps.satellites.value());
+  }
 
-//     if (gps.charsProcessed() < 10)
-//       Serial.println(F("WARNING: No GPS data.  Check wiring."));
+  else if (gps.hdop.isUpdated())
+  {
+    Serial.print(F("HDOP       Fix Age="));
+    Serial.print(gps.hdop.age());
+    Serial.print(F("ms raw="));
+    Serial.print(gps.hdop.value());
+    Serial.print(F(" hdop="));
+    Serial.println(gps.hdop.hdop());
+  }
 
-//     last = millis();
-//     Serial.println();
-//   }
-// }
+  else if (millis() - last > 5000)
+  {
+    Serial.println();
+    if (gps.location.isValid())
+    {
+      static const double LONDON_LAT = 51.508131, LONDON_LON = -0.128002;
+      double distanceToLondon =
+          TinyGPSPlus::distanceBetween(
+              gps.location.lat(),
+              gps.location.lng(),
+              LONDON_LAT,
+              LONDON_LON);
+      double courseToLondon =
+          TinyGPSPlus::courseTo(
+              gps.location.lat(),
+              gps.location.lng(),
+              LONDON_LAT,
+              LONDON_LON);
+
+      Serial.print(F("LONDON     Distance="));
+      Serial.print(distanceToLondon / 1000, 6);
+      Serial.print(F(" km Course-to="));
+      Serial.print(courseToLondon, 6);
+      Serial.print(F(" degrees ["));
+      Serial.print(TinyGPSPlus::cardinal(courseToLondon));
+      Serial.println(F("]"));
+    }
+
+    Serial.print(F("DIAGS      Chars="));
+    Serial.print(gps.charsProcessed());
+    Serial.print(F(" Sentences-with-Fix="));
+    Serial.print(gps.sentencesWithFix());
+    Serial.print(F(" Failed-checksum="));
+    Serial.print(gps.failedChecksum());
+    Serial.print(F(" Passed-checksum="));
+    Serial.println(gps.passedChecksum());
+
+    if (gps.charsProcessed() < 10)
+      Serial.println(F("WARNING: No GPS data.  Check wiring."));
+
+    last = millis();
+    Serial.println();
+  }
+}
+
+void init_WiFi()
+{
+  WiFi.begin(ssid, password);
+
+  Serial.print("[READY] : Connecting to ");
+  Serial.println(ssid);
+
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    delay(100);
+    Serial.print(".");
+  }
+  Serial.println();
+  Serial.print("[INFO] : Connected @ ");
+  Serial.println(WiFi.localIP());
+
+  // Start Websocket server
+  webSocket.begin();
+  webSocket.onEvent(onWebSocketEvent);
+}
+
+void start_websocket_loop()
+{
+  webSocket.loop();
+}
 
 float convert_rad_s_to_deg_s(float rad_s)
 {
@@ -620,18 +690,22 @@ void update_YPR()
   yaw = heading;   // Yaw from Quaternion
 }
 
+void print_serial_buffer(char* serial_buff)
+{
+  sprintf(serial_buff, "%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%d,%.1f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f", acc[0], acc[1], acc[2], gyro[0], gyro[1], gyro[2], mag[0], mag[1], mag[2], qrt[0], qrt[1], qrt[2], qrt[3], pressure, altitude, temp, pitch, roll, yaw, t_delta, sample_rate, acc_k[0], acc_k[1], acc_k[2], gyro_k[0], gyro_k[1], gyro_k[2], mag_k[0], mag_k[1], mag_k[2], heading_k, pitch_k, roll_k);
+  Serial.println(serial_buff);
+}
+
 void setup()
 {
   // serial to display data
   Serial.begin(Serial_Monitor_Baud);
+  Serial2.begin(GPSBaud, SERIAL_8N1, RXD2, TXD2);
 
-  // ss.begin(GPSBaud);
+  while (!Serial){}
 
-  while (!Serial)
-  {
-    ;
-  }
   sensors_init();
+  init_WiFi();
 
   /** 
     * Calibration? [Last Calibrated Nov 28. 2020]
@@ -642,6 +716,8 @@ void setup()
 
 void loop()
 {
+  // Starts ws communication loop
+  start_websocket_loop();
 
   // Start timer
   t_start = micros();
@@ -665,7 +741,5 @@ void loop()
     sample_rate = 1 / (sample_rate / 1000000);
   }
 
-  sprintf(buffer_serial_out, "%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%d,%.1f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f", acc[0], acc[1], acc[2], gyro[0], gyro[1], gyro[2], mag[0], mag[1], mag[2], qrt[0], qrt[1], qrt[2], qrt[3], pressure, altitude, temp, pitch, roll, yaw, t_delta, sample_rate, acc_k[0], acc_k[1], acc_k[2], gyro_k[0], gyro_k[1], gyro_k[2], mag_k[0], mag_k[1], mag_k[2], heading_k, pitch_k, roll_k);
-  Serial.println(buffer_serial_out);
-  // delay(400);
+  // print_serial_buffer(buffer_serial_out);
 }

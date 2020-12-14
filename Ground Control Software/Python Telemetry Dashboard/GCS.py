@@ -60,14 +60,11 @@ class GCS_Plotter:
                 print("[SET-UP] : Setting up TCP connection")
                 self.ws_socket = WS_Manager()
                 print("[SET-UP] : TCP Connection Establied!")
-            except Exception as identifier:
-                print(f"[ERROR] : {identifier}")
-
-            try:
-                self.AVA_model = AVA(self.ws_socket.targetIP, self.current_state, self.system_state_pool)
+                self.AVA_model = AVA(
+                    self.ws_socket.targetIP, self.current_state, self.system_state_pool)
                 print("[SET-UP] : AVA model setup completed")
             except Exception as identifier:
-                print(f"[ERROR] : {identifier}")
+                print(f"[ERROR] : (setting up ws) {identifier}")
         
         self.udp_socket = UDP_Manager()
 
@@ -701,7 +698,7 @@ class GCS_Plotter:
     def animation(self):
         timer = pg.QtCore.QTimer()
         timer.timeout.connect(self.update)
-        timer.start(25)
+        timer.start(10)
         self.start()
 
 if __name__ == "__main__":
