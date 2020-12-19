@@ -1,8 +1,5 @@
-#include <Wire.h>
 #include <MPU9250.h>
 #include <Adafruit_BMP280.h>
-#include <WiFi.h>
-#include <WiFiMulti.h>
 #include <WebSocketsServer.h>
 #include <TinyGPS++.h>
 #include "kalman_filter.h"
@@ -10,20 +7,29 @@
 #define RXD2 16
 #define TXD2 17
 
-#define RAD2DEG 57.29578
-#define DEG2RAD 0.01745
-#define M_PI 3.14159265358979323846
+#define HSPI_MISO 27
+#define HSPI_MOSI 13
+#define HSPI_SCLK 14
+#define HSPI_SS 15
 
 #define IMU_SS 5
 #define BARO_SS 4
 
 #define GPSBaud 9600 //GPS Baud rate
 #define Serial_Monitor_Baud 115200
+
+#define RAD2DEG 57.29578
+#define DEG2RAD 0.01745
+#define M_PI 3.14159265358979323846
+
 // For stats that happen every 5 seconds
 unsigned long last = 0UL;
 
 const char *ssid = "baca";
 const char *password = "randy053";
+
+//uninitialized pointers to SPI objects
+// SPIClass spiSD(HSPI);
 
 // Sensors
 TinyGPSPlus gps;
@@ -282,10 +288,18 @@ void init_WiFi()
   Serial.print("[READY] : Connecting to ");
   Serial.println(ssid);
 
+  int wifi_connection_attempts = 0 ;
   while (WiFi.status() != WL_CONNECTED)
   {
     delay(100);
     Serial.print(".");
+    wifi_connection_attempts++;
+    if (wifi_connection_attempts > 20)
+    {
+      Serial.println("[ERROR] : Wifi connection attempt limit exceeded (restarting) ");
+      delay(2000);
+      ESP.restart();
+    }
   }
   Serial.println();
   Serial.print("[INFO] : Connected @ ");
@@ -729,7 +743,7 @@ void loop()
   update_body_velocity();
 
   // Read the barometer
-  // baro_update();
+  baro_update();
 
   // Update GPS reading if available
   // gps_update();
@@ -741,5 +755,5 @@ void loop()
     sample_rate = 1 / (sample_rate / 1000000);
   }
 
-  // print_serial_buffer(buffer_serial_out);
+  print_serial_buffer(buffer_serial_out);
 }
