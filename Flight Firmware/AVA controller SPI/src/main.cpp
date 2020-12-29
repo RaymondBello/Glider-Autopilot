@@ -20,7 +20,7 @@
 #define SDA_PIN 4
 #define SCL_PIN 5
 
-const char *mac_addr_MEGA = "FC:F5:C4:2C:5D:5C";
+// const char *mac_addr_MEGA = "FC:F5:C4:2C:5D:5C";
 
 // Sensors
 TinyGPSPlus gps;

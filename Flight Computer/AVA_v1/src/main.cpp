@@ -7,10 +7,10 @@
 #define RXD2 16
 #define TXD2 17
 
-#define HSPI_MISO 27
-#define HSPI_MOSI 13
-#define HSPI_SCLK 14
-#define HSPI_SS 15
+// #define HSPI_MISO 27
+// #define HSPI_MOSI 13
+// #define HSPI_SCLK 14
+// #define HSPI_SS 15
 
 #define IMU_SS 5
 #define BARO_SS 4
@@ -27,9 +27,6 @@ unsigned long last = 0UL;
 
 const char *ssid = "baca";
 const char *password = "randy053";
-
-//uninitialized pointers to SPI objects
-// SPIClass spiSD(HSPI);
 
 // Sensors
 TinyGPSPlus gps;
@@ -105,7 +102,7 @@ void onWebSocketEvent(u_int num, WStype_t type, uint8_t *payload, size_t length)
     sprintf(buffer_udp_in, "%s", payload);
     Serial.println(buffer_udp_in);
 
-    sprintf(buffer_udp_out, "%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f", acc[0], acc[1], acc[2], gyro[0], gyro[1], gyro[2], mag[0], mag[1], mag[2], qrt[0], qrt[1], qrt[2], qrt[3], pressure, altitude, temp, pitch, roll, yaw);
+    sprintf(buffer_udp_out, "%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f", acc[0], acc[1], acc[2], gyro[0], gyro[1], gyro[2], mag[0], mag[1], mag[2], qrt[0], qrt[1], qrt[2], qrt[3], pressure, altitude, temp, pitch_k, roll_k, heading_k);
     webSocket.sendTXT(num, buffer_udp_out);
     break;
   }
@@ -297,7 +294,7 @@ void init_WiFi()
     if (wifi_connection_attempts > 20)
     {
       Serial.println("[ERROR] : Wifi connection attempt limit exceeded (restarting) ");
-      delay(2000);
+      delay(1000);
       ESP.restart();
     }
   }
@@ -342,9 +339,12 @@ int print3(float x, float y, float z)
 
 void setFullScaleRanges()
 {
-  status = IMU.setGyroRange(MPU9250::GYRO_RANGE_2000DPS);
+  // status = IMU.setGyroRange(MPU9250::GYRO_RANGE_2000DPS);
+  status = IMU.setGyroRange(MPU9250::GYRO_RANGE_1000DPS);
   delay(10);
-  status = IMU.setAccelRange(MPU9250::ACCEL_RANGE_16G);
+  // status = IMU.setAccelRange(MPU9250::ACCEL_RANGE_16G);
+  // status = IMU.setAccelRange(MPU9250::ACCEL_RANGE_8G);
+  status = IMU.setAccelRange(MPU9250::ACCEL_RANGE_4G);
 }
 
 void setBiasesAndScaleFactors()
@@ -491,7 +491,7 @@ void baro_update()
 {
   static uint32_t prev_ms = millis();
 
-  if ((millis() - prev_ms) > 5)
+  if ((millis() - prev_ms) > 0)
   {
     temp = bmp.readTemperature();
     pressure = bmp.readPressure();
@@ -707,6 +707,9 @@ void update_YPR()
 void print_serial_buffer(char* serial_buff)
 {
   sprintf(serial_buff, "%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%d,%.1f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f", acc[0], acc[1], acc[2], gyro[0], gyro[1], gyro[2], mag[0], mag[1], mag[2], qrt[0], qrt[1], qrt[2], qrt[3], pressure, altitude, temp, pitch, roll, yaw, t_delta, sample_rate, acc_k[0], acc_k[1], acc_k[2], gyro_k[0], gyro_k[1], gyro_k[2], mag_k[0], mag_k[1], mag_k[2], heading_k, pitch_k, roll_k);
+  // Serial.println(serial_buff);
+
+  // sprintf(serial_buff, "PRY: %.3f,%.3f,%.3f PRY_K: %.3f,%.3f,%.3f BMP: %.3f,%.3f,%.3f", pitch, roll, yaw, pitch_k, roll_k, heading_k, pressure, altitude, temp);
   Serial.println(serial_buff);
 }
 
@@ -743,7 +746,7 @@ void loop()
   update_body_velocity();
 
   // Read the barometer
-  baro_update();
+  // baro_update();
 
   // Update GPS reading if available
   // gps_update();
