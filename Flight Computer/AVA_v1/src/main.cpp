@@ -2,6 +2,7 @@
 #include <Adafruit_BMP280.h>
 #include <WebSocketsServer.h>
 #include <TinyGPS++.h>
+#include <Servo.h>
 #include "kalman_filter.h"
 
 #define RXD2 16
@@ -12,8 +13,27 @@
 // #define HSPI_SCLK 14
 // #define HSPI_SS 15
 
+// State Indicator Devices
+#define LED_BLUE 25
+#define LED_GREEN 33
+#define BUZZER_PIN 32
+
 #define IMU_SS 5
 #define BARO_SS 4
+
+// Actuator COnfiguration
+#define L_W_SERVO 13
+#define R_W_SERVO 12
+#define MAX_SERVO_ANGLE 150
+#define MIN_SERVO_ANGLE 30
+
+// Receiver Configuration
+#define RX_R_WING 14
+#define RX_L_WING 27
+#define RX_AP_SWITCH 22
+
+volatile int pwm_value = 0;
+volatile int prev_time = 0;
 
 #define GPSBaud 9600 //GPS Baud rate
 #define Serial_Monitor_Baud 115200
@@ -33,6 +53,10 @@ TinyGPSPlus gps;
 MPU9250 IMU(SPI, IMU_SS);
 Adafruit_BMP280 bmp(BARO_SS);
 WebSocketsServer webSocket = WebSocketsServer(80);
+
+// Actuators
+Servo L_WING_ACT;
+Servo R_WING_ACT;
 
 int status;
 static uint32_t t_delta = 0;
@@ -60,7 +84,7 @@ unsigned long count = 0, sumCount = 0;
 float eInt[3] = {0.0f, 0.0f, 0.0f}; // vector to hold intergal error in mahony filter
 
 // Mahony free parameters
-//#define Kp 2.0f * 5.0f                
+//#define Kp 2.0f * 5.0f
 // original Kp proportional feedback parameter in Mahony filter and fusion scheme
 #define Kp 40.0f // Kp proportional feedback parameter in Mahony filter and fusion scheme
 #define Ki 0.0f  // Ki integral parameter in Mahony filter and fusion scheme
@@ -285,7 +309,7 @@ void init_WiFi()
   Serial.print("[READY] : Connecting to ");
   Serial.println(ssid);
 
-  int wifi_connection_attempts = 0 ;
+  int wifi_connection_attempts = 0;
   while (WiFi.status() != WL_CONNECTED)
   {
     delay(100);
@@ -340,11 +364,11 @@ int print3(float x, float y, float z)
 void setFullScaleRanges()
 {
   // status = IMU.setGyroRange(MPU9250::GYRO_RANGE_2000DPS);
-  status = IMU.setGyroRange(MPU9250::GYRO_RANGE_1000DPS);
+  status = IMU.setGyroRange(MPU9250::GYRO_RANGE_250DPS);
   delay(10);
   // status = IMU.setAccelRange(MPU9250::ACCEL_RANGE_16G);
   // status = IMU.setAccelRange(MPU9250::ACCEL_RANGE_8G);
-  status = IMU.setAccelRange(MPU9250::ACCEL_RANGE_4G);
+  status = IMU.setAccelRange(MPU9250::ACCEL_RANGE_2G);
 }
 
 void setBiasesAndScaleFactors()
@@ -636,7 +660,7 @@ void update_quaternion()
     This is ok by aircraft orientation standards!
     Pass gyro rate as rad/s
   */
-  MahonyQuaternionUpdate(acc_k[0], acc_k[1], acc_k[2], gyro[0] * DEG_TO_RAD, gyro[1] * DEG_TO_RAD, gyro[2] * DEG_TO_RAD, mag[0], mag[1], mag[2]);
+  MahonyQuaternionUpdate(acc_k[0], acc_k[1], acc_k[2], gyro_k[0] * DEG_TO_RAD, gyro_k[1] * DEG_TO_RAD, gyro_k[2] * DEG_TO_RAD, mag[0], mag[1], mag[2]);
 
   // Calculate the yaw
   yaw_q = atan2(2.0f * (qrt[1] * qrt[2] + qrt[0] * qrt[3]), qrt[0] * qrt[0] + qrt[1] * qrt[1] - qrt[2] * qrt[2] - qrt[3] * qrt[3]);
@@ -704,7 +728,7 @@ void update_YPR()
   yaw = heading;   // Yaw from Quaternion
 }
 
-void print_serial_buffer(char* serial_buff)
+void print_serial_buffer(char *serial_buff)
 {
   sprintf(serial_buff, "%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%d,%.1f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f", acc[0], acc[1], acc[2], gyro[0], gyro[1], gyro[2], mag[0], mag[1], mag[2], qrt[0], qrt[1], qrt[2], qrt[3], pressure, altitude, temp, pitch, roll, yaw, t_delta, sample_rate, acc_k[0], acc_k[1], acc_k[2], gyro_k[0], gyro_k[1], gyro_k[2], mag_k[0], mag_k[1], mag_k[2], heading_k, pitch_k, roll_k);
   // Serial.println(serial_buff);
@@ -713,22 +737,54 @@ void print_serial_buffer(char* serial_buff)
   Serial.println(serial_buff);
 }
 
+
+
+
+
 void setup()
 {
-  // serial to display data
+  // Turn ON Setup Indicator
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH);
+
   Serial.begin(Serial_Monitor_Baud);
   Serial2.begin(GPSBaud, SERIAL_8N1, RXD2, TXD2);
 
-  while (!Serial){}
+  while (!Serial)
+  {
+  }
 
   sensors_init();
   init_WiFi();
+
+  pinMode(LED_BLUE, OUTPUT);
+  pinMode(LED_GREEN, OUTPUT);
+  pinMode(BUZZER_PIN, OUTPUT);
+
+  // digitalWrite(LED_BLUE, HIGH);
+  // digitalWrite(LED_GREEN, HIGH);
+  // digitalWrite(BUZZER_PIN, HIGH);
 
   /** 
     * Calibration? [Last Calibrated Nov 28. 2020]
     * imu_calibrate();
     * update_imu_resting_offsets();
   **/
+
+  L_WING_ACT.attach(L_W_SERVO,
+                Servo::CHANNEL_NOT_ATTACHED,
+                MIN_SERVO_ANGLE,
+                MAX_SERVO_ANGLE);
+
+  R_WING_ACT.attach(R_W_SERVO,
+                Servo::CHANNEL_NOT_ATTACHED,
+                MIN_SERVO_ANGLE,
+                MAX_SERVO_ANGLE);
+
+  
+
+  //Turn Setup Indicator OFF
+  digitalWrite(LED_BUILTIN, LOW);
 }
 
 void loop()
@@ -758,5 +814,34 @@ void loop()
     sample_rate = 1 / (sample_rate / 1000000);
   }
 
-  print_serial_buffer(buffer_serial_out);
+  // print_serial_buffer(buffer_serial_out);
+
+  // for (int posDegrees = 0; posDegrees <= 180; posDegrees++)
+  // {
+  //   L_WING_ACT.write(posDegrees);
+  //   R_WING_ACT.write(posDegrees);
+  //   // Serial.println(posDegrees);
+  //   delay(20);
+  // }
+
+  // for (int posDegrees = 180; posDegrees >= 0; posDegrees--)
+  // {
+  //   L_WING_ACT.write(posDegrees);
+  //   R_WING_ACT.write(posDegrees);
+  //   // Serial.println(posDegrees);
+  //   delay(20);
+  // }
+
+  int ch_2 = pulseIn(RX_L_WING, HIGH, 25000);
+  Serial.print(ch_2);
+  Serial.print(",");
+
+  int ch_3 = pulseIn(RX_AP_SWITCH, HIGH, 25000);
+  Serial.print(ch_3);
+  Serial.print(",");
+
+  int ch_4 = pulseIn(RX_R_WING, HIGH, 25000);
+  Serial.println(ch_4);
+
+  delay(10);
 }
