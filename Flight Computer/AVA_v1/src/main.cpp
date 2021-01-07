@@ -3,6 +3,7 @@
 #include <WebSocketsServer.h>
 #include <TinyGPS++.h>
 #include <Servo.h>
+#include <ServoInput.h>
 #include "kalman_filter.h"
 
 #define RXD2 16
@@ -22,18 +23,62 @@
 #define BARO_SS 4
 
 // Actuator COnfiguration
+const int servo1Pin = 13;
+const int servo2Pin = 12;
+#define USE_PWM_RX
 #define L_W_SERVO 13
 #define R_W_SERVO 12
-#define MAX_SERVO_ANGLE 150
-#define MIN_SERVO_ANGLE 30
+#define MAX_SERVO_ANGLE 120
+#define MIN_SERVO_ANGLE 60
+#define MAX_SERVO_PWM 2000
+#define MIN_SERVO_PWM 1000
 
 // Receiver Configuration
-#define RX_R_WING 14
-#define RX_L_WING 27
-#define RX_AP_SWITCH 22
+#define RX_CHANNEL_1 14
+#define RX_CHANNEL_2 27
+#define RX_CHANNEL_3 22
 
-volatile int pwm_value = 0;
-volatile int prev_time = 0;
+// Actuators
+Servo L_WING_ACT;
+Servo R_WING_ACT;
+
+struct RX_Channel
+{
+  int PWM_MAX;
+  int PWM_MIN;
+  int PWM_CENTRE;
+  int PWM_RAW;
+  int PWM_F;
+  float ANGLE;
+  float ANGLE_MAX;
+  float ANGLE_MIN;
+  bool Connected;
+};
+
+// Channel1 Setup
+// Receiver Configuration
+const int ch1Pin = RX_CHANNEL_1; // channel 1
+const int CH1_PulseMin = 950; // microseconds (us)
+const int CH1_PulseMax = 2050; // Ideal values for your servo can be found with the "Calibration" example
+float channel_1_fs = 1500; // Midpoint
+// Channel2 Setup
+const int ch2Pin = RX_CHANNEL_2; // channel 2
+const int CH2_PulseMin = 950;    // microseconds (us)
+const int CH2_PulseMax = 2050; // Ideal values for your servo can be found with the "Calibration" example
+float channel_2_fs = 1500;  // Midpoint
+// Channel3 Setup
+const int ch3Pin = RX_CHANNEL_3; // channel 3
+const int CH3_PulseMin = 950;    // microseconds (us)
+const int CH3_PulseMax = 2050;   // Ideal values for your servo can be found with the "Calibration" example
+float channel_3_fs = 1000;       // Manual
+
+ServoInputPin<ch1Pin> RX_CH1_PIN(CH1_PulseMin, CH1_PulseMax);
+ServoInputPin<ch2Pin> RX_CH2_PIN(CH2_PulseMin, CH2_PulseMax);
+ServoInputPin<ch3Pin> RX_CH3_PIN(CH3_PulseMin, CH3_PulseMax);
+
+RX_Channel RX_CH1;
+RX_Channel RX_CH2;
+RX_Channel RX_CH3;
 
 #define GPSBaud 9600 //GPS Baud rate
 #define Serial_Monitor_Baud 115200
@@ -53,10 +98,6 @@ TinyGPSPlus gps;
 MPU9250 IMU(SPI, IMU_SS);
 Adafruit_BMP280 bmp(BARO_SS);
 WebSocketsServer webSocket = WebSocketsServer(80);
-
-// Actuators
-Servo L_WING_ACT;
-Servo R_WING_ACT;
 
 int status;
 static uint32_t t_delta = 0;
@@ -83,11 +124,24 @@ unsigned long lastUpdate = 0;
 unsigned long count = 0, sumCount = 0;
 float eInt[3] = {0.0f, 0.0f, 0.0f}; // vector to hold intergal error in mahony filter
 
-// Mahony free parameters
-//#define Kp 2.0f * 5.0f
-// original Kp proportional feedback parameter in Mahony filter and fusion scheme
-#define Kp 40.0f // Kp proportional feedback parameter in Mahony filter and fusion scheme
-#define Ki 0.0f  // Ki integral parameter in Mahony filter and fusion scheme
+// global constants for 9 DoF fusion and AHRS (Attitude and Heading Reference System)
+float GyroMeasError = PI * (40.0f / 180.0f); // gyroscope measurement error in rads/s (start at 40 deg/s)
+float GyroMeasDrift = PI * (0.0f / 180.0f);  // gyroscope measurement drift in rad/s/s (start at 0.0 deg/s/s)
+// There is a tradeoff in the beta parameter between accuracy and response speed.
+// In the original Madgwick study, beta of 0.041 (corresponding to GyroMeasError of 2.7 degrees/s) was found to give optimal accuracy.
+// However, with this value, the LSM9SD0 response time is about 10 seconds to a stable initial quaternion.
+// Subsequent changes also require a longish lag time to a stable output, not fast enough for a quadcopter or robot car!
+// By increasing beta (GyroMeasError) by about a factor of fifteen, the response time constant is reduced to ~2 sec
+// I haven't noticed any reduction in solution accuracy. This is essentially the I coefficient in a PID control sense;
+// the bigger the feedback coefficient, the faster the solution converges, usually at the expense of accuracy.
+// In any case, this is the free parameter in the Madgwick filtering and fusion scheme.
+float beta = sqrt(3.0f / 4.0f) * GyroMeasError; // compute beta
+float zeta = sqrt(3.0f / 4.0f) * GyroMeasDrift; // compute zeta, the other free parameter in the Madgwick scheme usually set to a small or zero value
+#define Kp 2.0f * 5.0f                          // these are the free parameters in the Mahony filter and fusion scheme, Kp for proportional feedback, Ki for integral
+#define Ki 0.0f
+
+float pitchError;
+float rollError;
 
 float pitch, yaw, roll; // MAIN ATTITUDE VAIRABLES
 float pitch_a, roll_a;
@@ -318,7 +372,10 @@ void init_WiFi()
     if (wifi_connection_attempts > 20)
     {
       Serial.println("[ERROR] : Wifi connection attempt limit exceeded (restarting) ");
-      delay(1000);
+      digitalWrite(BUZZER_PIN, HIGH);
+      delay(500);
+      digitalWrite(BUZZER_PIN, LOW);
+      delay(400);
       ESP.restart();
     }
   }
@@ -373,11 +430,11 @@ void setFullScaleRanges()
 
 void setBiasesAndScaleFactors()
 {
-  IMU.setGyroBiasX_rads(-0.01);
+  IMU.setGyroBiasX_rads(0.0);
   delay(10);
-  IMU.setGyroBiasY_rads(0.02);
+  IMU.setGyroBiasY_rads(0.0);
   delay(10);
-  IMU.setGyroBiasZ_rads(0);
+  IMU.setGyroBiasZ_rads(0.0);
   delay(10);
   IMU.setMagCalX(25.61, 1.07);
   delay(10);
@@ -490,24 +547,32 @@ int update_imu_resting_offsets()
 void imu_update()
 {
 
+  static uint32_t prev_ms = millis();
+
   if (IMU.readSensor())
   {
-    acc[0] = IMU.getAccelX_mss() + a_offset[0];
-    acc[1] = IMU.getAccelY_mss() + a_offset[1];
-    acc[2] = IMU.getAccelZ_mss() + a_offset[2];
+    if ((millis() - prev_ms) > 1){
 
-    gyro[0] = IMU.getGyroX_rads();
-    gyro[0] = convert_rad_s_to_deg_s(gyro[0]) + g_offset[0];
-    gyro[1] = IMU.getGyroY_rads();
-    gyro[1] = convert_rad_s_to_deg_s(gyro[1]) + g_offset[1];
-    gyro[2] = IMU.getGyroZ_rads();
-    gyro[2] = convert_rad_s_to_deg_s(gyro[2]) + g_offset[2];
+      acc[0] = IMU.getAccelX_mss() + a_offset[0];
+      acc[1] = IMU.getAccelY_mss() + a_offset[1];
+      acc[2] = IMU.getAccelZ_mss() + a_offset[2];
 
-    mag[0] = IMU.getMagX_uT();
-    mag[1] = IMU.getMagY_uT();
-    mag[2] = IMU.getMagZ_uT();
+      gyro[0] = IMU.getGyroX_rads();
+      gyro[0] = convert_rad_s_to_deg_s(gyro[0]) + g_offset[0];
+      gyro[1] = IMU.getGyroY_rads();
+      gyro[1] = convert_rad_s_to_deg_s(gyro[1]) + g_offset[1];
+      gyro[2] = IMU.getGyroZ_rads();
+      gyro[2] = convert_rad_s_to_deg_s(gyro[2]) + g_offset[2];
 
-    temp_imu = IMU.getTemperature_C();
+      mag[0] = IMU.getMagX_uT();
+      mag[1] = IMU.getMagY_uT();
+      mag[2] = IMU.getMagZ_uT();
+
+      temp_imu = IMU.getTemperature_C();
+      
+      prev_ms = millis();
+    }
+    
   }
 }
 
@@ -547,6 +612,101 @@ void update_kalman_filter()
 void update_body_velocity()
 {
   ;
+}
+
+void MadgwickQuaternionUpdate(float ax, float ay, float az, float gx, float gy, float gz, float mx, float my, float mz)
+{
+  float q1 = qrt[0], q2 = qrt[1], q3 = qrt[2], q4 = qrt[3]; // short name local variable for readability
+  float norm;
+  float hx, hy, _2bx, _2bz;
+  float s1, s2, s3, s4;
+  float qDot1, qDot2, qDot3, qDot4;
+
+  // Auxiliary variables to avoid repeated arithmetic
+  float _2q1mx;
+  float _2q1my;
+  float _2q1mz;
+  float _2q2mx;
+  float _4bx;
+  float _4bz;
+  float _2q1 = 2.0f * q1;
+  float _2q2 = 2.0f * q2;
+  float _2q3 = 2.0f * q3;
+  float _2q4 = 2.0f * q4;
+  float _2q1q3 = 2.0f * q1 * q3;
+  float _2q3q4 = 2.0f * q3 * q4;
+  float q1q1 = q1 * q1;
+  float q1q2 = q1 * q2;
+  float q1q3 = q1 * q3;
+  float q1q4 = q1 * q4;
+  float q2q2 = q2 * q2;
+  float q2q3 = q2 * q3;
+  float q2q4 = q2 * q4;
+  float q3q3 = q3 * q3;
+  float q3q4 = q3 * q4;
+  float q4q4 = q4 * q4;
+
+  // Normalise accelerometer measurement
+  norm = sqrtf(ax * ax + ay * ay + az * az);
+  if (norm == 0.0f)
+    return; // handle NaN
+  norm = 1.0f / norm;
+  ax *= norm;
+  ay *= norm;
+  az *= norm;
+
+  // Normalise magnetometer measurement
+  norm = sqrtf(mx * mx + my * my + mz * mz);
+  if (norm == 0.0f)
+    return; // handle NaN
+  norm = 1.0f / norm;
+  mx *= norm;
+  my *= norm;
+  mz *= norm;
+
+  // Reference direction of Earth's magnetic field
+  _2q1mx = 2.0f * q1 * mx;
+  _2q1my = 2.0f * q1 * my;
+  _2q1mz = 2.0f * q1 * mz;
+  _2q2mx = 2.0f * q2 * mx;
+  hx = mx * q1q1 - _2q1my * q4 + _2q1mz * q3 + mx * q2q2 + _2q2 * my * q3 + _2q2 * mz * q4 - mx * q3q3 - mx * q4q4;
+  hy = _2q1mx * q4 + my * q1q1 - _2q1mz * q2 + _2q2mx * q3 - my * q2q2 + my * q3q3 + _2q3 * mz * q4 - my * q4q4;
+  _2bx = sqrtf(hx * hx + hy * hy);
+  _2bz = -_2q1mx * q3 + _2q1my * q2 + mz * q1q1 + _2q2mx * q4 - mz * q2q2 + _2q3 * my * q4 - mz * q3q3 + mz * q4q4;
+  _4bx = 2.0f * _2bx;
+  _4bz = 2.0f * _2bz;
+
+  // Gradient decent algorithm corrective step
+  s1 = -_2q3 * (2.0f * q2q4 - _2q1q3 - ax) + _2q2 * (2.0f * q1q2 + _2q3q4 - ay) - _2bz * q3 * (_2bx * (0.5f - q3q3 - q4q4) + _2bz * (q2q4 - q1q3) - mx) + (-_2bx * q4 + _2bz * q2) * (_2bx * (q2q3 - q1q4) + _2bz * (q1q2 + q3q4) - my) + _2bx * q3 * (_2bx * (q1q3 + q2q4) + _2bz * (0.5f - q2q2 - q3q3) - mz);
+  s2 = _2q4 * (2.0f * q2q4 - _2q1q3 - ax) + _2q1 * (2.0f * q1q2 + _2q3q4 - ay) - 4.0f * q2 * (1.0f - 2.0f * q2q2 - 2.0f * q3q3 - az) + _2bz * q4 * (_2bx * (0.5f - q3q3 - q4q4) + _2bz * (q2q4 - q1q3) - mx) + (_2bx * q3 + _2bz * q1) * (_2bx * (q2q3 - q1q4) + _2bz * (q1q2 + q3q4) - my) + (_2bx * q4 - _4bz * q2) * (_2bx * (q1q3 + q2q4) + _2bz * (0.5f - q2q2 - q3q3) - mz);
+  s3 = -_2q1 * (2.0f * q2q4 - _2q1q3 - ax) + _2q4 * (2.0f * q1q2 + _2q3q4 - ay) - 4.0f * q3 * (1.0f - 2.0f * q2q2 - 2.0f * q3q3 - az) + (-_4bx * q3 - _2bz * q1) * (_2bx * (0.5f - q3q3 - q4q4) + _2bz * (q2q4 - q1q3) - mx) + (_2bx * q2 + _2bz * q4) * (_2bx * (q2q3 - q1q4) + _2bz * (q1q2 + q3q4) - my) + (_2bx * q1 - _4bz * q3) * (_2bx * (q1q3 + q2q4) + _2bz * (0.5f - q2q2 - q3q3) - mz);
+  s4 = _2q2 * (2.0f * q2q4 - _2q1q3 - ax) + _2q3 * (2.0f * q1q2 + _2q3q4 - ay) + (-_4bx * q4 + _2bz * q2) * (_2bx * (0.5f - q3q3 - q4q4) + _2bz * (q2q4 - q1q3) - mx) + (-_2bx * q1 + _2bz * q3) * (_2bx * (q2q3 - q1q4) + _2bz * (q1q2 + q3q4) - my) + _2bx * q2 * (_2bx * (q1q3 + q2q4) + _2bz * (0.5f - q2q2 - q3q3) - mz);
+  norm = sqrtf(s1 * s1 + s2 * s2 + s3 * s3 + s4 * s4); // normalise step magnitude
+  norm = 1.0f / norm;
+  s1 *= norm;
+  s2 *= norm;
+  s3 *= norm;
+  s4 *= norm;
+
+  // Compute rate of change of quaternion
+  qDot1 = 0.5f * (-q2 * gx - q3 * gy - q4 * gz) - beta * s1;
+  qDot2 = 0.5f * (q1 * gx + q3 * gz - q4 * gy) - beta * s2;
+  qDot3 = 0.5f * (q1 * gy - q2 * gz + q4 * gx) - beta * s3;
+  qDot4 = 0.5f * (q1 * gz + q2 * gy - q3 * gx) - beta * s4;
+
+  // Integrate to yield quaternion
+  q1 += qDot1 * deltat;
+  q2 += qDot2 * deltat;
+  q3 += qDot3 * deltat;
+  q4 += qDot4 * deltat;
+
+  norm = sqrtf(q1 * q1 + q2 * q2 + q3 * q3 + q4 * q4); // normalise quaternion
+  norm = 1.0f / norm;
+
+  qrt[0] = q1 * norm;
+  qrt[1] = q2 * norm;
+  qrt[2] = q3 * norm;
+  qrt[3] = q4 * norm;
 }
 
 void MahonyQuaternionUpdate(float ax, float ay, float az, float gx, float gy, float gz, float mx, float my, float mz)
@@ -651,20 +811,16 @@ void update_quaternion()
   sum += deltat; // sum for averaging filter update rate
   sumCount++;
 
-  /*
-    Sensors x (y)-axis of the accelerometer is aligned with the y (x)-axis of the magnetometer;
-    the magnetometer z-axis (+ down) is opposite to z-axis (+ up) of accelerometer and gyro!
-    We have to make some allowance for this orientation mismatch in feeding the output to the quaternion filter.
-    For the MPU-9250, we have chosen a magnetic rotation that keeps the sensor forward along the x-axis just like
-    in the LSM9DS0 sensor. This rotation can be modified to allow any convenient orientation convention.
-    This is ok by aircraft orientation standards!
-    Pass gyro rate as rad/s
-  */
-  MahonyQuaternionUpdate(acc_k[0], acc_k[1], acc_k[2], gyro_k[0] * DEG_TO_RAD, gyro_k[1] * DEG_TO_RAD, gyro_k[2] * DEG_TO_RAD, mag[0], mag[1], mag[2]);
+  // MAHONY QUARTERNION FILTER
+  // MahonyQuaternionUpdate(acc_k[0], acc_k[1], acc_k[2], gyro_k[0] * DEG_TO_RAD, gyro_k[1] * DEG_TO_RAD, gyro_k[2] * DEG_TO_RAD, mag[0], mag[1], mag[2]);
+
+  // MADGWICK QUARTERNION FILTER
+  MadgwickQuaternionUpdate(acc_k[0], acc_k[1], acc_k[2], gyro_k[0] * DEG_TO_RAD, gyro_k[1] * DEG_TO_RAD, gyro_k[2] * DEG_TO_RAD, mag_k[0], mag_k[1], mag_k[2]);
 
   // Calculate the yaw
   yaw_q = atan2(2.0f * (qrt[1] * qrt[2] + qrt[0] * qrt[3]), qrt[0] * qrt[0] + qrt[1] * qrt[1] - qrt[2] * qrt[2] - qrt[3] * qrt[3]);
   heading = yaw_q * RAD2DEG;
+  heading -= magnetic_declination; 
 
   // Calculate pitch and roll
   pitch_q = asin(2.0f * (qrt[1] * qrt[3] - qrt[0] * qrt[2]));
@@ -674,6 +830,7 @@ void update_quaternion()
   pitch_q *= RAD_TO_DEG;
   roll_q *= RAD_TO_DEG;
   yaw_q *= RAD_TO_DEG;
+  yaw_q -= magnetic_declination;
 
   // Normalizing Roll to +(0-180) upright and -(0-180) upside down.
   if (roll_q > 0)
@@ -722,10 +879,14 @@ void update_YPR()
   }
 
   update_quaternion();
-
+  
   pitch = pitch_q; // Pitch from Quaternion
   roll = roll_q;   // Roll from Quaternion
   yaw = heading;   // Yaw from Quaternion
+
+  pitchError = pitch_q * 0.35 + pitch_a * 0.65;
+  rollError = roll_q * 0.35 + roll_a * 0.65;
+
 }
 
 void print_serial_buffer(char *serial_buff)
@@ -737,15 +898,72 @@ void print_serial_buffer(char *serial_buff)
   Serial.println(serial_buff);
 }
 
+void BUZZER_1(){
+  digitalWrite(BUZZER_PIN, HIGH);
+  delay(200);
+  digitalWrite(BUZZER_PIN, LOW);
+}
 
+void BUZZER_2()
+{
+  digitalWrite(BUZZER_PIN, HIGH);
+  delay(200);
+  digitalWrite(BUZZER_PIN, LOW);
+  delay(200);
+  digitalWrite(BUZZER_PIN, HIGH);
+  delay(200);
+  digitalWrite(BUZZER_PIN, LOW);
+}
 
+void update_RX_Channels (){
+  int CH_1_Raw = RX_CH1_PIN.getPulseRaw();
+  int CH_2_Raw = RX_CH2_PIN.getPulseRaw();
+  int CH_3_Raw = RX_CH3_PIN.getPulseRaw();
 
+  if (CH1_PulseMin < CH_1_Raw && CH1_PulseMax > CH_1_Raw)
+  {
+    RX_CH1.PWM_RAW = CH_1_Raw;
+  }
+  if (CH2_PulseMin < CH_2_Raw && CH2_PulseMax > CH_2_Raw)
+  {
+    RX_CH2.PWM_RAW = CH_2_Raw;
+  }
+  if (CH3_PulseMin < CH_3_Raw && CH3_PulseMax > CH_3_Raw)
+  {
+    RX_CH3.PWM_RAW = CH_3_Raw;
+  }
+}
+
+void update_RX_Indicators(){
+  if (950 < RX_CH3.PWM_RAW && RX_CH3.PWM_RAW < 1050)
+  {
+    digitalWrite(LED_GREEN, HIGH);
+    digitalWrite(LED_BLUE, LOW);
+
+  }
+  if (1450 < RX_CH3.PWM_RAW && RX_CH3.PWM_RAW < 1550)
+  {
+    digitalWrite(LED_GREEN, LOW);
+    digitalWrite(LED_BLUE, HIGH);
+  }
+  if (1950 < RX_CH3.PWM_RAW && RX_CH3.PWM_RAW < 2050)
+  {
+    digitalWrite(LED_GREEN, HIGH);
+    digitalWrite(LED_BLUE, HIGH);
+  }
+} 
 
 void setup()
 {
-  // Turn ON Setup Indicator
+  // Setup Indicators
   pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(LED_BLUE, OUTPUT);
+  pinMode(LED_GREEN, OUTPUT);
+  pinMode(BUZZER_PIN, OUTPUT);
+
+  // BUILTIN LED ON during Setup
   digitalWrite(LED_BUILTIN, HIGH);
+  BUZZER_1();
 
   Serial.begin(Serial_Monitor_Baud);
   Serial2.begin(GPSBaud, SERIAL_8N1, RXD2, TXD2);
@@ -757,55 +975,45 @@ void setup()
   sensors_init();
   init_WiFi();
 
-  pinMode(LED_BLUE, OUTPUT);
-  pinMode(LED_GREEN, OUTPUT);
-  pinMode(BUZZER_PIN, OUTPUT);
-
-  // digitalWrite(LED_BLUE, HIGH);
-  // digitalWrite(LED_GREEN, HIGH);
-  // digitalWrite(BUZZER_PIN, HIGH);
-
   /** 
     * Calibration? [Last Calibrated Nov 28. 2020]
     * imu_calibrate();
     * update_imu_resting_offsets();
   **/
 
-  L_WING_ACT.attach(L_W_SERVO,
-                Servo::CHANNEL_NOT_ATTACHED,
-                MIN_SERVO_ANGLE,
-                MAX_SERVO_ANGLE);
-
-  R_WING_ACT.attach(R_W_SERVO,
-                Servo::CHANNEL_NOT_ATTACHED,
-                MIN_SERVO_ANGLE,
-                MAX_SERVO_ANGLE);
-
-  
+  L_WING_ACT.attach(L_W_SERVO, Servo::CHANNEL_NOT_ATTACHED, MIN_SERVO_ANGLE, MAX_SERVO_ANGLE, MIN_SERVO_PWM, MAX_SERVO_PWM);
+  R_WING_ACT.attach(R_W_SERVO, Servo::CHANNEL_NOT_ATTACHED, MIN_SERVO_ANGLE, MAX_SERVO_ANGLE, MIN_SERVO_PWM, MAX_SERVO_PWM);
 
   //Turn Setup Indicator OFF
   digitalWrite(LED_BUILTIN, LOW);
+  BUZZER_2();
 }
 
 void loop()
 {
-  // Starts ws communication loop
-  start_websocket_loop();
-
   // Start timer
   t_start = micros();
+
+  // Starts ws communication loop
+  // start_websocket_loop();
 
   // read the IMU values
   imu_update();
   update_YPR();
   update_kalman_filter();
-  update_body_velocity();
+  // update_body_velocity();
 
   // Read the barometer
   // baro_update();
 
   // Update GPS reading if available
   // gps_update();
+
+  update_RX_Channels();
+  update_RX_Indicators();
+
+  // L_WING_ACT.write(ch_1_servo_angle);
+  // R_WING_ACT.write(ch_2_servo_angle);
 
   t_delta = micros() - t_start;
   if (t_delta > 0)
@@ -816,32 +1024,25 @@ void loop()
 
   // print_serial_buffer(buffer_serial_out);
 
-  // for (int posDegrees = 0; posDegrees <= 180; posDegrees++)
-  // {
-  //   L_WING_ACT.write(posDegrees);
-  //   R_WING_ACT.write(posDegrees);
-  //   // Serial.println(posDegrees);
-  //   delay(20);
-  // }
-
-  // for (int posDegrees = 180; posDegrees >= 0; posDegrees--)
-  // {
-  //   L_WING_ACT.write(posDegrees);
-  //   R_WING_ACT.write(posDegrees);
-  //   // Serial.println(posDegrees);
-  //   delay(20);
-  // }
-
-  int ch_2 = pulseIn(RX_L_WING, HIGH, 25000);
-  Serial.print(ch_2);
+  Serial.print(pitch_a);
   Serial.print(",");
-
-  int ch_3 = pulseIn(RX_AP_SWITCH, HIGH, 25000);
-  Serial.print(ch_3);
+  Serial.print(roll_a);
   Serial.print(",");
+  Serial.print(pitch);
+  Serial.print(",");
+  Serial.print(roll);
+  Serial.print(",");
+  Serial.print(pitchError);
+  Serial.print(",");
+  Serial.println(rollError);
 
-  int ch_4 = pulseIn(RX_R_WING, HIGH, 25000);
-  Serial.println(ch_4);
 
-  delay(10);
+  // Serial.print(RX_CH1_PIN.getPulseRaw());
+  // Serial.print(",");
+  // Serial.print(RX_CH2_PIN.getPulseRaw());
+  // Serial.print(",");
+  // Serial.print(RX_CH3_PIN.getPulseRaw());
+  // Serial.print(",");
+  // Serial.println(sample_rate);
+
 }
