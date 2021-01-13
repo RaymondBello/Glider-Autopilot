@@ -92,7 +92,6 @@ class GCS_Plotter:
         self.font_gps.setWeight(100)
         self.font_gps.setFamily('Fira Code')
         self.font_gps.setCapitalization(3)
-
         self.topSection = self.win.addLayout(colspan=5, rowspan=1)
 
         # Top Row Buttons

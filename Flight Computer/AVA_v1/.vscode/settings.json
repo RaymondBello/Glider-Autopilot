@@ -4,5 +4,6 @@
         "hdop",
         "kmph",
         "markus"
-    ]
+    ],
+    "cmake.configureOnOpen": false
 }

@@ -1036,7 +1036,6 @@ void loop()
   Serial.print(",");
   Serial.println(rollError);
 
-
   // Serial.print(RX_CH1_PIN.getPulseRaw());
   // Serial.print(",");
   // Serial.print(RX_CH2_PIN.getPulseRaw());
