@@ -58,14 +58,14 @@ struct RX_Channel
 // Channel1 Setup
 // Receiver Configuration
 const int ch1Pin = RX_CHANNEL_1; // channel 1
-const int CH1_PulseMin = 950; // microseconds (us)
-const int CH1_PulseMax = 2050; // Ideal values for your servo can be found with the "Calibration" example
-float channel_1_fs = 1500; // Midpoint
+const int CH1_PulseMin = 950;    // microseconds (us)
+const int CH1_PulseMax = 2050;   // Ideal values for your servo can be found with the "Calibration" example
+float channel_1_fs = 1500;       // Midpoint
 // Channel2 Setup
 const int ch2Pin = RX_CHANNEL_2; // channel 2
 const int CH2_PulseMin = 950;    // microseconds (us)
-const int CH2_PulseMax = 2050; // Ideal values for your servo can be found with the "Calibration" example
-float channel_2_fs = 1500;  // Midpoint
+const int CH2_PulseMax = 2050;   // Ideal values for your servo can be found with the "Calibration" example
+float channel_2_fs = 1500;       // Midpoint
 // Channel3 Setup
 const int ch3Pin = RX_CHANNEL_3; // channel 3
 const int CH3_PulseMin = 950;    // microseconds (us)
@@ -148,11 +148,12 @@ float pitch_a, roll_a;
 float pitch_q, yaw_q, roll_q;
 
 float magnetic_declination = -12.97; // Ottawa, Nov 23 2020
-float temp_imu, temp, pressure, altitude;
+float temp_imu, temp_baro, pressure, altitude;
 
 char buffer_udp_out[150];
 char buffer_udp_in[150];
 char buffer_serial_out[200];
+
 
 // Called when receiving websocket packet
 void onWebSocketEvent(u_int num, WStype_t type, uint8_t *payload, size_t length)
@@ -180,7 +181,7 @@ void onWebSocketEvent(u_int num, WStype_t type, uint8_t *payload, size_t length)
     sprintf(buffer_udp_in, "%s", payload);
     Serial.println(buffer_udp_in);
 
-    sprintf(buffer_udp_out, "%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f", acc[0], acc[1], acc[2], gyro[0], gyro[1], gyro[2], mag[0], mag[1], mag[2], qrt[0], qrt[1], qrt[2], qrt[3], pressure, altitude, temp, pitch_k, roll_k, heading_k);
+    sprintf(buffer_udp_out, "%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f", acc[0], acc[1], acc[2], gyro[0], gyro[1], gyro[2], mag[0], mag[1], mag[2], qrt[0], qrt[1], qrt[2], qrt[3], pressure, altitude, temp_baro, pitch_k, roll_k, heading_k);
     webSocket.sendTXT(num, buffer_udp_out);
     break;
   }
@@ -477,11 +478,11 @@ void sensors_init()
   else
   {
     /* Default settings from datasheet. */
-    bmp.setSampling(Adafruit_BMP280::MODE_NORMAL,   /* Operating Mode. */
-                    Adafruit_BMP280::SAMPLING_NONE, /* Temp. oversampling */
-                    Adafruit_BMP280::SAMPLING_NONE, /* Pressure oversampling */
-                    Adafruit_BMP280::FILTER_OFF,    /* Filtering. */
-                    Adafruit_BMP280::STANDBY_MS_1); /* Standby time. */
+    bmp.setSampling(Adafruit_BMP280::MODE_NORMAL,    /* Operating Mode. */
+                    Adafruit_BMP280::SAMPLING_NONE,  /* Temp. oversampling */
+                    Adafruit_BMP280::SAMPLING_NONE,  /* Pressure oversampling */
+                    Adafruit_BMP280::FILTER_OFF,     /* Filtering. */
+                    Adafruit_BMP280::STANDBY_MS_500); /* Standby time. */
     Serial.println("[SETUP] : Barometer Sampling Settings SET");
   }
 }
@@ -551,7 +552,8 @@ void imu_update()
 
   if (IMU.readSensor())
   {
-    if ((millis() - prev_ms) > 1){
+    if ((millis() - prev_ms) > 1)
+    {
 
       acc[0] = IMU.getAccelX_mss() + a_offset[0];
       acc[1] = IMU.getAccelY_mss() + a_offset[1];
@@ -569,10 +571,9 @@ void imu_update()
       mag[2] = IMU.getMagZ_uT();
 
       temp_imu = IMU.getTemperature_C();
-      
+
       prev_ms = millis();
     }
-    
   }
 }
 
@@ -580,9 +581,9 @@ void baro_update()
 {
   static uint32_t prev_ms = millis();
 
-  if ((millis() - prev_ms) > 0)
+  if ((millis() - prev_ms) > 500)
   {
-    temp = bmp.readTemperature();
+    temp_baro = bmp.readTemperature();
     pressure = bmp.readPressure();
     altitude = bmp.readAltitude(1026);
     prev_ms = millis();
@@ -820,7 +821,7 @@ void update_quaternion()
   // Calculate the yaw
   yaw_q = atan2(2.0f * (qrt[1] * qrt[2] + qrt[0] * qrt[3]), qrt[0] * qrt[0] + qrt[1] * qrt[1] - qrt[2] * qrt[2] - qrt[3] * qrt[3]);
   heading = yaw_q * RAD2DEG;
-  heading -= magnetic_declination; 
+  heading -= magnetic_declination;
 
   // Calculate pitch and roll
   pitch_q = asin(2.0f * (qrt[1] * qrt[3] - qrt[0] * qrt[2]));
@@ -879,26 +880,26 @@ void update_YPR()
   }
 
   update_quaternion();
-  
+
   pitch = pitch_q; // Pitch from Quaternion
   roll = roll_q;   // Roll from Quaternion
   yaw = heading;   // Yaw from Quaternion
 
   pitchError = pitch_q * 0.35 + pitch_a * 0.65;
   rollError = roll_q * 0.35 + roll_a * 0.65;
-
 }
 
 void print_serial_buffer(char *serial_buff)
 {
-  sprintf(serial_buff, "%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%d,%.1f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f", acc[0], acc[1], acc[2], gyro[0], gyro[1], gyro[2], mag[0], mag[1], mag[2], qrt[0], qrt[1], qrt[2], qrt[3], pressure, altitude, temp, pitch, roll, yaw, t_delta, sample_rate, acc_k[0], acc_k[1], acc_k[2], gyro_k[0], gyro_k[1], gyro_k[2], mag_k[0], mag_k[1], mag_k[2], heading_k, pitch_k, roll_k);
+  sprintf(serial_buff, "%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%d,%.1f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f", acc[0], acc[1], acc[2], gyro[0], gyro[1], gyro[2], mag[0], mag[1], mag[2], qrt[0], qrt[1], qrt[2], qrt[3], pressure, altitude, temp_baro, pitch, roll, yaw, t_delta, sample_rate, acc_k[0], acc_k[1], acc_k[2], gyro_k[0], gyro_k[1], gyro_k[2], mag_k[0], mag_k[1], mag_k[2], heading_k, pitch_k, roll_k);
   // Serial.println(serial_buff);
 
   // sprintf(serial_buff, "PRY: %.3f,%.3f,%.3f PRY_K: %.3f,%.3f,%.3f BMP: %.3f,%.3f,%.3f", pitch, roll, yaw, pitch_k, roll_k, heading_k, pressure, altitude, temp);
   Serial.println(serial_buff);
 }
 
-void BUZZER_1(){
+void BUZZER_1()
+{
   digitalWrite(BUZZER_PIN, HIGH);
   delay(200);
   digitalWrite(BUZZER_PIN, LOW);
@@ -915,7 +916,8 @@ void BUZZER_2()
   digitalWrite(BUZZER_PIN, LOW);
 }
 
-void update_RX_Channels (){
+void update_RX_Channels()
+{
   int CH_1_Raw = RX_CH1_PIN.getPulseRaw();
   int CH_2_Raw = RX_CH2_PIN.getPulseRaw();
   int CH_3_Raw = RX_CH3_PIN.getPulseRaw();
@@ -923,10 +925,12 @@ void update_RX_Channels (){
   if (CH1_PulseMin < CH_1_Raw && CH1_PulseMax > CH_1_Raw)
   {
     RX_CH1.PWM_RAW = CH_1_Raw;
+    RX_CH1.ANGLE = map(RX_CH1.PWM_RAW, MIN_SERVO_PWM, MAX_SERVO_PWM, MIN_SERVO_ANGLE, MAX_SERVO_ANGLE);
   }
   if (CH2_PulseMin < CH_2_Raw && CH2_PulseMax > CH_2_Raw)
   {
     RX_CH2.PWM_RAW = CH_2_Raw;
+    RX_CH2.ANGLE = map(RX_CH2.PWM_RAW, MIN_SERVO_PWM, MAX_SERVO_PWM, MIN_SERVO_ANGLE, MAX_SERVO_ANGLE);
   }
   if (CH3_PulseMin < CH_3_Raw && CH3_PulseMax > CH_3_Raw)
   {
@@ -934,12 +938,12 @@ void update_RX_Channels (){
   }
 }
 
-void update_RX_Indicators(){
+void update_RX_Indicators()
+{
   if (950 < RX_CH3.PWM_RAW && RX_CH3.PWM_RAW < 1050)
   {
     digitalWrite(LED_GREEN, HIGH);
     digitalWrite(LED_BLUE, LOW);
-
   }
   if (1450 < RX_CH3.PWM_RAW && RX_CH3.PWM_RAW < 1550)
   {
@@ -951,7 +955,19 @@ void update_RX_Indicators(){
     digitalWrite(LED_GREEN, HIGH);
     digitalWrite(LED_BLUE, HIGH);
   }
-} 
+}
+
+void update_servos(RX_Channel CH1, RX_Channel CH2)
+{
+  static uint32_t prev_ms = millis();
+
+  if ((millis() - prev_ms) > 10){
+    
+    L_WING_ACT.write(CH1.ANGLE);
+    R_WING_ACT.write(CH2.ANGLE);
+    prev_ms = millis();
+  }
+}
 
 void setup()
 {
@@ -1004,16 +1020,14 @@ void loop()
   // update_body_velocity();
 
   // Read the barometer
-  // baro_update();
+  baro_update();
 
   // Update GPS reading if available
   // gps_update();
 
   update_RX_Channels();
   update_RX_Indicators();
-
-  // L_WING_ACT.write(ch_1_servo_angle);
-  // R_WING_ACT.write(ch_2_servo_angle);
+  update_servos(RX_CH1, RX_CH2);
 
   t_delta = micros() - t_start;
   if (t_delta > 0)
@@ -1024,24 +1038,28 @@ void loop()
 
   // print_serial_buffer(buffer_serial_out);
 
-  Serial.print(pitch_a);
-  Serial.print(",");
-  Serial.print(roll_a);
-  Serial.print(",");
-  Serial.print(pitch);
-  Serial.print(",");
-  Serial.print(roll);
-  Serial.print(",");
-  Serial.print(pitchError);
-  Serial.print(",");
-  Serial.println(rollError);
+  // Serial.print(pitch_a);
+  // Serial.print(",");
+  // Serial.print(roll_a);
+  // Serial.print(",");
+  // Serial.print(pitch);
+  // Serial.print(",");
+  // Serial.print(roll);
+  // Serial.print(",");
+  // Serial.print(pitchError);
+  // Serial.print(",");
+  // Serial.println(rollError);
 
-  // Serial.print(RX_CH1_PIN.getPulseRaw());
+  // Serial.print(RX_CH1.ANGLE - 90);
   // Serial.print(",");
-  // Serial.print(RX_CH2_PIN.getPulseRaw());
+  // Serial.print(RX_CH2.ANGLE - 90);
   // Serial.print(",");
-  // Serial.print(RX_CH3_PIN.getPulseRaw());
-  // Serial.print(",");
-  // Serial.println(sample_rate);
-
+  // Serial.print(RX_CH3.PWM_RAW);
+  Serial.print(altitude);
+  Serial.print(",");
+  Serial.print(pressure);
+  Serial.print(",");
+  Serial.print(temp_baro);
+  Serial.print(",");
+  Serial.println(sample_rate);
 }
