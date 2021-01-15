@@ -22,12 +22,12 @@
 #define IMU_SS 5
 #define BARO_SS 4
 
-// Actuator COnfiguration
-const int servo1Pin = 13;
-const int servo2Pin = 12;
 #define USE_PWM_RX
+
+// Actuator COnfiguration
 #define L_W_SERVO 13
 #define R_W_SERVO 12
+
 #define MAX_SERVO_ANGLE 120
 #define MIN_SERVO_ANGLE 60
 #define MAX_SERVO_PWM 2000

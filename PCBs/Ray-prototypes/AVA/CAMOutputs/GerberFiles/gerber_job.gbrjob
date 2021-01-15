@@ -1,7 +1,7 @@
 {
     "Header": {
         "Comment": "All values are metric (mm)",
-        "CreationDate": "2020-12-12T13:45:54Z",
+        "CreationDate": "2021-01-15T11:08:02Z",
         "GenerationSoftware": {
             "Application": "EAGLE",
             "Vendor": "Autodesk",
@@ -13,7 +13,7 @@
         "BoardThickness": 1.57,
         "LayerNumber": 2,
         "Name": {
-            "ProjectId": "Schematic-ESP32 v5"
+            "ProjectId": "Schematic-ESP32 v35"
         },
         "Owner": "raymondbello11 raymondbello11 <raymondbello11@gmail.com>",
         "Size": {
