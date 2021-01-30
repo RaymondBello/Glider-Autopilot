@@ -11,6 +11,7 @@ from pyqtgraph.Qt import QtCore, QtGui
 from PyQt5.QtWidgets import QPushButton
 import pyqtgraph.opengl as gl
 import numpy as np
+from math import *
 import time
 import sys
 import json
@@ -22,7 +23,10 @@ class GCS_Plotter:
     background_color = (36, 37, 41)
     aspect_ratio_locked = True
 
-    use_TCP = False
+    build_mode = None
+    debug_mode = False
+    tcp_mode = False
+    serial_mode = False
 
     # State Constants
     ABORT_state = 0
@@ -42,9 +46,20 @@ class GCS_Plotter:
     ButtonStyle_green = "background-color:rgb(0, 155, 0);color:rgb(0,0,0);font-size:26px;font-weight:bold"
     ButtonStyle_yellow = "background-color:rgb(255, 255, 0);color:rgb(0,0,0);font-size:26px;font-weight:bold"
 
-    data1 = [0] * 200
-    data2 = [0] * 200
-    data3 = [0] * 200
+    # Top Row Draw Buffers 
+    data1_0 = [0] * 200
+    data1_1 = [0] * 200
+    data1_2 = [0] * 200
+    
+    data2_0 = [0] * 200
+    data2_1 = [0] * 200
+    data2_2 = [0] * 200
+    
+    data3_0 = [0] * 200
+    data3_1 = [0] * 200
+    data3_2 = [0] * 200    
+    
+    counter = 0
 
     def __init__(self):
         self.system_state_pool = (0, 1, 2, 3, 4, 5, 6)
@@ -55,7 +70,7 @@ class GCS_Plotter:
         self.serial_data = [1] * 19
         self.count = 0
 
-        if self.use_TCP:
+        if self.tcp_mode:
             try:
                 print("[SET-UP] : Setting up TCP connection")
                 self.ws_socket = WS_Manager()
@@ -139,34 +154,78 @@ class GCS_Plotter:
         self.topSection.addItem(self.proxy5)
 
         self.win.nextRow()
-
+        
+        # p2 = win.addPlot(title="Multiple curves")
+        # p2.plot(np.random.normal(size=100), pen=(255,0,0), name="Red curve")
+        # p2.plot(np.random.normal(size=110)+5, pen=(0,255,0), name="Green curve")
+        # p2.plot(np.random.normal(size=120)+10, pen=(0,0,255), name="Blue curve")
+        
         ''' Accelerometer Row '''
-        self.graph1 = self.win.addPlot(title="Accelerometer X")
-        self.graph2 = self.win.addPlot(title="Accelerometer Y")
-        self.graph3 = self.win.addPlot(title="Accelerometer Z")
-        # self.graph1.addLegend(offset=(1, 1))
+        self.graph1 = self.win.addPlot(title="Accelerometer")
+        self.graph2 = self.win.addPlot(title="Gyroscope")
+        self.graph3 = self.win.addPlot(title="Magnetometer")
+        self.graph1.addLegend(offset=(1, 1))
         # self.graph2.addLegend(offset=(1, 1))
         # self.graph3.addLegend(offset=(1, 1))
+        
+        # Accelerometer
         self.graph1_curve = self.graph1.plot(
-            self.data1,
+            self.data1_0,
             pen=(150, 0, 0),
-            name="ax (m/s^2)",
+            name="x",
             labels={
                 "left": self.graph1.setLabel("left", text="Acceleration ", units="m/s^2"),
                 # "bottom": self.graph1.setLabel("bottom", text="Time", units="s"),
             },
         )
-        self.graph2_curve = self.graph2.plot(
-            self.data2,
+        self.graph1_curve1 = self.graph1.plot(
+            self.data1_1,
             pen=(0, 150, 0),
-            name="Accel_Y",
-            # labels={"bottom": self.graph2.setLabel("bottom", text="Time", units="s"),},
+            name="y",
         )
-        self.graph3_curve = self.graph3.plot(
-            self.data3,
+        self.graph1_curve2 = self.graph1.plot(
+            self.data1_2,
             pen=(0, 0, 150),
-            name="Accel_Z",
+            name="z",
+        )
+       
+        # Gyroscope
+        self.graph2_curve = self.graph2.plot(
+            self.data2_0,
+            pen=(150, 0, 0),
+            name="Gx",
+            labels={
+                # "left": self.graph2.setLabel("left", text="Angular Accel ", units="rad/s2"),
+                # "bottom": self.graph1.setLabel("bottom", text="Time", units="s"),
+            },
+        )
+        self.graph2_curve1 = self.graph2.plot(
+            self.data2_1,
+            pen=(0,150,0),
+            name="Gy"
+        )
+        self.graph2_curve2 = self.graph2.plot(
+            self.data2_2,
+            pen=(0,0,150),
+            name="Gz"
+        )
+        
+        # Magnetometer
+        self.graph3_curve = self.graph3.plot(
+            self.data3_0,
+            pen=(150, 0, 0),
+            name="Mx",
             # labels={"bottom": graph3.setLabel("bottom", text="Time", units="s"),},
+        )
+        self.graph3_curve1 = self.graph3.plot(
+            self.data3_1,
+            pen=(0, 150, 0),
+            name = "My"
+        )
+        self.graph3_curve2 = self.graph3.plot(
+            self.data3_2,
+            pen=(0, 0, 150),
+            name = "Mz"
         )
         self.ptr1 = 0
 
@@ -191,9 +250,9 @@ class GCS_Plotter:
         self.win.nextRow()
 
         '''Gyroscope Row'''
-        self.graph4 = self.win.addPlot(title="Gyroscope X")
-        self.graph5 = self.win.addPlot(title="Gyroscope Y")
-        self.graph6 = self.win.addPlot(title="Gyroscope Z")
+        self.graph4 = self.win.addPlot(title="Pitch")
+        self.graph5 = self.win.addPlot(title="Roll")
+        self.graph6 = self.win.addPlot(title="Heading")
         # Used automatic downsampling and clipping to reduce the drawing load
         self.graph4.setDownsampling(mode="peak")
         self.graph5.setDownsampling(mode="peak")
@@ -201,33 +260,54 @@ class GCS_Plotter:
         self.graph4.setClipToView(True)
         self.graph5.setClipToView(True)
         self.graph6.setClipToView(True)
+        
+        self.graph4.addLegend(offset=(1, 1))
+        
         self.graph4.setRange(xRange=[-200, 0])
         self.graph4.setLimits(xMax=0)
         self.graph4_curve = self.graph4.plot(
-            pen=(150, 0, 0),
-            name="Gyro_X",
+            pen=(150, 150, 75),
+            name="Actual",
             labels={
-                "left": self.graph4.setLabel("left", text="Angular Velocity", units="°/s"),
+                "left": self.graph4.setLabel("left", text="Angle", units="°"),
                 # "bottom": self.graph4.setLabel("bottom", text="Time", units="s"),
             },
         )
+        self.graph4_curve1 = self.graph4.plot(
+            pen=(150, 0, 0),
+            name="Setpoint",
+        )
+        
         self.graph5.setRange(xRange=[-200, 0])
         self.graph5.setLimits(xMax=0)
         self.graph5_curve = self.graph5.plot(
-            pen=(0, 150, 0),
-            name="Gyro_Y",
+            pen=(150, 150, 75),
+            name="Act",
             # labels={"bottom": self.graph5.setLabel("bottom", text="Time", units="s"),},
         )
+        self.graph5_curve1 = self.graph5.plot(
+            pen=(150, 0, 0),
+            name="Setpoint",
+        )
+        
         self.graph6.setRange(xRange=[-200, 0])
         self.graph6.setLimits(xMax=0)
         self.graph6_curve = self.graph6.plot(
-            pen=(0, 0, 150),
-            name="Gyro_Z",
+            pen=(150, 150, 75),
+            name="Act",
             # labels={"bottom": self.graph6.setLabel("bottom", text="Time", units="s"),},
         )
+        self.graph6_curve1 = self.graph6.plot(
+            pen=(150, 0, 0),
+            name="Setpoint",
+        )
+        
         self.data4 = np.empty(200)
+        self.data4_1 = np.empty(200)
         self.data5 = np.empty(200)
+        self.data5_1 = np.empty(200)
         self.data6 = np.empty(200)
+        self.data6_1 = np.empty(200)
         self.ptr2 = 0
 
         ''' Battery Text Item '''
@@ -253,9 +333,9 @@ class GCS_Plotter:
         self.win.nextRow()
 
         '''Magnetometer Row'''
-        self.graph8 = self.win.addPlot(title="Magnetometer X")
-        self.graph9 = self.win.addPlot(title="Magnetometer Y")
-        self.graph10 = self.win.addPlot(title="Magnetometer Z")
+        self.graph8 = self.win.addPlot(title="Ground Speed")
+        self.graph9 = self.win.addPlot(title="Climb Rate")
+        self.graph10 = self.win.addPlot(title="Altitude")
         self.graph8.setClipToView(True)
         self.graph9.setClipToView(True)
         self.graph10.setClipToView(True)
@@ -264,9 +344,9 @@ class GCS_Plotter:
         self.graph8.setLimits(xMax=0)
         self.graph8_curve = self.graph8.plot(
             pen=(150, 0, 0),
-            name="Mag_X",
+            name="Vel",
             labels={
-                "left": self.graph8.setLabel("left", text="Magnetic Field Strength", units="μT"),
+                "left": self.graph8.setLabel("left", text="Velocity", units="m/s"),
                 # "bottom": self.graph8.setLabel("bottom", text="Time", units="s"),
             },
         )
@@ -282,7 +362,7 @@ class GCS_Plotter:
         self.graph10_curve = self.graph10.plot(
             pen=(0, 0, 150),
             name="Mag_Z",
-            # labels={"bottom": self.graph10.setLabel("bottom", text="Time", units="s"),},
+            labels={"left": self.graph10.setLabel("left", text="Meters", units="m"),},
         )
         self.data8 = np.empty(200)
         self.data9 = np.empty(200)
@@ -354,52 +434,102 @@ class GCS_Plotter:
 
         self.win.nextCol()
 
-    def update_row_accel(self, acc_values):
+    def update_acc_gyro_mag(self, row_values):
         """Update graph-> shifts data in the array one sample left, appends new value"""
-        self.shift_array(self.data1)
-        self.shift_array(self.data2)
-        self.shift_array(self.data3)
+        self.shift_array(self.data1_0)
+        self.shift_array(self.data1_1)
+        self.shift_array(self.data1_2)
+        self.shift_array(self.data2_0)
+        self.shift_array(self.data2_1)
+        self.shift_array(self.data2_2)
+        self.shift_array(self.data3_0)
+        self.shift_array(self.data3_1)
+        self.shift_array(self.data3_2)
 
         if self.ptr1 < self.random_plot_step:
-            self.data1[-1] = np.random.normal()
-            self.data2[-1] = np.random.normal()
-            self.data3[-1] = np.random.normal()
+            self.data1_0[-1] = np.random.normal()
+            self.data1_1[-1] = np.random.normal()
+            self.data1_2[-1] = np.random.normal()
+            self.data2_0[-1] = np.random.normal()
+            self.data2_1[-1] = np.random.normal()
+            self.data2_2[-1] = np.random.normal()
+            self.data3_0[-1] = np.random.normal()
+            self.data3_1[-1] = np.random.normal()
+            self.data3_2[-1] = np.random.normal()
         else:
-            if len(acc_values) == 3:
+            if len(row_values) == 9:
                 try:
-                    data1_value = round(float(acc_values[0]), 3)
-                    data2_value = round(float(acc_values[1]), 3)
-                    data3_value = round(float(acc_values[2]), 3)
+                    data1_0_value = round(float(row_values[0]), 3)
+                    data1_1_value = round(float(row_values[1]), 3)
+                    data1_2_value = round(float(row_values[2]), 3)
+                    data2_0_value = round(float(row_values[3]), 3)
+                    data2_1_value = round(float(row_values[4]), 3)
+                    data2_2_value = round(float(row_values[5]), 3)
+                    data3_0_value = round(float(row_values[6]), 3)
+                    data3_1_value = round(float(row_values[7]), 3)
+                    data3_2_value = round(float(row_values[8]), 3)
 
-                    self.data1[-1] = data1_value
-                    self.data2[-1] = data2_value
-                    self.data3[-1] = data3_value
+                    self.data1_0[-1] = data1_0_value
+                    self.data1_1[-1] = data1_1_value
+                    self.data1_2[-1] = data1_2_value
+                    self.data2_0[-1] = data2_0_value
+                    self.data2_1[-1] = data2_1_value
+                    self.data2_2[-1] = data2_2_value
+                    self.data3_0[-1] = data3_0_value
+                    self.data3_1[-1] = data3_1_value
+                    self.data3_2[-1] = data3_2_value
                 except ValueError as error:
                     print(f"[VALUE ERROR]: {error}")
         
-        self.ptr1 += 1
-        self.graph1_curve.setData(self.data1)
-        self.graph1_curve.setPos(self.ptr1, 0)
-        self.graph2_curve.setData(self.data2)
-        self.graph2_curve.setPos(self.ptr1, 0)
-        self.graph3_curve.setData(self.data3)
-        self.graph3_curve.setPos(self.ptr1, 0)
+        
 
-    def update_row_gyro(self, gyro_values):
+        self.ptr1 += 1
+        self.graph1_curve.setData(self.data1_0)
+        self.graph1_curve.setPos(self.ptr1, 0)
+        self.graph1_curve1.setData(self.data1_1)
+        self.graph1_curve1.setPos(self.ptr1, 0)
+        self.graph1_curve2.setData(self.data1_2)
+        self.graph1_curve2.setPos(self.ptr1, 0)
+        
+        self.graph2_curve.setData(self.data2_0)
+        self.graph2_curve.setPos(self.ptr1, 0)
+        self.graph2_curve1.setData(self.data2_1)
+        self.graph2_curve1.setPos(self.ptr1, 0)
+        self.graph2_curve2.setData(self.data2_2)
+        self.graph2_curve2.setPos(self.ptr1, 0)
+        
+        self.graph3_curve.setData(self.data3_0)
+        self.graph3_curve.setPos(self.ptr1, 0)
+        self.graph3_curve1.setData(self.data3_1)
+        self.graph3_curve1.setPos(self.ptr1, 0)
+        self.graph3_curve2.setData(self.data3_2)
+        self.graph3_curve2.setPos(self.ptr1, 0)
+
+    def update_pitch_roll_yaw(self, gyro_values):
         if self.ptr2 < self.random_plot_step:
             self.data4[self.ptr2] = np.random.normal()
+            self.data4_1[self.ptr2] = np.random.normal()
             self.data5[self.ptr2] = np.random.normal()
+            self.data5_1[self.ptr2] = np.random.normal()
             self.data6[self.ptr2] = np.random.normal()
+            self.data6_1[self.ptr2] = np.random.normal()
+            
         else:
-            if len(gyro_values) == 3:
+            if len(gyro_values) == 6:
                 try:
                     data4_value = round(float(gyro_values[0]), 3)
+                    data4_1_value = round(float(gyro_values[1]), 3)
                     data5_value = round(float(gyro_values[1]), 3)
-                    data6_value = round(float(gyro_values[2]), 3)
+                    data5_1_value = round(float(gyro_values[2]), 3)
+                    data6_value = round(float(gyro_values[1]), 3)
+                    data6_1_value = round(float(gyro_values[2]), 3)
 
                     self.data4[self.ptr2] = data4_value  # round(float(gyro_values[0]), 3)
+                    self.data4_1[self.ptr2] = data4_1_value
                     self.data5[self.ptr2] = data5_value
+                    self.data5_1[self.ptr2] = data5_1_value
                     self.data6[self.ptr2] = data6_value
+                    self.data6_1[self.ptr2] = data6_1_value
                 except ValueError as error:
                     print(f"[VALUE ERROR]: {error}")
 
@@ -407,24 +537,39 @@ class GCS_Plotter:
 
         if self.ptr2 >= self.data4.shape[0]:
             tmp1 = self.data4
+            tmp1_1 = self.data4_1
             tmp2 = self.data5
+            tmp2_1 = self.data5_1
             tmp3 = self.data6
+            tmp3_1 = self.data6_1
 
             self.data4 = np.empty(self.data4.shape[0] * 2)
+            self.data4_1 = np.empty(self.data4_1.shape[0] * 2)
             self.data5 = np.empty(self.data5.shape[0] * 2)
+            self.data5_1 = np.empty(self.data5_1.shape[0] * 2)
             self.data6 = np.empty(self.data6.shape[0] * 2)
+            self.data6_1 = np.empty(self.data6_1.shape[0] * 2)
 
             self.data4[: tmp1.shape[0]] = tmp1
+            self.data4_1[: tmp1_1.shape[0]] = tmp1_1
             self.data5[: tmp2.shape[0]] = tmp2
+            self.data5_1[: tmp2_1.shape[0]] = tmp2_1
             self.data6[: tmp3.shape[0]] = tmp3
+            self.data6_1[: tmp3_1.shape[0]] = tmp3_1
 
         self.graph4_curve.setData(self.data4[:self.ptr2])
+        self.graph4_curve1.setData(self.data4_1[:self.ptr2])
         self.graph5_curve.setData(self.data5[:self.ptr2])
+        self.graph5_curve1.setData(self.data5_1[:self.ptr2])
         self.graph6_curve.setData(self.data6[:self.ptr2])
+        self.graph6_curve1.setData(self.data6_1[:self.ptr2])
 
         self.graph4_curve.setPos(-self.ptr2, 0)
+        self.graph4_curve1.setPos(-self.ptr2, 0)
         self.graph5_curve.setPos(-self.ptr2, 0)
+        self.graph5_curve1.setPos(-self.ptr2, 0)
         self.graph6_curve.setPos(-self.ptr2, 0)
+        self.graph6_curve1.setPos(-self.ptr2, 0)
 
     def update_pressure(self, pressure):
         self.PressureGraphic.removeItem(self.texttoPressure)
@@ -619,7 +764,7 @@ class GCS_Plotter:
     def abort_state(self):
         '''abort function'''
         self.current_state = int(not bool(self.current_state))
-        if self.use_TCP:
+        if self.tcp_mode:
             self.raw_data = self.tcp_handleshack("STATE", self.current_state)
     
     def idle_state(self):
@@ -650,11 +795,46 @@ class GCS_Plotter:
     
     def return_home_state(self):
         pass
+    
+    def generate_data(self, data):
+        """Generates sin waves to be displayed for UI debugging and developmentpython -m pyqtgraph.examples
+        available only in DEBUG MODE (self.build_mode = 0)
+
+        Args:
+            data (list): Array of data shared by all the graphs
+
+        Returns:
+            list: Array of sin waves with varying phase and polarity
+        """
+        self.counter = self.counter if self.counter < 360 else 0
+        self.counter += 1
+        
+        
+        
+        return [sin(self.counter + (idx*90 if bool(idx%2) else -idx*90)) for idx, val in enumerate(self.serial_data)]
+        
 
     @classmethod
-    def from_flags(cls):
-        '''Class constructor using arguments'''
-        cls.use_TCP = True if sys.argv[-1].lower() in ["true", "t"] else False
+    def from_argv(cls):
+        """Class constructor using arguments
+        
+        Build-Mode Arguments:
+            0 : Run in debug mode. Uses random data in all graphs
+            1 : Run in TCP Websocket mode
+            2 : Run in Serial mode
+
+        Returns:
+            cls(): Returns a class initialized using sys.argv arguments
+        """
+        # Any valid argument is used as build mode specifier, If no valid argument, build mode defaults to debug
+        argv = (int(sys.argv[-1]) if int(sys.argv[-1]) < 3 else 0) if sys.argv[-1].isnumeric() else 0
+        
+        cls.build_mode = argv
+        
+        cls.debug_mode = True if cls.build_mode is 0 else False
+        cls.tcp_mode = True if cls.build_mode is 1 else False
+        cls.serial_mode = True if cls.build_mode is 2 else False
+        
         return cls()
 
     def start(self):
@@ -666,16 +846,24 @@ class GCS_Plotter:
         ''' Updates all UI data'''
         start = time.perf_counter()
 
-        if self.use_TCP:
+        # Depending on current build mode
+        if self.tcp_mode:
             self.serial_data = self.tcp_handleshack("STATE", self.current_state)
             self.serial_data = self.AVA_model.update(self.serial_data, self.current_state)
             self.udp_broadcast(self.serial_data)
-
+            
+        if self.debug_mode:
+            self.serial_data = self.generate_data(self.serial_data)
+            # print(test, len(test))
+            
+        if self.serial_mode:
+            print("Serial Mode")
+            
         self.update_state()
 
         if self.current_state in (self.IDLE_state, self.LOGGING_STATE, self.ORIGIN_STATE, self.TAKE_OFF_state):
-            self.update_row_accel(self.serial_data[0:3])
-            self.update_row_gyro(self.serial_data[3:6])
+            self.update_acc_gyro_mag(self.serial_data[0:9])
+            self.update_pitch_roll_yaw(self.serial_data[3:9])
             self.update_row_mag(self.serial_data[6:9])
             self.update_pressure(self.serial_data[13:14])
             self.update_altitude(self.serial_data[14:15])
@@ -695,9 +883,9 @@ class GCS_Plotter:
     def animation(self):
         timer = pg.QtCore.QTimer()
         timer.timeout.connect(self.update)
-        timer.start(10)
+        timer.start(5)
         self.start()
 
 if __name__ == "__main__":
-    Plot = GCS_Plotter.from_flags()
+    Plot = GCS_Plotter.from_argv()
     Plot.animation()

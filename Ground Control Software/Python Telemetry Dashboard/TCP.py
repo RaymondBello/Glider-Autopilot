@@ -1,5 +1,6 @@
 import websocket
 
+
 class WS_Manager:
     def __init__(self):
         self.targetIP = "192.168.0.31"
