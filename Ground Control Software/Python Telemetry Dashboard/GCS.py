@@ -855,7 +855,7 @@ class GCS_Plotter:
         self.counter = self.counter if self.counter < 360 else 0
         self.counter += 1
         
-        return [sin(self.counter + (idx*180 if bool(idx%2) else -idx*90)) for idx, val in enumerate(self.serial_data)]
+        return [2*sin(self.counter + (idx*180 if bool(idx%2) else -idx*90) ) for idx, val in enumerate(self.serial_data)]
         
 
     @classmethod
