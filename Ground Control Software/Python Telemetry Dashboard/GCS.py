@@ -246,10 +246,20 @@ class GCS_Plotter:
         self.texttoPitch = pg.TextItem("0.0°", anchor=(0.5, 0.5), color='w')
         self.texttoPitch.setFont(self.font3)
         self.PitchGraphic.addItem(self.texttoPitch)
+        
+        ''' RX Data Text Item'''
+        self.RXDataGraphic = self.win.addPlot(title="Receiver Data ",colspan=1, rowspan=2)
+        self.RXDataGraphic.setRange(QtCore.QRectF(-50, -50, 100, 100))
+        self.RXDataGraphic.hideAxis('bottom')
+        self.RXDataGraphic.hideAxis('left')
+        self.texttoRX = pg.TextItem("null", anchor=(0.5, 0.5), color='w')
+        self.texttoRX.setFont(self.font3)
+        self.RXDataGraphic.addItem(self.texttoRX)
+        
 
         self.win.nextRow()
 
-        '''Gyroscope Row'''
+        '''Pitch Roll Heading Row'''
         self.graph4 = self.win.addPlot(title="Pitch")
         self.graph5 = self.win.addPlot(title="Roll")
         self.graph6 = self.win.addPlot(title="Heading")
@@ -387,6 +397,15 @@ class GCS_Plotter:
         self.texttoHeading = pg.TextItem("0.0°", anchor=(0.5, 0.5), color='w')
         self.texttoHeading.setFont(self.font3)
         self.HeadingGraphic.addItem(self.texttoHeading)
+        
+        ''' Actuator Data Text Item'''
+        self.ACTDataGraphic = self.win.addPlot(title="Actuator Data ",colspan=1, rowspan=2)
+        self.ACTDataGraphic.setRange(QtCore.QRectF(-50, -50, 100, 100))
+        self.ACTDataGraphic.hideAxis('bottom')
+        self.ACTDataGraphic.hideAxis('left')
+        self.texttoACT = pg.TextItem("null", anchor=(0.5, 0.5), color='w')
+        self.texttoACT.setFont(self.font3)
+        self.ACTDataGraphic.addItem(self.texttoACT)
 
         self.win.nextRow()
 
@@ -505,7 +524,7 @@ class GCS_Plotter:
         self.graph3_curve2.setData(self.data3_2)
         self.graph3_curve2.setPos(self.ptr1, 0)
 
-    def update_pitch_roll_yaw(self, gyro_values):
+    def update_pitch_roll_yaw(self, pry_values):
         if self.ptr2 < self.random_plot_step:
             self.data4[self.ptr2] = np.random.normal()
             self.data4_1[self.ptr2] = np.random.normal()
@@ -515,16 +534,16 @@ class GCS_Plotter:
             self.data6_1[self.ptr2] = np.random.normal()
             
         else:
-            if len(gyro_values) == 6:
+            if len(pry_values) == 6:
                 try:
-                    data4_value = round(float(gyro_values[0]), 3)
-                    data4_1_value = round(float(gyro_values[1]), 3)
-                    data5_value = round(float(gyro_values[1]), 3)
-                    data5_1_value = round(float(gyro_values[2]), 3)
-                    data6_value = round(float(gyro_values[1]), 3)
-                    data6_1_value = round(float(gyro_values[2]), 3)
+                    data4_value = round(float(pry_values[0]), 3)
+                    data4_1_value = round(float(pry_values[1]), 3)
+                    data5_value = round(float(pry_values[2]), 3)
+                    data5_1_value = round(float(pry_values[3]), 3)
+                    data6_value = round(float(pry_values[4]), 3)
+                    data6_1_value = round(float(pry_values[5]), 3)
 
-                    self.data4[self.ptr2] = data4_value  # round(float(gyro_values[0]), 3)
+                    self.data4[self.ptr2] = data4_value  # round(float(pry_values[0]), 3)
                     self.data4_1[self.ptr2] = data4_1_value
                     self.data5[self.ptr2] = data5_value
                     self.data5_1[self.ptr2] = data5_1_value
@@ -571,13 +590,14 @@ class GCS_Plotter:
         self.graph6_curve.setPos(-self.ptr2, 0)
         self.graph6_curve1.setPos(-self.ptr2, 0)
 
+    
     def update_pressure(self, pressure):
         self.PressureGraphic.removeItem(self.texttoPressure)
         self.texttoPressure = pg.TextItem(f"{str(round(float(pressure[0]),1))} Pa", anchor=(0.5, 0.5), color='w')
         self.texttoPressure.setFont(self.font3)
         self.PressureGraphic.addItem(self.texttoPressure)
     
-    def update_row_mag(self, mag_values):
+    def update_vel_climb_alt(self, mag_values):
         if self.ptr4 < self.random_plot_step:
             self.data8[self.ptr4] = np.random.normal()
             self.data9[self.ptr4] = np.random.normal()
@@ -672,14 +692,40 @@ class GCS_Plotter:
     @staticmethod
     def GPS_text_template(values: list):
         gps_temp = f"Lat: {values[0]}\tLng: {values[1]}\n# of Sat: {values[2]}\tSignal Str: {82}%\nAlt: {102} m\tSpeed: {0.8} m/s\nHeading: {310}°\tUpdated: {5} secs ago"
-
         return pg.TextItem(gps_temp,anchor=(0.5, 0.5), color='w')
+    
+    @staticmethod
+    def RX_text_template(values:list):
+        values = [i*1000 for i in values] # REMOVE THIS LINE
+        
+        rx_temp = f"RX_CH1: {round(int(values[2]),0)}\nRX_CH2: {round(int(values[2]),0)}\nRX_CH3: {round(int(values[2]),0)}\nRX_CH4: {round(int(values[2]),0)}\nRX_CH5: {round(int(values[2]),0)}\nRX_CH6: {round(int(values[2]),0)}\nRX_CH7: {round(int(values[2]),0)}\nRX_CH8: {round(int(values[2]),0)}\nRX_CH9: {round(int(values[2]),0)}\nRX_CH10: {round(int(values[2]),0)}"
+        return pg.TextItem(rx_temp,anchor=(0.5, 0.5), color='w')
+    
+    @staticmethod
+    def ACT_text_template(values: list):
+        values = [i*1000 for i in values] # REMOVE THIS LINE
+        
+        act_temp = f"ACT_CH1: {round(int(values[2]),0)}\nACT_CH2: {round(int(values[2]),0)}\nACT_CH3: {round(int(values[2]),0)}\nACT_CH4: {round(int(values[2]),0)}\nACT_CH5: {round(int(values[2]),0)}\nAIL: {round(int(values[2]),0)}°\nELE: {round(int(values[2]),0)}°\nRUD: {round(int(values[2]),0)}°\nTHR: {round(int(values[2]),0)}%\n"
+        return pg.TextItem(act_temp,anchor=(0.5, 0.5), color='w')
+        
     
     def update_gps(self, gps_values):
         self.GPSDataGraphic.removeItem(self.texttoGPS)
         self.texttoGPS = self.GPS_text_template(gps_values)
         self.texttoGPS.setFont(self.font_gps)
         self.GPSDataGraphic.addItem(self.texttoGPS)
+    
+    def update_rx(self, rx_values):
+        self.RXDataGraphic.removeItem(self.texttoRX)
+        self.texttoRX = self.RX_text_template(rx_values)
+        self.texttoRX.setFont(self.font_gps)
+        self.RXDataGraphic.addItem(self.texttoRX)
+    
+    def update_actuator(self, act_values):
+        self.ACTDataGraphic.removeItem(self.texttoACT)
+        self.texttoACT = self.ACT_text_template(act_values)
+        self.texttoACT.setFont(self.font_gps)
+        self.ACTDataGraphic.addItem(self.texttoACT)
 
     def update_battery(self,bat_val):
         self.BatteryGraphic.removeItem(self.texttoBattery)
@@ -809,9 +855,7 @@ class GCS_Plotter:
         self.counter = self.counter if self.counter < 360 else 0
         self.counter += 1
         
-        
-        
-        return [sin(self.counter + (idx*90 if bool(idx%2) else -idx*90)) for idx, val in enumerate(self.serial_data)]
+        return [sin(self.counter + (idx*180 if bool(idx%2) else -idx*90)) for idx, val in enumerate(self.serial_data)]
         
 
     @classmethod
@@ -861,18 +905,21 @@ class GCS_Plotter:
             
         self.update_state()
 
-        if self.current_state in (self.IDLE_state, self.LOGGING_STATE, self.ORIGIN_STATE, self.TAKE_OFF_state):
+        if self.current_state in [self.IDLE_state, self.LOGGING_STATE, self.ORIGIN_STATE, self.TAKE_OFF_state]:
             self.update_acc_gyro_mag(self.serial_data[0:9])
             self.update_pitch_roll_yaw(self.serial_data[3:9])
-            self.update_row_mag(self.serial_data[6:9])
+            # self.update_rx_act(self.serial_data[3:9])
+            self.update_vel_climb_alt(self.serial_data[6:9])
             self.update_pressure(self.serial_data[13:14])
             self.update_altitude(self.serial_data[14:15])
             self.update_row_temp(self.serial_data[0:1])
             self.update_time()
             self.update_gps([45.4534, 72.3424, 5])
+            self.update_rx(self.serial_data[3:9])
+            self.update_actuator(self.serial_data[3:9])
             self.update_battery(12)
             self.write_data_to_JSON(self.serial_data)
-        else:
+        if self.current_state in [self.ABORT_state]:
             self.update_time()
             self.update_gps([45.4534, 72.3424, 5])
             self.update_battery(12)
