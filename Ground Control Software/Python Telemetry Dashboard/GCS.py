@@ -15,9 +15,17 @@ from math import *
 import time
 import sys
 import json
+import serial
 
 class GCS_Plotter:
     '''This is the base class for the Ground Control Station Plotter'''
+    
+    v_serial = 0
+    try:
+        virtual_serial = serial.Serial('COM2')
+        v_serial = 1
+    except Exception as error :
+        print(error)
 
     title = "Ground Control Station"
     background_color = (36, 37, 41)
@@ -886,6 +894,19 @@ class GCS_Plotter:
         if (sys.flags.interactive != 1) or not hasattr(QtCore, "PYQT_VERSION"):
             QtGui.QApplication.instance().exec_()
 
+    def send_to_serial(self):
+        if self.v_serial:
+            data_string = ""
+            
+            for idx,val in enumerate(self.serial_data):
+                data_string += str(val)
+                if idx == len(self.serial_data)-1:
+                    data_string += "\n"
+                else:
+                    data_string += ","
+                    
+            self.virtual_serial.write(data_string.encode('utf-8'))
+        
     def update(self):
         ''' Updates all UI data'''
         start = time.perf_counter()
@@ -926,6 +947,9 @@ class GCS_Plotter:
 
         finish = time.perf_counter()
         # print(f"[GRAPH] Update Rate: {round(time.perf_counter()-start,5)} seconds ")
+        
+        '''Edit this'''
+        # self.send_to_serial()
 
     def animation(self):
         timer = pg.QtCore.QTimer()
