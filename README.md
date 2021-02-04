@@ -9,7 +9,8 @@ Such as the GCS (Ground Control System)```GCS.py``` used to debug/test along wit
 (Primary Flight Display)```PFD.py``` used to plan flight waypoints as well as monitor the gliders attitude in real-time
 
 ## Hardware Used
-1. ESP-32-WROOM-32 - MCU (@ 240MHz)
+1. Teensy 4.1 - Main MCU @ 600Mhz
+1. ESP-32-WROOM-32 - Communication MCU @ 240MHz
 2. MPU-9250 - IMU (Accelerometer, Gyroscope & Magnetometer) for attitude estimation
 3. BMP-280 - Barometric Pressure & Altitude Sensor 
 4. BN-220 - GPS Module (U-Blox M8030-KT) [GLONASS format]
