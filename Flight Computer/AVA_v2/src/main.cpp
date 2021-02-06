@@ -1,14 +1,27 @@
-#include <Arduino.h>
+/******** Libraries **********/
+#include <MPU9250.h>
+#include <Adafruit_BMP280.h>
+#include <TinyGPS++.h>
+#include <Servo.h>
+#include <ServoInput.h>
+
+/******* User-defined *******/
+#include "kalman_filter.h"
+#include "mcu_config.h"
+
 
 void setup()
 {
-  // initialize LED digital pin as an output.
-  pinMode(LED_BUILTIN, OUTPUT);
-}
+    // Setup Indicators
+    pinMode(LED_BUILTIN, OUTPUT);
 
+    // BUILTIN LED ON during Setup
+    digitalWrite(LED_BUILTIN, HIGH);
+}
 void loop()
 {
-  // turn the LED on (HIGH is the voltage level)
-  digitalWrite(LED_BUILTIN, HIGH);
-  Serial.print("TESTING TEENSY");
+    digitalWrite(LED_BUILTIN, LOW);
+    delay(1000);
+    digitalWrite(LED_BUILTIN, HIGH);
+    delay(1000);
 }
