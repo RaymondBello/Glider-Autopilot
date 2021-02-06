@@ -9,6 +9,11 @@
 #include "kalman_filter.h"
 #include "mcu_config.h"
 
+#define IMU_CS 5
+#define BARO_CS 4
+
+MPU9250 IMU(SPI, IMU_CS);
+Adafruit_BMP280 bmp(BARO_CS);
 
 void setup()
 {

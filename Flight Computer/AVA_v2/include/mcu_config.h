@@ -23,8 +23,8 @@
 #define LED_GREEN 33
 #define BUZZER_PIN 32
 
-#define IMU_SS 5
-#define BARO_SS 4
+#define IMU_CS 5
+#define BARO_CS 4
 
 // Actuator Configuration
 #define L_W_SERVO 13
