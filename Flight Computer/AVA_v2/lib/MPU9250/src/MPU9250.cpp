@@ -79,6 +79,7 @@ int MPU9250::begin(){
   }
   // check the WHO AM I byte, expected value is 0x71 (decimal 113) or 0x73 (decimal 115)
   if((whoAmI() != 113)&&(whoAmI() != 115)){
+    Serial.println(whoAmI());
     return -5;
   }
   // enable accelerometer and gyro
@@ -100,7 +101,7 @@ int MPU9250::begin(){
   // setting bandwidth to 184Hz as default
   if(writeRegister(ACCEL_CONFIG2,ACCEL_DLPF_184) < 0){ 
     return -9;
-  } 
+  }
   if(writeRegister(CONFIG,GYRO_DLPF_184) < 0){ // setting gyro bandwidth to 184Hz
     return -10;
   }
@@ -108,20 +109,21 @@ int MPU9250::begin(){
   // setting the sample rate divider to 0 as default
   if(writeRegister(SMPDIV,0x00) < 0){ 
     return -11;
-  } 
+  }
   _srd = 0;
   // enable I2C master mode
   if(writeRegister(USER_CTRL,I2C_MST_EN) < 0){
   	return -12;
   }
-	// set the I2C bus speed to 400 kHz
+  // set the I2C bus speed to 400 kHz
 	if( writeRegister(I2C_MST_CTRL,I2C_MST_CLK) < 0){
 		return -13;
 	}
-	// check AK8963 WHO AM I register, expected value is 0x48 (decimal 72)
+  // check AK8963 WHO AM I register, expected value is 0x48 (decimal 72)
 	if( whoAmIAK8963() != 72 ){
     return -14;
 	}
+  delay(100);
   /* get the magnetometer calibration */
   // set AK8963 to Power Down
   if(writeAK8963Register(AK8963_CNTL1,AK8963_PWR_DOWN) < 0){
@@ -154,6 +156,7 @@ int MPU9250::begin(){
   }       
   // instruct the MPU9250 to get 7 bytes of data from the AK8963 at the sample rate
   readAK8963Registers(AK8963_HXL,7,_buffer);
+  delay(100);
   // estimate gyro bias
   if (calibrateGyro() < 0) {
     return -20;

@@ -14,8 +14,9 @@
 //#define USE_PPM_RX
 //#define USE_SBUS_RX
 
-// #define USE_MPU6050_I2C
-#define USE_MPU9250_SPI // SPI to MPU-9250
+#define USE_MPU6050_I2C
+// #define USE_MPU9250_SPI // SPI to MPU-9250
+// #define USE_MPU9250_I2C
 
 #define GYRO_250DPS //default full scale range
 //#define GYRO_500DPS

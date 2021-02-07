@@ -3,7 +3,6 @@
 /*******************************************************************************/
 #include <Adafruit_BMP280.h>
 #include <TinyGPS++.h>
-#include <SPI.h>
 #include <ServoInput.h>
 #include <PWMServo.h>
 
@@ -18,14 +17,29 @@
 /*************************************************************************************************/
 /****************************************** Define Checks ***************************************/
 /************************************************************************************************/
-#if defined USE_MPU9250_SPI
+#if defined USE_MPU6050_I2C
+    #include <MPU6050.h>
+    MPU6050 mpu6050;
+#elif defined USE_MPU9250_SPI
     #include <MPU9250.h>
     MPU9250 mpu9250(SPI, MPU9250_SS);
-#else 
-    #error No MPU defined ...
+#elif defined USE_MPU9250_I2C
+    #include <MPU9250.h>
+    MPU9250 mpu9250(Wire,0x68);
+#else
+    #error No IMU Defined
 #endif
 
-#if defined USE_MPU9250_SPI
+#if defined USE_MPU6050_I2C
+  #define GYRO_FS_SEL_250    MPU6050_GYRO_FS_250
+  #define GYRO_FS_SEL_500    MPU6050_GYRO_FS_500
+  #define GYRO_FS_SEL_1000   MPU6050_GYRO_FS_1000
+  #define GYRO_FS_SEL_2000   MPU6050_GYRO_FS_2000
+  #define ACCEL_FS_SEL_2     MPU6050_ACCEL_FS_2
+  #define ACCEL_FS_SEL_4     MPU6050_ACCEL_FS_4
+  #define ACCEL_FS_SEL_8     MPU6050_ACCEL_FS_8
+  #define ACCEL_FS_SEL_16    MPU6050_ACCEL_FS_16
+#elif defined USE_MPU9250_SPI
     #define GYRO_FS_SEL_250 mpu9250.GYRO_RANGE_250DPS
     #define GYRO_FS_SEL_500 mpu9250.GYRO_RANGE_500DPS
     #define GYRO_FS_SEL_1000 mpu9250.GYRO_RANGE_1000DPS
@@ -1636,8 +1650,15 @@ void setup()
 
     Serial.begin(SERIAL_BAUD);
 
+    // SPI2.setMOSI(PIN_SPI_MOSI);
+    // SPI2.setMISO(PIN_SPI_MISO);
+    // SPI2.setSCK(PIN_SPI_SCK);
+
+    // pinMode(MPU9250_SS, OUTPUT);
+    // digitalWrite(MPU9250_SS, HIGH);
+
     //Initialize all pins
-    pinMode(LED_BUILTIN, OUTPUT); //pin 13 LED blinker on board, do not modify
+    // pinMode(LED_BUILTIN, OUTPUT); //pin 13 LED blinker on board, do not modify
     pinMode(m1Pin, OUTPUT);
     pinMode(m2Pin, OUTPUT);
     pinMode(m3Pin, OUTPUT);
@@ -1653,7 +1674,7 @@ void setup()
     servo7.attach(servo7Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
 
     //Set built in LED to turn on to signal startup & not to disturb vehicle during IMU calibration
-    digitalWrite(LED_BUILTIN, HIGH);
+    // digitalWrite(LED_BUILTIN, HIGH);
 
     Serial.println("Starting Radio setup");
     //Initialize radio communication
@@ -1673,7 +1694,6 @@ void setup()
 
     delay(10);
 
-    Serial.println("Starting IMU Error setup");
     //Get IMU error to zero accelerometer and gyro readings, assuming vehicle is level
     calculate_IMU_error();
 
@@ -1707,7 +1727,7 @@ void setup()
     calibrateAttitude(); //helps to warm up IMU and Madgwick filter before finally entering main loop
 
     //Indicate entering main loop with 3 quick blinks
-    setupBlink(3, 160, 70); //numBlinks, upTime (ms), downTime (ms)
+    // setupBlink(3, 160, 70); //numBlinks, upTime (ms), downTime (ms)
 
     //If using MPU9250 IMU, uncomment for one-time magnetometer calibration (may need to repeat for new locations)
     //calibrateMagnetometer(); //generates magnetometer error and scale factors
@@ -1724,13 +1744,13 @@ void loop()
     current_time = micros();
     dt = (current_time - prev_time) / 1000000.0;
 
-    loopBlink(); //indicate we are in main loop with short blink every 1.5 seconds
+    // loopBlink(); //indicate we are in main loop with short blink every 1.5 seconds
 
     //Print data at 100hz (uncomment one at a time for troubleshooting) - SELECT ONE:
     //printRadioData();     //radio pwm values (expected: 1000 to 2000)
     //printDesiredState();  //prints desired vehicle state commanded in either degrees or deg/sec (expected: +/- maxAXIS for roll, pitch, yaw; 0 to 1 for throttle)
-    //printGyroData();      //prints filtered gyro data direct from IMU (expected: ~ -250 to 250, 0 at rest)
-    //printAccelData();     //prints filtered accelerometer data direct from IMU (expected: ~ -2 to 2; x,y 0 when level, z 1 when level)
+    printGyroData();      //prints filtered gyro data direct from IMU (expected: ~ -250 to 250, 0 at rest)
+    // printAccelData();     //prints filtered accelerometer data direct from IMU (expected: ~ -2 to 2; x,y 0 when level, z 1 when level)
     //printMagData();       //prints filtered magnetometer data direct from IMU (expected: ~ -300 to 300)
     //printRollPitchYaw();  //prints roll, pitch, and yaw angles in degrees from Madgwick filter (expected: degrees, 0 when level)
     //printPIDoutput();     //prints computed stabilized PID variables from controller and desired setpoint (expected: ~ -1 to 1)
@@ -1772,5 +1792,5 @@ void loop()
     failSafe();    //prevent failures in event of bad receiver connection, defaults to failsafe values assigned in setup
 
     //Regulate loop rate
-    loopRate(2000); //do not exceed 2000Hz, all filter parameters tuned to 2000Hz by default
+    loopRate(500); //do not exceed 2000Hz, all filter parameters tuned to 2000Hz by default
 }
