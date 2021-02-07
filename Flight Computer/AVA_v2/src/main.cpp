@@ -1650,15 +1650,8 @@ void setup()
 
     Serial.begin(SERIAL_BAUD);
 
-    // SPI2.setMOSI(PIN_SPI_MOSI);
-    // SPI2.setMISO(PIN_SPI_MISO);
-    // SPI2.setSCK(PIN_SPI_SCK);
-
-    // pinMode(MPU9250_SS, OUTPUT);
-    // digitalWrite(MPU9250_SS, HIGH);
-
     //Initialize all pins
-    // pinMode(LED_BUILTIN, OUTPUT); //pin 13 LED blinker on board, do not modify
+    pinMode(LED_BUILTIN, OUTPUT); //pin 13 LED blinker on board, do not modify
     pinMode(m1Pin, OUTPUT);
     pinMode(m2Pin, OUTPUT);
     pinMode(m3Pin, OUTPUT);
@@ -1674,7 +1667,7 @@ void setup()
     servo7.attach(servo7Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
 
     //Set built in LED to turn on to signal startup & not to disturb vehicle during IMU calibration
-    // digitalWrite(LED_BUILTIN, HIGH);
+    digitalWrite(LED_BUILTIN, HIGH);
 
     Serial.println("Starting Radio setup");
     //Initialize radio communication
@@ -1727,7 +1720,7 @@ void setup()
     calibrateAttitude(); //helps to warm up IMU and Madgwick filter before finally entering main loop
 
     //Indicate entering main loop with 3 quick blinks
-    // setupBlink(3, 160, 70); //numBlinks, upTime (ms), downTime (ms)
+    setupBlink(3, 160, 70); //numBlinks, upTime (ms), downTime (ms)
 
     //If using MPU9250 IMU, uncomment for one-time magnetometer calibration (may need to repeat for new locations)
     //calibrateMagnetometer(); //generates magnetometer error and scale factors
