@@ -2,6 +2,18 @@
 #define KALMAN_FILTER_H
 
 double kalman_ax(double U);
+double kalman_ay(double U);
+double kalman_az(double U);
+double kalman_gx(double U);
+double kalman_gy(double U);
+double kalman_gz(double U);
+double kalman_mx(double U);
+double kalman_my(double U);
+double kalman_mz(double U);
+double kalman_compass(double U);
+double kalman_pitch(double U);
+double kalman_roll(double U);
+
 double kalman_ax(double U)
 {
     static const double R = 40;   // Noise Covariance (its actually 10)
@@ -22,7 +34,6 @@ double kalman_ax(double U)
     return U_hat;
 }
 
-double kalman_ay(double U);
 double kalman_ay(double U)
 {
     static const double R = 40;   // Noise Covariance (its actually 10)
@@ -43,7 +54,6 @@ double kalman_ay(double U)
     return U_hat;
 }
 
-double kalman_az(double U);
 double kalman_az(double U)
 {
     static const double R = 40;   // Noise Covariance (its actually 10)
@@ -64,7 +74,6 @@ double kalman_az(double U)
     return U_hat;
 }
 
-double kalman_gx(double U);
 double kalman_gx(double U)
 {
     static const double R = 40;   // Noise Covariance (its actually 10)
@@ -85,7 +94,6 @@ double kalman_gx(double U)
     return U_hat;
 }
 
-double kalman_gy(double U);
 double kalman_gy(double U)
 {
     static const double R = 40;   // Noise Covariance (its actually 10)
@@ -106,7 +114,6 @@ double kalman_gy(double U)
     return U_hat;
 }
 
-double kalman_gz(double U);
 double kalman_gz(double U)
 {
     static const double R = 40;   // Noise Covariance (its actually 10)
@@ -127,7 +134,6 @@ double kalman_gz(double U)
     return U_hat;
 }
 
-double kalman_mx(double U);
 double kalman_mx(double U)
 {
     static const double R = 40;   // Noise Covariance (its actually 10)
@@ -148,7 +154,6 @@ double kalman_mx(double U)
     return U_hat;
 }
 
-double kalman_my(double U);
 double kalman_my(double U)
 {
     static const double R = 40;   // Noise Covariance (its actually 10)
@@ -169,7 +174,6 @@ double kalman_my(double U)
     return U_hat;
 }
 
-double kalman_mz(double U);
 double kalman_mz(double U)
 {
     static const double R = 40;   // Noise Covariance (its actually 10)
@@ -190,7 +194,6 @@ double kalman_mz(double U)
     return U_hat;
 }
 
-double kalman_compass(double U);
 double kalman_compass(double U)
 {
     static const double R = 40;   // Noise Covariance (its actually 10)
@@ -211,7 +214,6 @@ double kalman_compass(double U)
     return U_hat;
 }
 
-double kalman_pitch(double U);
 double kalman_pitch(double U)
 {
     static const double R = 40;   // Noise Covariance (its actually 10)
@@ -232,7 +234,6 @@ double kalman_pitch(double U)
     return U_hat;
 }
 
-double kalman_roll(double U);
 double kalman_roll(double U)
 {
     static const double R = 40;   // Noise Covariance (its actually 10)

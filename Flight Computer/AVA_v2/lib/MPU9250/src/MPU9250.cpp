@@ -1102,3 +1102,32 @@ int MPU9250::whoAmIAK8963(){
   // return the register value
   return _buffer[0];
 }
+
+// jihlein additions start
+
+void MPU9250::getMotion6(int16_t *ax, int16_t *ay, int16_t *az, int16_t *gx, int16_t *gy, int16_t *gz)
+{
+  uint8_t buffer[14];
+  readRegisters(ACCEL_OUT, 14, buffer);
+  *ax = (((int16_t)buffer[0]) << 8) | buffer[1];
+  *ay = (((int16_t)buffer[2]) << 8) | buffer[3];
+  *az = (((int16_t)buffer[4]) << 8) | buffer[5];
+  *gx = (((int16_t)buffer[8]) << 8) | buffer[9];
+  *gy = (((int16_t)buffer[10]) << 8) | buffer[11];
+  *gz = (((int16_t)buffer[12]) << 8) | buffer[13];
+}
+
+void MPU9250::getMotion9(int16_t *ax, int16_t *ay, int16_t *az, int16_t *gx, int16_t *gy, int16_t *gz, int16_t *mx, int16_t *my, int16_t *mz)
+{
+  uint8_t buffer[20];
+  readRegisters(ACCEL_OUT, 20, buffer);
+  *ax = (((int16_t)buffer[0]) << 8) | buffer[1];
+  *ay = (((int16_t)buffer[2]) << 8) | buffer[3];
+  *az = (((int16_t)buffer[4]) << 8) | buffer[5];
+  *gx = (((int16_t)buffer[8]) << 8) | buffer[9];
+  *gy = (((int16_t)buffer[10]) << 8) | buffer[11];
+  *gz = (((int16_t)buffer[12]) << 8) | buffer[13];
+  *mx = (((int16_t)buffer[15]) << 8) | buffer[14];
+  *my = (((int16_t)buffer[17]) << 8) | buffer[16];
+  *mz = (((int16_t)buffer[19]) << 8) | buffer[18];
+}
