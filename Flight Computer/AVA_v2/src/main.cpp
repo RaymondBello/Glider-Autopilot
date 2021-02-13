@@ -2027,8 +2027,6 @@ void setup()
     servo6.attach(servo6Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
     servo7.attach(servo7Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
 
-    
-
     Serial.println("Starting Radio setup");
     //Initialize radio communication
     radioSetup();
