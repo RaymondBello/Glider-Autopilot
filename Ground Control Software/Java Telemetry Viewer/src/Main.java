@@ -23,6 +23,7 @@ public class Main {
 
 	static JFrame window = new JFrame("All-Vehicle Avionics Telemetry");
 	static LogitechSmoothScrolling mouse = new LogitechSmoothScrolling();
+	
 	/**
 	 * Entry point for the program.
 	 * This just creates and configures the main window.
@@ -41,7 +42,7 @@ public class Main {
 		window.add(SettingsView.instance,      BorderLayout.WEST);
 		window.add(CommunicationView.instance, BorderLayout.SOUTH);
 		window.add(ConfigureView.instance,     BorderLayout.EAST);
-		NotificationsController.showHintUntil("Start by connecting to a device or opening a file by using the buttons below.", () -> false, true);
+		NotificationsController.showHintUntil("Connect to a device or open a file using buttons below.", () -> false, true);
 		
 		// size the window
 		int settingsViewWidth = SettingsView.instance.getPreferredSize().width;

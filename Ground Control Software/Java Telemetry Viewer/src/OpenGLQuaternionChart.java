@@ -129,7 +129,7 @@ public class OpenGLQuaternionChart extends PositionedChart {
 		OpenGL.multiplyMatrix(modelMatrix, quatMatrix);
 		
 		// invert direction of x-axis
-		OpenGL.rotateMatrix(modelMatrix, 180, 1, 0, 0);
+		OpenGL.rotateMatrix(modelMatrix, 0, 1, 0, 0);
 		
 		// swap x and z axes
 		OpenGL.rotateMatrix(modelMatrix, 90, 0, 0, 1);
