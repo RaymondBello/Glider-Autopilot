@@ -18,22 +18,69 @@
 // #define USE_MPU9250_SPI // SPI to MPU-9250
 // #define USE_MPU9250_I2C
 
-#define GYRO_250DPS //default full scale range
+#define USE_BMP280_I2C // Barometric Pressure Sensor
+
+// #define GYRO_250DPS //default full scale range
 //#define GYRO_500DPS
 //#define GYRO_1000DPS
-//#define GYRO_2000DPS
+#define GYRO_2000DPS
 
 #define ACCEL_2G //default full scale range
 // #define ACCEL_4G
 //#define ACCEL_8G
 //#define ACCEL_16G
 
+/**************************************************************/
+/************* SERIAL PRINT-OUR DEFINES ***********************/
+/**************************************************************/
+
+/**
+ * @brief quaternion components in a [w, x, y, z] format (not best for parsing
+ * 
+ */
+// #define OUTPUT_READABLE_QUATERNION
+
+/**
+ * @brief (in degrees) calculated from the quaternions 
+ * coming from the FIFO.
+ */
+// #define OUTPUT_READABLE_EULER
+
+/**
+ * @brief pitch/roll angles (in degrees) calculated from the 
+ * quaternions coming from the FIFO. Note this also requires 
+ * gravity vector calculations.
+ */
+// #define OUTPUT_READABLE_YAWPITCHROLL
+
+/**
+ * @brief 
+ * components with gravity removed. This acceleration 
+ * reference frame is not compensated for orientation, so +X 
+ * is always +X according to thesensor, just without the 
+ * effects of gravity.
+ */
+// #define OUTPUT_READABLE_REALACCEL
+
+/**
+ * @brief acceleration components with gravity removed and adjusted for 
+ * the world frame of reference (yaw is relative to initial 
+ * orientation, since no magnetometer is present in this 
+ * case). Could be quite handy in some cases.
+ */
+// #define OUTPUT_READABLE_WORLDACCEL
+
+/**
+ * @brief format used for the InvenSense teapot demo
+ * 
+ */
+//#define OUTPUT_TEAPOT
 
 /**************************************************************/
 /************* PIN ASSIGNMENT AND FAILSAFES *******************/
 /**************************************************************/
-#define RXD2 16
-#define TXD2 17
+// #define RXD2 16
+// #define TXD2 17
 
 // State Indicator Devices
 // #define LED_BLUE 25
@@ -42,6 +89,9 @@
 
 #define MPU9250_SS 10
 #define BMP280_SS 4
+
+#define INTERRUPT_PIN 2
+#define LED_PIN LED_BUILTIN
 
 // Actuator Configuration
 #define MAX_SERVO_ANGLE 120
@@ -64,7 +114,7 @@
 // Motor Configuration
 #define M1_PIN 0
 #define M2_PIN 1
-#define M3_PIN 2
+#define M3_PIN 14
 #define M4_PIN 3
 #define M5_PIN 4
 #define M6_PIN 5
