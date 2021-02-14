@@ -103,37 +103,41 @@
 //NOTE: Pin 13 is reserved for onboard LED, pins 18 and 19 are reserved for the MPU6050 IMU for default setup
 //Radio:
 //Note: If using SBUS, connect to pin 21 (RX5)
-#define CH1_PIN 15
-#define CH2_PIN 16
-#define CH3_PIN 17
-#define CH4_PIN 20
-#define CH5_PIN 21
-#define CH6_PIN 22
-#define PPM_PIN 23
+#define CH1_PIN 0
+#define CH2_PIN 1
+// #define CH3_PIN 17
+#define CH4_PIN 2
+#define CH5_PIN 3
+#define CH6_PIN 4
+#define CH7_PIN 22
+#define CH8_PIN 23
+// #define PPM_PIN 15
 
 // Motor Configuration
-#define M1_PIN 0
-#define M2_PIN 1
-#define M3_PIN 14
-#define M4_PIN 3
-#define M5_PIN 4
-#define M6_PIN 5
+// #define M1_PIN 0
+// #define M2_PIN 1
+// #define M3_PIN 14
+// #define M4_PIN 3
+// #define M5_PIN 4
+// #define M6_PIN 5
 
 // Servo Configuration
-#define SERVO1_PIN 6
-#define SERVO2_PIN 7
+#define SERVO1_PIN 7
+#define SERVO2_PIN 9
 #define SERVO3_PIN 8
-#define SERVO4_PIN 9
+#define SERVO4_PIN 6
 #define SERVO5_PIN 10
 #define SERVO6_PIN 11
 #define SERVO7_PIN 12
 
 // Failsafe Configuration
-#define CHAN1_FS 1000
+#define CHAN1_FS 1500
 #define CHAN2_FS 1500
 #define CHAN3_FS 1500
 #define CHAN4_FS 1500
-#define CHAN5_FS 2000
-#define CHAN6_FS 2000
+#define CHAN5_FS 1500
+#define CHAN6_FS 1500
+#define CHAN7_FS 1000
+#define CHAN8_FS 1000
 
 #endif

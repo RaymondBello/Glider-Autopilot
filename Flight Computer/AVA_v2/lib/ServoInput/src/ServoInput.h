@@ -92,7 +92,8 @@ class ServoInputPin : public ServoInputSignal {
 public:
 	ServoInputPin() {
 		ServoInputPin<Pin>::PinMask = PIN_TO_BITMASK(Pin);
-		ServoInputPin<Pin>::PortRegister = PIN_TO_BASEREG(Pin);
+		// ServoInputPin<Pin>::PortRegister = PIN_TO_BASEREG(Pin);
+		ServoInputPin<Pin>::PortRegister = (unsigned char *)PIN_TO_BASEREG(Pin);
 		pinMode(Pin, INPUT_PULLUP);
 
 		attachInterrupt();
