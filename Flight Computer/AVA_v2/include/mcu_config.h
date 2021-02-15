@@ -122,10 +122,10 @@
 // #define M6_PIN 5
 
 // Servo Configuration
-#define SERVO1_PIN 7
-#define SERVO2_PIN 9
-#define SERVO3_PIN 8
-#define SERVO4_PIN 6
+#define SERVO1_PIN 8 //Top Pin
+#define SERVO2_PIN 7
+#define SERVO3_PIN 6
+#define SERVO4_PIN 5 //Bottom Pin
 #define SERVO5_PIN 10
 #define SERVO6_PIN 11
 #define SERVO7_PIN 12
