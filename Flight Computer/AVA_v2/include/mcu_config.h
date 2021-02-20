@@ -79,8 +79,6 @@
 /**************************************************************/
 /************* PIN ASSIGNMENT AND FAILSAFES *******************/
 /**************************************************************/
-// #define RXD2 16
-// #define TXD2 17
 
 // State Indicator Devices
 // #define LED_BLUE 25
@@ -98,6 +96,10 @@
 #define MIN_SERVO_ANGLE 60
 #define MAX_SERVO_PWM 2100
 #define MIN_SERVO_PWM 900
+
+// GPS RECEIVER
+#define BN220_TX 29
+#define BN220_RX 28
 
 // Receiver Configuration
 //NOTE: Pin 13 is reserved for onboard LED, pins 18 and 19 are reserved for the MPU6050 IMU for default setup
