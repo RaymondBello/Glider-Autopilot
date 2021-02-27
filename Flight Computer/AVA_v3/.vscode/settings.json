@@ -1,0 +1,11 @@
+{
+    "cSpell.words": [
+        "SBUS",
+        "Uinit"
+    ],
+    "files.associations": {
+        "*.tcc": "cpp",
+        "string": "cpp",
+        "initializer_list": "cpp"
+    }
+}
