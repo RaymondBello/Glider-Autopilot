@@ -1304,12 +1304,12 @@ void controlMixer()
    * Takes roll_PID, pitch_PID, and yaw_PID computed from the PID controller and appropriately mixes them for the desired
    * vehicle configuration. For example on a quadcopter, the left two motors should have +roll_PID while the right two motors
    * should have -roll_PID. Front two should have -pitch_PID and the back two should have +pitch_PID etc... every motor has
-   * normalized (0 to 1) thro_des command for throttle control. Can also apply direct unstabilized commands from the transmitter with 
+   * normalized (0 to 1) thro_des command for throttle control. Can also apply direct un-stabilized commands from the transmitter with 
    * roll_passthru, pitch_passthru, and yaw_passthu. mX_command_scaled and sX_command scaled variables are used in scaleCommands() 
    * in preparation to be sent to the motor ESCs and servos.
    */
     //Quad mixing
-    //m1 = front left, m2 = front right, m3 = back right, m4 = back left
+    // m1 = front left, m2 = front right, m3 = back right, m4 = back left
     m1_command_scaled = thro_des - pitch_PID + roll_PID + yaw_PID;
     m2_command_scaled = thro_des - pitch_PID - roll_PID - yaw_PID;
     m3_command_scaled = thro_des + pitch_PID - roll_PID + yaw_PID;
@@ -2152,7 +2152,7 @@ void setup()
     m6_command_PWM = 125;
 
     // Serial.println("Starting Motors");
-    // commandMotors();
+    commandMotors();
 
     delay(100);
 
@@ -2186,14 +2186,14 @@ void loop()
 
     //Print data at 100hz (uncomment one at a time for troubleshooting) - SELECT ONE:
     printRadioData();     //radio pwm values (expected: 1000 to 2000)
-    // printDesiredState();  //prints desired vehicle state commanded in either degrees or deg/sec (expected: +/- maxAXIS for roll, pitch, yaw; 0 to 1 for throttle)
+    printDesiredState();  //prints desired vehicle state commanded in either degrees or deg/sec (expected: +/- maxAXIS for roll, pitch, yaw; 0 to 1 for throttle)
     // printGyroData();      //prints filtered gyro data direct from IMU (expected: ~ -250 to 250, 0 at rest)
     // printAccelData();     //prints filtered accelerometer data direct from IMU (expected: ~ -2 to 2; x,y 0 when level, z 1 when level)
     //printMagData();       //prints filtered magnetometer data direct from IMU (expected: ~ -300 to 300)
     // printRollPitchYaw();  //prints roll, pitch, and yaw angles in degrees from Madgwick filter (expected: degrees, 0 when level)
     // printPIDoutput();     //prints computed stabilized PID variables from controller and desired setpoint (expected: ~ -1 to 1)
     // printBmpData();
-    //printMotorCommands(); //prints the values being written to the motors (expected: 120 to 250)
+    printMotorCommands(); //prints the values being written to the motors (expected: 120 to 250)
     // printServoCommands(); //prints the values being written to the servos (expected: 0 to 180)
     // printLoopRate();      //prints the time between loops in microseconds (expected: microseconds between loop iterations)
 
@@ -2221,7 +2221,7 @@ void loop()
     // throttleCut(); //directly sets motor commands to low based on state of ch5
 
     //Command actuators
-    // commandMotors(); //sends command pulses to each motor pin using OneShot125 protocol
+    commandMotors(); //sends command pulses to each motor pin using OneShot125 protocol
 
     servo1.write(s1_command_PWM);
     servo2.write(s2_command_PWM);

@@ -4,8 +4,8 @@
 #include <Arduino.h>
 #include "config.h"
 
-unsigned long rising_edge_start_1, rising_edge_start_2, rising_edge_start_3, rising_edge_start_4, rising_edge_start_5, rising_edge_start_6; 
-unsigned long channel_1_raw, channel_2_raw, channel_3_raw, channel_4_raw, channel_5_raw, channel_6_raw;
+unsigned long rising_edge_start_1, rising_edge_start_2, rising_edge_start_3, rising_edge_start_4, rising_edge_start_5, rising_edge_start_6, rising_edge_start_7, rising_edge_start_8;
+unsigned long channel_1_raw, channel_2_raw, channel_3_raw, channel_4_raw, channel_5_raw, channel_6_raw, channel_7_raw, channel_8_raw;
 int ppm_counter = 0;
 unsigned long time_ms = 0;
 
