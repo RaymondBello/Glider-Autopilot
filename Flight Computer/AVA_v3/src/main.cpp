@@ -1,7 +1,6 @@
 /*************************************************************************************************/
 /**************************************** Libraries ***********************************************/
 /*******************************************************************************/
-
 #include <TinyGPS++.h>
 #include <PWMServo.h>
 #include <I2Cdev.h>
@@ -15,78 +14,78 @@
 #include "tools/radio_comms.h"
 
 /*************************************************************************************************/
-/****************************************** Define Checks ***************************************/
+/****************************************** Define Guards ***************************************/
 /************************************************************************************************/
 #if defined USE_MPU6050_I2C
-#include "MPU6050_6Axis_MotionApps20.h"
-MPU6050 mpu;
+    #include "MPU6050_6Axis_MotionApps20.h"
+    MPU6050 mpu;
 #elif defined USE_MPU9250_SPI
-#include <MPU9250.h>
-MPU9250 mpu9250(SPI, MPU9250_SS);
+    #include <MPU9250.h>
+    MPU9250 mpu9250(SPI, MPU9250_SS);
 #elif defined USE_MPU9250_I2C_1
-#include <MPU9250.h>
-MPU9250 mpu9250(Wire, 0x68);
+    #include <MPU9250.h>
+    MPU9250 mpu9250(Wire, 0x68);
 #else
-#error No IMU Defined
+    #error No IMU Defined
 #endif
 
 #if defined USE_BMP280_I2C
-#include <Adafruit_BMP280.h>
-Adafruit_BMP280 bmp(&Wire);
+    #include <Adafruit_BMP280.h>
+    Adafruit_BMP280 bmp(&Wire);
 #endif
 
 #if defined USE_MPU6050_I2C
-#define GYRO_FS_SEL_250 MPU6050_GYRO_FS_250
-#define GYRO_FS_SEL_500 MPU6050_GYRO_FS_500
-#define GYRO_FS_SEL_1000 MPU6050_GYRO_FS_1000
-#define GYRO_FS_SEL_2000 MPU6050_GYRO_FS_2000
-#define ACCEL_FS_SEL_2 MPU6050_ACCEL_FS_2
-#define ACCEL_FS_SEL_4 MPU6050_ACCEL_FS_4
-#define ACCEL_FS_SEL_8 MPU6050_ACCEL_FS_8
-#define ACCEL_FS_SEL_16 MPU6050_ACCEL_FS_16
+    #define GYRO_FS_SEL_250 MPU6050_GYRO_FS_250
+    #define GYRO_FS_SEL_500 MPU6050_GYRO_FS_500
+    #define GYRO_FS_SEL_1000 MPU6050_GYRO_FS_1000
+    #define GYRO_FS_SEL_2000 MPU6050_GYRO_FS_2000
+    #define ACCEL_FS_SEL_2 MPU6050_ACCEL_FS_2
+    #define ACCEL_FS_SEL_4 MPU6050_ACCEL_FS_4
+    #define ACCEL_FS_SEL_8 MPU6050_ACCEL_FS_8
+    #define ACCEL_FS_SEL_16 MPU6050_ACCEL_FS_16
 #elif defined USE_MPU9250_SPI
-#define GYRO_FS_SEL_250 mpu9250.GYRO_RANGE_250DPS
-#define GYRO_FS_SEL_500 mpu9250.GYRO_RANGE_500DPS
-#define GYRO_FS_SEL_1000 mpu9250.GYRO_RANGE_1000DPS
-#define GYRO_FS_SEL_2000 mpu9250.GYRO_RANGE_2000DPS
-#define ACCEL_FS_SEL_2 mpu9250.ACCEL_RANGE_2G
-#define ACCEL_FS_SEL_4 mpu9250.ACCEL_RANGE_4G
-#define ACCEL_FS_SEL_8 mpu9250.ACCEL_RANGE_8G
-#define ACCEL_FS_SEL_16 mpu9250.ACCEL_RANGE_16G
+    #define GYRO_FS_SEL_250 mpu9250.GYRO_RANGE_250DPS
+    #define GYRO_FS_SEL_500 mpu9250.GYRO_RANGE_500DPS
+    #define GYRO_FS_SEL_1000 mpu9250.GYRO_RANGE_1000DPS
+    #define GYRO_FS_SEL_2000 mpu9250.GYRO_RANGE_2000DPS
+    #define ACCEL_FS_SEL_2 mpu9250.ACCEL_RANGE_2G
+    #define ACCEL_FS_SEL_4 mpu9250.ACCEL_RANGE_4G
+    #define ACCEL_FS_SEL_8 mpu9250.ACCEL_RANGE_8G
+    #define ACCEL_FS_SEL_16 mpu9250.ACCEL_RANGE_16G
 #endif
 
 #if defined GYRO_250DPS
-#define GYRO_SCALE GYRO_FS_SEL_250
-#define GYRO_SCALE_FACTOR 131.0
+    #define GYRO_SCALE GYRO_FS_SEL_250
+    #define GYRO_SCALE_FACTOR 131.0
 #elif defined GYRO_500DPS
-#define GYRO_SCALE GYRO_FS_SEL_500
-#define GYRO_SCALE_FACTOR 65.5
+    #define GYRO_SCALE GYRO_FS_SEL_500
+    #define GYRO_SCALE_FACTOR 65.5
 #elif defined GYRO_1000DPS
-#define GYRO_SCALE GYRO_FS_SEL_1000
-#define GYRO_SCALE_FACTOR 32.8
+    #define GYRO_SCALE GYRO_FS_SEL_1000
+    #define GYRO_SCALE_FACTOR 32.8
 #elif defined GYRO_2000DPS
-#define GYRO_SCALE GYRO_FS_SEL_2000
-#define GYRO_SCALE_FACTOR 16.4
+    #define GYRO_SCALE GYRO_FS_SEL_2000
+    #define GYRO_SCALE_FACTOR 16.4
 #endif
 
 #if defined ACCEL_2G
-#define ACCEL_SCALE ACCEL_FS_SEL_2
-#define ACCEL_SCALE_FACTOR 16384.0
+    #define ACCEL_SCALE ACCEL_FS_SEL_2
+    #define ACCEL_SCALE_FACTOR 16384.0
 #elif defined ACCEL_4G
-#define ACCEL_SCALE ACCEL_FS_SEL_4
-#define ACCEL_SCALE_FACTOR 8192.0
+    #define ACCEL_SCALE ACCEL_FS_SEL_4
+    #define ACCEL_SCALE_FACTOR 8192.0
 #elif defined ACCEL_8G
-#define ACCEL_SCALE ACCEL_FS_SEL_8
-#define ACCEL_SCALE_FACTOR 4096.0
+    #define ACCEL_SCALE ACCEL_FS_SEL_8
+    #define ACCEL_SCALE_FACTOR 4096.0
 #elif defined ACCEL_16G
-#define ACCEL_SCALE ACCEL_FS_SEL_16
-#define ACCEL_SCALE_FACTOR 2048.0
+    #define ACCEL_SCALE ACCEL_FS_SEL_16
+    #define ACCEL_SCALE_FACTOR 2048.0
 #endif
 
 /*************************************************************************************************************/
 /*************************************** User Specified Variables *******************************************/
 /***********************************************************************************************************/
-//Radio failsafe values for every channel in the event that bad receiver data is detected. Recommended defaults:
+//Radio failsafe values for every channel in the event that bad receiver data is detected.
 unsigned long channel_1_fs = CHAN1_FS; //ailerons
 unsigned long channel_2_fs = CHAN2_FS; //elevator
 unsigned long channel_3_fs = CHAN3_FS; //elev
@@ -163,6 +162,7 @@ PWMServo servo4;
 PWMServo servo5;
 PWMServo servo6;
 PWMServo servo7;
+
 /************************************************************************************************************/
 /******************************************* Variables ******************************************************/
 /************************************************************************************************************/

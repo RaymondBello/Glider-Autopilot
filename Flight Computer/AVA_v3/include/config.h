@@ -14,7 +14,7 @@
 //#define USE_SBUS_RX
 
 #define USE_MPU6050_I2C
-// #define USE_MPU9250_SPI // SPI to MPU-9250
+// #define USE_MPU9250_SPI 
 // #define USE_MPU9250_I2C_1
 
 #define USE_BMP280_I2C // Barometric Pressure Sensor

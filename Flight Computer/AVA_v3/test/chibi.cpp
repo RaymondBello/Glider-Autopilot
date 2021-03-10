@@ -10,7 +10,7 @@ static THD_WORKING_AREA(waThread1, 64);
 static THD_FUNCTION(Thread1 , arg) {
   (void)arg;
 
-  pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(LED_BUILTIN, OUTPUT);   // Move to Setup Function
 
   // Flash led every 200 ms.
   while (true) {
@@ -54,12 +54,14 @@ void chSetup() {
 
 void setup() {
   Serial.begin(115200);
+
   // Wait for USB Serial.
-  while (!Serial) {}
+  // while (!Serial) {}
 
   chBegin(chSetup);
   // chBegin() resets stacks and should never return.
-  while (true) {}
+
+  // while (true) {}
 }
 
 void loop() {
