@@ -36,7 +36,7 @@
 // State Indicator Devices
 // #define LED_BLUE 25
 // #define LED_GREEN 33
-// #define BUZZER_PIN 32
+#define BUZZER_PIN 36
 
 // #define MPU9250_SS 10
 #define MPU_INTERRUPT_PIN 2

@@ -14,74 +14,73 @@
 #include "tools/kalman_filter.h"
 #include "tools/radio_comms.h"
 
-
 /*************************************************************************************************/
 /****************************************** Define Checks ***************************************/
 /************************************************************************************************/
 #if defined USE_MPU6050_I2C
-    #include "MPU6050_6Axis_MotionApps20.h"
-    MPU6050 mpu;
+#include "MPU6050_6Axis_MotionApps20.h"
+MPU6050 mpu;
 #elif defined USE_MPU9250_SPI
-    #include <MPU9250.h>
-    MPU9250 mpu9250(SPI, MPU9250_SS);
+#include <MPU9250.h>
+MPU9250 mpu9250(SPI, MPU9250_SS);
 #elif defined USE_MPU9250_I2C_1
-    #include <MPU9250.h>
-    MPU9250 mpu9250(Wire,0x68);
+#include <MPU9250.h>
+MPU9250 mpu9250(Wire, 0x68);
 #else
-    #error No IMU Defined
+#error No IMU Defined
 #endif
 
 #if defined USE_BMP280_I2C
-    #include <Adafruit_BMP280.h>
-    Adafruit_BMP280 bmp(&Wire);
+#include <Adafruit_BMP280.h>
+Adafruit_BMP280 bmp(&Wire);
 #endif
 
 #if defined USE_MPU6050_I2C
-  #define GYRO_FS_SEL_250    MPU6050_GYRO_FS_250
-  #define GYRO_FS_SEL_500    MPU6050_GYRO_FS_500
-  #define GYRO_FS_SEL_1000   MPU6050_GYRO_FS_1000
-  #define GYRO_FS_SEL_2000   MPU6050_GYRO_FS_2000
-  #define ACCEL_FS_SEL_2     MPU6050_ACCEL_FS_2
-  #define ACCEL_FS_SEL_4     MPU6050_ACCEL_FS_4
-  #define ACCEL_FS_SEL_8     MPU6050_ACCEL_FS_8
-  #define ACCEL_FS_SEL_16    MPU6050_ACCEL_FS_16
+#define GYRO_FS_SEL_250 MPU6050_GYRO_FS_250
+#define GYRO_FS_SEL_500 MPU6050_GYRO_FS_500
+#define GYRO_FS_SEL_1000 MPU6050_GYRO_FS_1000
+#define GYRO_FS_SEL_2000 MPU6050_GYRO_FS_2000
+#define ACCEL_FS_SEL_2 MPU6050_ACCEL_FS_2
+#define ACCEL_FS_SEL_4 MPU6050_ACCEL_FS_4
+#define ACCEL_FS_SEL_8 MPU6050_ACCEL_FS_8
+#define ACCEL_FS_SEL_16 MPU6050_ACCEL_FS_16
 #elif defined USE_MPU9250_SPI
-    #define GYRO_FS_SEL_250 mpu9250.GYRO_RANGE_250DPS
-    #define GYRO_FS_SEL_500 mpu9250.GYRO_RANGE_500DPS
-    #define GYRO_FS_SEL_1000 mpu9250.GYRO_RANGE_1000DPS
-    #define GYRO_FS_SEL_2000 mpu9250.GYRO_RANGE_2000DPS
-    #define ACCEL_FS_SEL_2 mpu9250.ACCEL_RANGE_2G
-    #define ACCEL_FS_SEL_4 mpu9250.ACCEL_RANGE_4G
-    #define ACCEL_FS_SEL_8 mpu9250.ACCEL_RANGE_8G
-    #define ACCEL_FS_SEL_16 mpu9250.ACCEL_RANGE_16G
+#define GYRO_FS_SEL_250 mpu9250.GYRO_RANGE_250DPS
+#define GYRO_FS_SEL_500 mpu9250.GYRO_RANGE_500DPS
+#define GYRO_FS_SEL_1000 mpu9250.GYRO_RANGE_1000DPS
+#define GYRO_FS_SEL_2000 mpu9250.GYRO_RANGE_2000DPS
+#define ACCEL_FS_SEL_2 mpu9250.ACCEL_RANGE_2G
+#define ACCEL_FS_SEL_4 mpu9250.ACCEL_RANGE_4G
+#define ACCEL_FS_SEL_8 mpu9250.ACCEL_RANGE_8G
+#define ACCEL_FS_SEL_16 mpu9250.ACCEL_RANGE_16G
 #endif
 
 #if defined GYRO_250DPS
-    #define GYRO_SCALE GYRO_FS_SEL_250
-    #define GYRO_SCALE_FACTOR 131.0
+#define GYRO_SCALE GYRO_FS_SEL_250
+#define GYRO_SCALE_FACTOR 131.0
 #elif defined GYRO_500DPS
-    #define GYRO_SCALE GYRO_FS_SEL_500
-    #define GYRO_SCALE_FACTOR 65.5
+#define GYRO_SCALE GYRO_FS_SEL_500
+#define GYRO_SCALE_FACTOR 65.5
 #elif defined GYRO_1000DPS
-    #define GYRO_SCALE GYRO_FS_SEL_1000
-    #define GYRO_SCALE_FACTOR 32.8
+#define GYRO_SCALE GYRO_FS_SEL_1000
+#define GYRO_SCALE_FACTOR 32.8
 #elif defined GYRO_2000DPS
-    #define GYRO_SCALE GYRO_FS_SEL_2000
-    #define GYRO_SCALE_FACTOR 16.4
+#define GYRO_SCALE GYRO_FS_SEL_2000
+#define GYRO_SCALE_FACTOR 16.4
 #endif
 
 #if defined ACCEL_2G
-    #define ACCEL_SCALE ACCEL_FS_SEL_2
-    #define ACCEL_SCALE_FACTOR 16384.0
+#define ACCEL_SCALE ACCEL_FS_SEL_2
+#define ACCEL_SCALE_FACTOR 16384.0
 #elif defined ACCEL_4G
-    #define ACCEL_SCALE ACCEL_FS_SEL_4
-    #define ACCEL_SCALE_FACTOR 8192.0
+#define ACCEL_SCALE ACCEL_FS_SEL_4
+#define ACCEL_SCALE_FACTOR 8192.0
 #elif defined ACCEL_8G
-    #define ACCEL_SCALE ACCEL_FS_SEL_8
-    #define ACCEL_SCALE_FACTOR 4096.0
+#define ACCEL_SCALE ACCEL_FS_SEL_8
+#define ACCEL_SCALE_FACTOR 4096.0
 #elif defined ACCEL_16G
-    #define ACCEL_SCALE ACCEL_FS_SEL_16
-    #define ACCEL_SCALE_FACTOR 2048.0
+#define ACCEL_SCALE ACCEL_FS_SEL_16
+#define ACCEL_SCALE_FACTOR 2048.0
 #endif
 
 /*************************************************************************************************************/
@@ -137,18 +136,17 @@ float Kp_yaw = 0.3;     //Yaw P-gain
 float Ki_yaw = 0.05;    //Yaw I-gain
 float Kd_yaw = 0.00015; //Yaw D-gain (be careful when increasing too high, motors will begin to overheat!)
 
-
 /************************************************************************************************************/
 /******************************************* Pin Declarations ******************************************************/
 /************************************************************************************************************/
-const int ch1Pin = CH1_PIN;       // Pin 0  -> CH1 -> Aileron
-const int ch2Pin = CH2_PIN;       // Pin 1  -> CH2 -> Elevator
-const int ch3Pin = CH3_PIN;       // Pin 2  -> CH3 -> Throttle
-const int ch4Pin = CH4_PIN;       // Pin 3  -> CH4 -> Rudder
-const int ch5Pin = CH5_PIN;       // Pin 4  -> CH5 -> Right 3-way Switch
-const int ch6Pin = CH6_PIN;       // Pin 22 -> CH6 -> Right 2-way Switch
-const int ch7Pin = CH7_PIN;       // Pin 23 -> CH7 -> Left 2-way Switch
-const int ch8Pin = CH8_PIN;       // Pin 17 -> CH8 -> Left 2-way Switch
+const int ch1Pin = CH1_PIN; // Pin 0  -> CH1 -> Aileron
+const int ch2Pin = CH2_PIN; // Pin 1  -> CH2 -> Elevator
+const int ch3Pin = CH3_PIN; // Pin 2  -> CH3 -> Throttle
+const int ch4Pin = CH4_PIN; // Pin 3  -> CH4 -> Rudder
+const int ch5Pin = CH5_PIN; // Pin 4  -> CH5 -> Right 3-way Switch
+const int ch6Pin = CH6_PIN; // Pin 22 -> CH6 -> Right 2-way Switch
+const int ch7Pin = CH7_PIN; // Pin 23 -> CH7 -> Left 2-way Switch
+const int ch8Pin = CH8_PIN; // Pin 17 -> CH8 -> Left 2-way Switch
 
 const int servo1Pin = SERVO1_PIN;
 const int servo2Pin = SERVO2_PIN;
@@ -158,7 +156,7 @@ const int servo5Pin = SERVO5_PIN;
 const int servo6Pin = SERVO6_PIN;
 const int servo7Pin = SERVO7_PIN;
 
-PWMServo servo1; 
+PWMServo servo1;
 PWMServo servo2;
 PWMServo servo3;
 PWMServo servo4;
@@ -172,7 +170,9 @@ float dt;
 unsigned long current_time, prev_time;
 unsigned long print_counter, serial_counter;
 unsigned long blink_counter, blink_delay;
+unsigned long beep_counter, beep_delay;
 bool blinkAlternate;
+bool beepAlternate;
 
 //Radio comm:
 unsigned long channel_1_pwm, channel_2_pwm, channel_3_pwm, channel_4_pwm, channel_5_pwm, channel_6_pwm, channel_7_pwm, channel_8_pwm;
@@ -198,25 +198,25 @@ float q3 = 0.0f;
 bool blinkState = false;
 
 // MPU control/status vars
-bool dmpReady = false;  // set true if DMP init was successful
-uint8_t mpuIntStatus;   // holds actual interrupt status byte from MPU
-uint8_t devStatus;      // return status after each device operation (0 = success, !0 = error)
-uint16_t packetSize;    // expected DMP packet size (default is 42 bytes)
-uint16_t fifoCount;     // count of all bytes currently in FIFO
-uint8_t fifoBuffer[64]; // FIFO storage buffer
+bool dmpReady = false;              // set true if DMP init was successful
+uint8_t mpuIntStatus;               // holds actual interrupt status byte from MPU
+uint8_t devStatus;                  // return status after each device operation (0 = success, !0 = error)
+uint16_t packetSize;                // expected DMP packet size (default is 42 bytes)
+uint16_t fifoCount;                 // count of all bytes currently in FIFO
+uint8_t fifoBuffer[64];             // FIFO storage buffer
 volatile bool mpuInterrupt = false; // indicates whether MPU interrupt pin has gone high
 
 // orientation/motion vars
-Quaternion q;        // [w, x, y, z]         quaternion container
-VectorInt16 aa;      // [x, y, z]            accel sensor measurements
-VectorInt16 aaReal;  // [x, y, z]            gravity-free accel sensor measurements
-VectorInt16 aaWorld; // [x, y, z]            world-frame accel sensor measurements
-VectorFloat gravity; // [x, y, z]            gravity vector
-float euler[3];      // [psi, theta, phi]    Euler angle container
-float ypr[3];        // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
-uint8_t teapotPacket[14] = {'$', 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0x00, 0x00, '\r', '\n'}; // packet structure for InvenSense teapot demo
+Quaternion q;                                                                           // [w, x, y, z]         quaternion container
+VectorInt16 aa;                                                                         // [x, y, z]            accel sensor measurements
+VectorInt16 aaReal;                                                                     // [x, y, z]            gravity-free accel sensor measurements
+VectorInt16 aaWorld;                                                                    // [x, y, z]            world-frame accel sensor measurements
+VectorFloat gravity;                                                                    // [x, y, z]            gravity vector
+float euler[3];                                                                         // [psi, theta, phi]    Euler angle container
+float ypr[3];                                                                           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
+uint8_t teapotPacket[14] = {'$', 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0x00, 0x00, '\r', '\n'}; // packet for InvenSense teapot demo
 
-//Barometric pressure sensor 
+//Barometric pressure sensor
 float internal_temp, pressure, altitude;
 
 //Normalized desired state:
@@ -233,7 +233,6 @@ float m1_command_scaled, m2_command_scaled, m3_command_scaled, m4_command_scaled
 int m1_command_PWM, m2_command_PWM, m3_command_PWM, m4_command_PWM, m5_command_PWM, m6_command_PWM;
 float s1_command_scaled, s2_command_scaled, s3_command_scaled, s4_command_scaled, s5_command_scaled, s6_command_scaled, s7_command_scaled;
 int s1_command_PWM, s2_command_PWM, s3_command_PWM, s4_command_PWM, s5_command_PWM, s6_command_PWM, s7_command_PWM;
-
 
 void failSafe()
 {
@@ -275,7 +274,7 @@ void failSafe()
         check8 = 1;
 
     //If any failures, set to default failsafe values
-    if ((check1 + check2 + check3 + check4 + check5 + check6+ check7 + check8) > 0)
+    if ((check1 + check2 + check3 + check4 + check5 + check6 + check7 + check8) > 0)
     {
         channel_1_pwm = channel_1_fs;
         channel_2_pwm = channel_2_fs;
@@ -291,7 +290,6 @@ void failSafe()
 void mpu_interupt_update()
 {
 
-    
     // wait for MPU interrupt or extra packet(s) available
     while (!mpuInterrupt && fifoCount < packetSize)
     {
@@ -452,86 +450,86 @@ void dmpDataReady()
 
 void IMUinit()
 {
-    #if defined USE_MPU6050_I2C
-        Wire.begin();
-        Wire.setClock(1000000); //Note this is 2.5 times the spec sheet 400 kHz max...
-        // Wire.setClock(400000);  // 400kHz I2C clock. Comment this line if having compilation difficulties
+#if defined USE_MPU6050_I2C
+    Wire.begin();
+    Wire.setClock(1000000); //Note this is 2.5 times the spec sheet 400 kHz max...
+    // Wire.setClock(400000);  // 400kHz I2C clock. Comment this line if having compilation difficulties
 
-        Serial.println("MPU9250 initialization...");
-        mpu.initialize(GYRO_SCALE, ACCEL_SCALE);
-        // pinMode(INTERRUPT_PIN, INPUT);
+    Serial.println("MPU9250 initialization...");
+    mpu.initialize(GYRO_SCALE, ACCEL_SCALE);
+    // pinMode(INTERRUPT_PIN, INPUT);
 
-        Serial.println(F("Initializing DMP..."));
-        devStatus = mpu.dmpInitialize();
+    Serial.println(F("Initializing DMP..."));
+    devStatus = mpu.dmpInitialize();
 
-        // Enter offsets here
-        mpu.setXGyroOffset(220);
-        mpu.setYGyroOffset(76);
-        mpu.setZGyroOffset(-85);
-        mpu.setZAccelOffset(1788); // 1688 factory default
+    // Enter offsets here
+    mpu.setXGyroOffset(220);
+    mpu.setYGyroOffset(76);
+    mpu.setZGyroOffset(-85);
+    mpu.setZAccelOffset(1788); // 1688 factory default
 
-        // make sure it worked (returns 0 if so)
-        if (devStatus == 0)
+    // make sure it worked (returns 0 if so)
+    if (devStatus == 0)
+    {
+        // Calibration Time: generate offsets and calibrate our MPU6050
+        mpu.CalibrateAccel(6);
+        mpu.CalibrateGyro(6);
+        mpu.PrintActiveOffsets();
+        // turn on the DMP, now that it's ready
+        Serial.println(F("Enabling DMP..."));
+        mpu.setDMPEnabled(true);
+
+        // Serial.print(F("Enabling interrupt detection (Teensy external interrupt "));
+        // Serial.print(digitalPinToInterrupt(INTERRUPT_PIN));
+        // Serial.println(F(""));
+        // attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), dmpDataReady, RISING);
+
+        mpuIntStatus = mpu.getIntStatus();
+
+        Serial.println(F("DMP ready!"));
+        dmpReady = true;
+
+        packetSize = mpu.dmpGetFIFOPacketSize();
+    }
+    else
+    {
+        // ERROR!
+        // 1 = initial memory load failed
+        // 2 = DMP configuration updates failed
+        Serial.print(F("DMP Initialization failed (code "));
+        Serial.print(devStatus);
+        Serial.println(F(")"));
+    }
+
+#elif defined USE_MPU9250_SPI
+    int status = mpu9250.begin();
+
+    if (status < 0)
+    {
+        Serial.println("MPU9250 initialization unsuccessful");
+        Serial.println("Check MPU9250 wiring or try cycling power");
+        Serial.print("Status: ");
+        Serial.println(status);
+        while (1)
         {
-            // Calibration Time: generate offsets and calibrate our MPU6050
-            mpu.CalibrateAccel(6);
-            mpu.CalibrateGyro(6);
-            mpu.PrintActiveOffsets();
-            // turn on the DMP, now that it's ready
-            Serial.println(F("Enabling DMP..."));
-            mpu.setDMPEnabled(true);
-
-            // Serial.print(F("Enabling interrupt detection (Teensy external interrupt "));
-            // Serial.print(digitalPinToInterrupt(INTERRUPT_PIN));
-            // Serial.println(F(""));
-            // attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), dmpDataReady, RISING);
-
-            mpuIntStatus = mpu.getIntStatus();
-
-            Serial.println(F("DMP ready!"));
-            dmpReady = true;
-
-            packetSize = mpu.dmpGetFIFOPacketSize();
         }
-        else
-        {
-            // ERROR!
-            // 1 = initial memory load failed
-            // 2 = DMP configuration updates failed
-            Serial.print(F("DMP Initialization failed (code "));
-            Serial.print(devStatus);
-            Serial.println(F(")"));
-        }
+    }
 
-    #elif defined USE_MPU9250_SPI
-        int status = mpu9250.begin();
-
-        if (status < 0)
-        {
-            Serial.println("MPU9250 initialization unsuccessful");
-            Serial.println("Check MPU9250 wiring or try cycling power");
-            Serial.print("Status: ");
-            Serial.println(status);
-            while (1)
-            {
-            }
-        }
-
-        //From the reset state all registers should be 0x00, so we should be at
-        //max sample rate with digital low pass filter(s) off.  All we need to
-        //do is set the desired fullscale ranges
-        mpu9250.setGyroRange(GYRO_SCALE);
-        mpu9250.setAccelRange(ACCEL_SCALE);
-        mpu9250.setMagCalX(MagErrorX, MagScaleX);
-        mpu9250.setMagCalY(MagErrorY, MagScaleY);
-        mpu9250.setMagCalZ(MagErrorZ, MagScaleZ);
-        mpu9250.setSrd(0); //sets gyro and accel read to 1khz, magnetometer read to 100hz
-    #endif
+    //From the reset state all registers should be 0x00, so we should be at
+    //max sample rate with digital low pass filter(s) off.  All we need to
+    //do is set the desired fullscale ranges
+    mpu9250.setGyroRange(GYRO_SCALE);
+    mpu9250.setAccelRange(ACCEL_SCALE);
+    mpu9250.setMagCalX(MagErrorX, MagScaleX);
+    mpu9250.setMagCalY(MagErrorY, MagScaleY);
+    mpu9250.setMagCalZ(MagErrorZ, MagScaleZ);
+    mpu9250.setSrd(0); //sets gyro and accel read to 1khz, magnetometer read to 100hz
+#endif
 }
 
 void BMPinit()
 {
-    #if defined USE_BMP280_I2C
+#if defined USE_BMP280_I2C
     // start communication to Barometer
     if (!bmp.begin())
     {
@@ -549,10 +547,10 @@ void BMPinit()
                         Adafruit_BMP280::SAMPLING_NONE,   /* Temp. oversampling */
                         Adafruit_BMP280::SAMPLING_NONE,   /* Pressure oversampling */
                         Adafruit_BMP280::FILTER_OFF,      /* Filtering. */
-                        Adafruit_BMP280::STANDBY_MS_500);  /* Standby time. */
+                        Adafruit_BMP280::STANDBY_MS_500); /* Standby time. */
         Serial.println("Barometer Sampling Settings SET");
     }
-    #endif
+#endif
 }
 
 void getIMUdata()
@@ -625,16 +623,16 @@ void getIMUdata()
 
 void getBMPdata()
 {
-    #if defined USE_BMP280_I2C
+#if defined USE_BMP280_I2C
     static uint32_t prev_ms = millis();
-    if ((millis()-prev_ms) > 250)
+    if ((millis() - prev_ms) > 250)
     {
         internal_temp = bmp.readTemperature();
         pressure = bmp.readPressure();
         altitude = bmp.readAltitude();
         prev_ms = millis();
     }
-    #endif
+#endif
 }
 
 void calculate_IMU_error()
@@ -778,11 +776,11 @@ void Madgwick(float gx, float gy, float gz, float ax, float ay, float az, float 
     float _2q0mx, _2q0my, _2q0mz, _2q1mx, _2bx, _2bz, _4bx, _4bz, _2q0, _2q1, _2q2, _2q3, _2q0q2, _2q2q3, q0q0, q0q1, q0q2, q0q3, q1q1, q1q2, q1q3, q2q2, q2q3, q3q3;
     float mholder;
 
-    //use 6DOF algorithm if MPU6050 is being used
-    #if defined USE_MPU6050_I2C
-        Madgwick6DOF(gx, gy, gz, ax, ay, az, invSampleFreq);
-        return;
-    #endif
+//use 6DOF algorithm if MPU6050 is being used
+#if defined USE_MPU6050_I2C
+    Madgwick6DOF(gx, gy, gz, ax, ay, az, invSampleFreq);
+    return;
+#endif
 
     //Use 6DOF algorithm if magnetometer measurement invalid (avoids NaN in magnetometer normalisation)
     if ((mx == 0.0f) && (my == 0.0f) && (mz == 0.0f))
@@ -949,6 +947,27 @@ void loopBlink()
     }
 }
 
+void loopBeep()
+{
+
+    if (current_time - beep_counter > beep_delay)
+    {
+        beep_counter = micros();
+        digitalWrite(BUZZER_PIN, beepAlternate); //pin 13 is built in LED
+
+        if (beepAlternate == 1)
+        {
+            beepAlternate = 0;
+            beep_delay = 500000;
+        }
+        else if (beepAlternate == 0)
+        {
+            beepAlternate = 1;
+            beep_delay = 9000000;
+        }
+    }
+}
+
 void setupBlink(int numBlinks, int upTime, int downTime)
 {
     for (int j = 1; j <= numBlinks; j++)
@@ -958,6 +977,18 @@ void setupBlink(int numBlinks, int upTime, int downTime)
         digitalWrite(13, HIGH);
         delay(upTime);
     }
+}
+
+void setupBeep(int numBeeps, int upTime, int downTime)
+{
+    for (int j = 1; j <= numBeeps; j++)
+    {
+        digitalWrite(BUZZER_PIN, LOW);
+        delay(downTime);
+        digitalWrite(BUZZER_PIN, HIGH);
+        delay(upTime);
+    }
+    digitalWrite(BUZZER_PIN, LOW);
 }
 
 void failure_if_mpu_not_working()
@@ -970,7 +1001,7 @@ void failure_if_mpu_not_working()
         }
 }
 
-void setChannelsToFailsafe() 
+void setChannelsToFailsafe()
 {
     channel_1_pwm = channel_1_fs;
     channel_2_pwm = channel_2_fs;
@@ -980,49 +1011,49 @@ void setChannelsToFailsafe()
     channel_6_pwm = channel_6_fs;
 }
 
-void getCommands() 
+void getCommands()
 {
-  //DESCRIPTION: Get raw PWM values for every channel from the radio
-  /*
+    //DESCRIPTION: Get raw PWM values for every channel from the radio
+    /*
    * Updates radio PWM commands in loop based on current available commands. channel_x_pwm is the raw command used in the rest of 
    * the loop. If using a PWM or PPM receiver, the radio commands are retrieved from a function in the readPWM file separate from this one which 
    * is running a bunch of interrupts to continuously update the radio readings. If using an SBUS receiver, the alues are pulled from the SBUS library directly.
    * The raw radio commands are filtered with a first order low-pass filter to eliminate any really high frequency noise. 
    */
 
-  #if defined USE_PPM_RX || defined USE_PWM_RX
+#if defined USE_PPM_RX || defined USE_PWM_RX
     channel_1_pwm = getRadioPWM(1);
     channel_2_pwm = getRadioPWM(2);
     channel_3_pwm = getRadioPWM(3);
     channel_4_pwm = getRadioPWM(4);
     channel_5_pwm = getRadioPWM(5);
     channel_6_pwm = getRadioPWM(6);
-    
-  #elif defined USE_SBUS_RX
+
+#elif defined USE_SBUS_RX
     if (sbus.read(&sbusChannels[0], &sbusFailSafe, &sbusLostFrame))
     {
-      //sBus scaling below is for Taranis-Plus and X4R-SB
-      float scale = 0.615;  
-      float bias  = 895.0; 
-      channel_1_pwm = sbusChannels[0] * scale + bias;
-      channel_2_pwm = sbusChannels[1] * scale + bias;
-      channel_3_pwm = sbusChannels[2] * scale + bias;
-      channel_4_pwm = sbusChannels[3] * scale + bias;
-      channel_5_pwm = sbusChannels[4] * scale + bias;
-      channel_6_pwm = sbusChannels[5] * scale + bias; 
+        //sBus scaling below is for Taranis-Plus and X4R-SB
+        float scale = 0.615;
+        float bias = 895.0;
+        channel_1_pwm = sbusChannels[0] * scale + bias;
+        channel_2_pwm = sbusChannels[1] * scale + bias;
+        channel_3_pwm = sbusChannels[2] * scale + bias;
+        channel_4_pwm = sbusChannels[3] * scale + bias;
+        channel_5_pwm = sbusChannels[4] * scale + bias;
+        channel_6_pwm = sbusChannels[5] * scale + bias;
     }
-  #endif
-  
-  //Low-pass the critical commands and update previous values
-  float b = 0.2; //lower=slower, higher=noiser
-  channel_1_pwm = (1.0 - b)*channel_1_pwm_prev + b*channel_1_pwm;
-  channel_2_pwm = (1.0 - b)*channel_2_pwm_prev + b*channel_2_pwm;
-  channel_3_pwm = (1.0 - b)*channel_3_pwm_prev + b*channel_3_pwm;
-  channel_4_pwm = (1.0 - b)*channel_4_pwm_prev + b*channel_4_pwm;
-  channel_1_pwm_prev = channel_1_pwm;
-  channel_2_pwm_prev = channel_2_pwm;
-  channel_3_pwm_prev = channel_3_pwm;
-  channel_4_pwm_prev = channel_4_pwm;
+#endif
+
+    //Low-pass the critical commands and update previous values
+    float b = 0.2; //lower=slower, higher=noiser
+    channel_1_pwm = (1.0 - b) * channel_1_pwm_prev + b * channel_1_pwm;
+    channel_2_pwm = (1.0 - b) * channel_2_pwm_prev + b * channel_2_pwm;
+    channel_3_pwm = (1.0 - b) * channel_3_pwm_prev + b * channel_3_pwm;
+    channel_4_pwm = (1.0 - b) * channel_4_pwm_prev + b * channel_4_pwm;
+    channel_1_pwm_prev = channel_1_pwm;
+    channel_2_pwm_prev = channel_2_pwm;
+    channel_3_pwm_prev = channel_3_pwm;
+    channel_4_pwm_prev = channel_4_pwm;
 }
 
 void servoSetup()
@@ -1039,7 +1070,7 @@ void servoSetup()
 void armServos()
 {
     //command servo angle from 0-180 degrees (1000 to 2000 PWM)
-    servo1.write(90); 
+    servo1.write(90);
     servo2.write(90);
     servo3.write(90);
     servo4.write(90);
@@ -1056,7 +1087,7 @@ void motorSetup()
 
 void armMotors()
 {
-    
+
     m1_command_PWM = 125; // command OneShot125 ESC from 125 to 250us pulse length
     m2_command_PWM = 125; // Arm OneShot125 motors
 }
@@ -1072,10 +1103,10 @@ void getDesiredState()
     yaw_passthru variables, to be used in commanding motors/servos with direct un-stabilized commands in controlMixer().
     */
 
-    roll_des = (channel_1_pwm - 1500.0) / 500.0;            //between -1 and 1
-    pitch_des = (channel_2_pwm - 1500.0) / 500.0;           //between -1 and 1
-    thro_des = (channel_3_pwm - 1000.0) / 1000.0;           //between 0 and 1
-    yaw_des = (channel_4_pwm - 1500.0) / 500.0;             //between -1 and 1
+    roll_des = (channel_1_pwm - 1500.0) / 500.0;  //between -1 and 1
+    pitch_des = (channel_2_pwm - 1500.0) / 500.0; //between -1 and 1
+    thro_des = (channel_3_pwm - 1000.0) / 1000.0; //between 0 and 1
+    yaw_des = (channel_4_pwm - 1500.0) / 500.0;   //between -1 and 1
 
     //Constrain within normalized bounds
     thro_des = constrain(thro_des, 0.0, 1.0);               //between 0 and 1
@@ -1094,15 +1125,13 @@ void controlAngle()
     error_roll = roll_des - roll_IMU;
     integral_roll = integral_roll_prev + error_roll * dt;
     if (channel_3_pwm < 1060)
-    { 
+    {
         //don't let integrator build if throttle is too low
         integral_roll = 0;
     }
     integral_roll = constrain(integral_roll, -i_limit, i_limit); //saturate integrator to prevent unsafe buildup
     derivative_roll = GyroX;
-    roll_PID = 0.01 * (Kp_roll_angle * error_roll + Ki_roll_angle * integral_roll - Kd_roll_angle * derivative_roll); //scaled by .01 to bring within -1 to 1 range
-    Serial.print(roll_PID);
-    Serial.print(",");
+    roll_PID = (float)0.01 * (Kp_roll_angle * error_roll + Ki_roll_angle * integral_roll - Kd_roll_angle * derivative_roll); //scaled by .01 to bring within -1 to 1 range
 
     //Pitch
     error_pitch = pitch_des - pitch_IMU;
@@ -1113,9 +1142,7 @@ void controlAngle()
     }
     integral_pitch = constrain(integral_pitch, -i_limit, i_limit); //saturate integrator to prevent unsafe buildup
     derivative_pitch = GyroY;
-    pitch_PID = .01 * (Kp_pitch_angle * error_pitch + Ki_pitch_angle * integral_pitch - Kd_pitch_angle * derivative_pitch); //scaled by .01 to bring within -1 to 1 range
-    Serial.print(pitch_PID);
-    Serial.print(",");
+    pitch_PID = (float).01 * (Kp_pitch_angle * error_pitch + Ki_pitch_angle * integral_pitch - Kd_pitch_angle * derivative_pitch); //scaled by .01 to bring within -1 to 1 range
 
     //Yaw, stabilize on rate from GyroZ
     error_yaw = yaw_des - GyroZ;
@@ -1126,9 +1153,7 @@ void controlAngle()
     }
     integral_yaw = constrain(integral_yaw, -i_limit, i_limit); //saturate integrator to prevent unsafe buildup
     derivative_yaw = (error_yaw - error_yaw_prev) / dt;
-    yaw_PID = .01 * (Kp_yaw * error_yaw + Ki_yaw * integral_yaw + Kd_yaw * derivative_yaw); //scaled by .01 to bring within -1 to 1 range
-    Serial.println(yaw_PID);
-
+    yaw_PID = (float).01 * (Kp_yaw * error_yaw + Ki_yaw * integral_yaw + Kd_yaw * derivative_yaw); //scaled by .01 to bring within -1 to 1 range
 
     //Update roll variables
     integral_roll_prev = integral_roll;
@@ -1141,7 +1166,7 @@ void controlAngle()
 
 void controlMixer()
 {
-    /*
+/*
    Takes roll_PID, pitch_PID, and yaw_PID computed from the PID controller and appropriately mixes them for the desired
    vehicle configuration. For example on a quadcopter, the left two motors should have +roll_PID while the right two motors
    should have -roll_PID. Front two should have -pitch_PID and the back two should have +pitch_PID etc... every motor has
@@ -1149,20 +1174,20 @@ void controlMixer()
    roll_passthru, pitch_passthru, and yaw_passthu. mX_command_scaled and sX_command scaled variables 
    are used in scaleCommands() in preparation to be sent to the motor ESCs and servos.
    */
-    #if defined USE_DIFFERENTIAL_THRUST
-        m1_command_scaled = thro_des + yaw_des;
-        m2_command_scaled = thro_des - yaw_des;
-    #else
-        m1_command_scaled = thro_des;
-        m2_command_scaled = thro_des;
-    #endif
+#if defined USE_DIFFERENTIAL_THRUST
+    m1_command_scaled = thro_des + yaw_des;
+    m2_command_scaled = thro_des - yaw_des;
+#else
+    m1_command_scaled = thro_des;
+    m2_command_scaled = thro_des;
+#endif
 
-    #if defined USE_QUADCOPTER
-        m1_command_scaled = thro_des - pitch_PID + roll_PID + yaw_PID;
-        m2_command_scaled = thro_des - pitch_PID - roll_PID - yaw_PID;
-        m3_command_scaled = thro_des + pitch_PID - roll_PID + yaw_PID;
-        m4_command_scaled = thro_des + pitch_PID + roll_PID - yaw_PID;
-    #endif
+#if defined USE_QUADCOPTER
+    m1_command_scaled = thro_des - pitch_PID + roll_PID + yaw_PID;
+    m2_command_scaled = thro_des - pitch_PID - roll_PID - yaw_PID;
+    m3_command_scaled = thro_des + pitch_PID - roll_PID + yaw_PID;
+    m4_command_scaled = thro_des + pitch_PID + roll_PID - yaw_PID;
+#endif
 
     //0.5 is centered servo, 0 is zero throttle if connecting to ESC for conventional PWM, 1 is max throttle
     s1_command_scaled = pitch_PID;
@@ -1176,17 +1201,17 @@ void controlMixer()
     //Example use of the linear fader for float type variables. Linearly interpolate between minimum and maximum values for Kp_pitch_rate variable based on state of channel 6:
     // if (channel_6_pwm > 1500){ //go to max specified value in 5.5 seconds
     //     //parameter, minimum value, maximum value, fadeTime (seconds), state (0 min or 1 max), loop frequency
-    //     Kp_pitch_rate = floatFaderLinear(Kp_pitch_rate, 0.1, 0.3, 5.5, 1, 2000); 
+    //     Kp_pitch_rate = floatFaderLinear(Kp_pitch_rate, 0.1, 0.3, 5.5, 1, 2000);
     // }
     // if (channel_6_pwm < 1500) { //go to min specified value in 2.5 seconds
     //     //parameter, minimum value, maximum value, fadeTime, state (0 min or 1 max), loop frequency
-    //     Kp_pitch_rate = floatFaderLinear(Kp_pitch_rate, 0.1, 0.3, 2.5, 0, 2000); 
+    //     Kp_pitch_rate = floatFaderLinear(Kp_pitch_rate, 0.1, 0.3, 2.5, 0, 2000);
     // }
 }
 
 void scaleCommands()
 {
-   /*
+    /*
    mX_command_scaled variables from the mixer function are scaled to 125-250us for OneShot125 protocol. 
    sX_command_scaled variables from the mixer function are scaled to 0-180 for the servo library using standard PWM.
    mX_command_PWM are updated here which are used to command the motors in commandMotors(). 
@@ -1319,14 +1344,14 @@ void commandServos()
     // servo5.write(s5_command_PWM);
     // servo6.write(s6_command_PWM);
     // servo7.write(s7_command_PWM);
-}   
+}
 
 void printIMUdata()
 {
     if (current_time - print_counter > 10000)
     {
         print_counter = micros();
-        
+
         Serial.print(GyroX);
         Serial.print(F(","));
         Serial.print(GyroY);
@@ -1354,25 +1379,57 @@ void printBMPdata()
     }
 }
 
-void printRadioData() 
+void printRadioData()
 {
-  if (current_time - print_counter > 10000) {
-    print_counter = micros();
-    Serial.print(F(" CH1: "));
-    Serial.print(channel_1_pwm);
-    Serial.print(F(" CH2: "));
-    Serial.print(channel_2_pwm);
-    Serial.print(F(" CH3: "));
-    Serial.print(channel_3_pwm);
-    Serial.print(F(" CH4: "));
-    Serial.print(channel_4_pwm);
-    Serial.print(F(" CH5: "));
-    Serial.print(channel_5_pwm);
-    Serial.print(F(" CH6: "));
-    Serial.println(channel_6_pwm);
-  }
+    if (current_time - print_counter > 10000)
+    {
+        print_counter = micros();
+        Serial.print(F(" CH1: "));
+        Serial.print(channel_1_pwm);
+        Serial.print(F(" CH2: "));
+        Serial.print(channel_2_pwm);
+        Serial.print(F(" CH3: "));
+        Serial.print(channel_3_pwm);
+        Serial.print(F(" CH4: "));
+        Serial.print(channel_4_pwm);
+        Serial.print(F(" CH5: "));
+        Serial.print(channel_5_pwm);
+        Serial.print(F(" CH6: "));
+        Serial.println(channel_6_pwm);
+    }
 }
 
+void printPIDvalues()
+{
+    // Roll - Pitch - Yaw
+    if (current_time - print_counter > 10000)
+    {
+        print_counter = micros();
+        Serial.print(error_roll);
+        Serial.print(F(","));
+        Serial.print(error_pitch);
+        Serial.print(F(","));
+        Serial.print(error_yaw);
+        Serial.print(F(","));
+        Serial.print(integral_roll);
+        Serial.print(F(","));
+        Serial.print(integral_pitch);
+        Serial.print(F(","));
+        Serial.print(integral_yaw);
+        Serial.print(F(","));
+        Serial.print(derivative_roll);
+        Serial.print(F(","));
+        Serial.print(derivative_pitch);
+        Serial.print(F(","));
+        Serial.print(derivative_yaw);
+        Serial.print(F(","));
+        Serial.print(roll_PID);
+        Serial.print(F(","));
+        Serial.print(pitch_PID);
+        Serial.print(F(","));
+        Serial.println(yaw_PID);
+    }
+}
 void printLoopRate()
 {
     if (current_time - print_counter > 10000)
@@ -1431,7 +1488,7 @@ void printPIDoutput()
         Serial.print(",");
         Serial.print(yaw_PID);
         Serial.print(F(","));
-        Serial.println(1/dt);
+        Serial.println(1 / dt);
     }
 }
 
@@ -1484,8 +1541,11 @@ void setup()
     delay(4000);
 
     //Set built in LED to turn on to signal startup & not to disturb vehicle during IMU calibration
-    pinMode(LED_BUILTIN, OUTPUT); 
+    pinMode(LED_BUILTIN, OUTPUT);
     digitalWrite(LED_BUILTIN, HIGH);
+
+    //Set Buzzer
+    pinMode(BUZZER_PIN, OUTPUT);
 
     Serial.begin(SERIAL_BAUD);
 
@@ -1503,22 +1563,22 @@ void setup()
     // commandMotors();
 
     Serial.println("Starting IMU Setup");
-    IMUinit();  //Initialize IMU communication
+    IMUinit(); //Initialize IMU communication
 
     Serial.println("Starting Barometer Setup");
     BMPinit(); // Initialize BMP communication
 
     delay(10);
-    
+
     calculate_IMU_error(); //Get IMU error to zero accelerometer and gyro readings, assuming vehicle is level
     delay(100);
-
 
     Serial.println("Calibrating Attitude. Warming up IMU & Madgwick filter");
     calibrateAttitude(); //Warm up the loop helps to warm up IMU and Madgwick filter before finally entering main loop
 
     //Indicate entering main loop with 3 quick blinks
     setupBlink(3, 160, 70); //numBlinks, upTime (ms), downTime (ms)
+    setupBeep(2, 160, 70);
 
     //If using MPU9250 IMU, uncomment for one-time magnetometer calibration (may need to repeat for new locations)
     // calibrateMagnetometer(); //generates magnetometer error and scale factors
@@ -1532,7 +1592,9 @@ void loop()
     prev_time = current_time;
     current_time = micros();
     dt = (current_time - prev_time) / 1000000.0;
+
     loopBlink(); // Heart-beat blink
+    // loopBeep(); // Heart-beat beep
 
     /** DEBUG FUNCTIONS **/
     // printRadioData();
@@ -1543,7 +1605,8 @@ void loop()
     // printPIDoutput();
     // printMotorCommands();
     // printServoCommands();
-    
+    printPIDvalues();
+
     // Update Aircraft State
     getIMUdata();
     getBMPdata();
@@ -1553,7 +1616,7 @@ void loop()
     getDesiredState();
 
     // PID Controllers
-    controlAngle();             // stabilize on angle setpoint
+    controlAngle(); // stabilize on angle setpoint
     // controlAngle2();         // stabilize on angle setpoint using cascaded method
     // controlRate();           // stabilize on rate setpoint
 
@@ -1566,7 +1629,7 @@ void loop()
 
     // Command Motors
     // commandMotors();         //sends command pulses to each motor pin using OneShot125 protocol
-    
+
     // Command Servos
     commandServos();
 
@@ -1575,5 +1638,5 @@ void loop()
     failSafe();
 
     //Regulate loop rate
-    loopRate(2000);             // Don't Exceed 2000Hz
+    loopRate(2000); // Don't Exceed 2000Hz
 }
