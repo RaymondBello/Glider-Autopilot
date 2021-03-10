@@ -883,9 +883,9 @@ class GCS_Plotter:
         
         cls.build_mode = argv
         
-        cls.debug_mode = True if cls.build_mode is 0 else False
-        cls.tcp_mode = True if cls.build_mode is 1 else False
-        cls.serial_mode = True if cls.build_mode is 2 else False
+        cls.debug_mode = True if cls.build_mode == 0 else False
+        cls.tcp_mode = True if cls.build_mode == 1 else False
+        cls.serial_mode = True if cls.build_mode == 2 else False
         
         return cls()
 
