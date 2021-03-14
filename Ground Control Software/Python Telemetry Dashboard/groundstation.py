@@ -834,7 +834,6 @@ class MainWindow(QWidget):
             QtGui.QApplication.instance().exec_()
             
     def animation(self):
-        # Add stuff here
         timer = pg.QtCore.QTimer()
         timer.timeout.connect(self.update)
         timer.start(30)
