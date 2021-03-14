@@ -168,11 +168,11 @@ class MainWindow(QWidget):
         self.font1.setWeight(100)
         self.font1.setFamily('Fira Code')
         self.font2 = QtGui.QFont()
-        self.font2.setPixelSize(35)
+        self.font2.setPixelSize(25)
         self.font2.setWeight(100)
         self.font2.setFamily('Fira Code')
         self.font3 = QtGui.QFont()
-        self.font3.setPixelSize(30)
+        self.font3.setPixelSize(20)
         self.font3.setWeight(100)
         self.font3.setFamily('Fira Code')
         self.font_gps = QtGui.QFont()
@@ -203,8 +203,8 @@ class MainWindow(QWidget):
         self.dock2 = Dock("2) Py Console", size=(500,200), closable=True)
         self.dock3 = Dock("3) Accelerometer", size=(500,400))
         self.dock4 = Dock("4) Gyroscope", size=(500,400))
-        self.dock5 = Dock("5) Dock5 - Image", size=(500,400))
-        self.dock6 = Dock("6) Dock6 (tabbed) - Plot", size=(500,200))
+        self.dock5 = Dock("5) Barometer", size=(500,400))
+        self.dock6 = Dock("6) Aircraft Data", size=(500,400))
         self.dock7 = Dock("7) RealTime - Plot", size=(500,200))
         self.dock8 = Dock("8) GCS Map",size=(500,300))
         self.dock9 = Dock("9) MatplotLib", size=(500,300))
@@ -212,19 +212,15 @@ class MainWindow(QWidget):
         self.area.addDock(self.dock1, 'left')      
         self.area.addDock(self.dock2, 'right', self.dock1)     
         self.area.addDock(self.dock3, 'top', self.dock2)
-        self.area.addDock(self.dock4, 'top',self.dock2)     
-        self.area.addDock(self.dock5, 'top', self.dock2)  
-        # self.area.addDock(self.dock6, 'right', self.dock5)   
+        self.area.addDock(self.dock4, 'below',self.dock3)     
+        self.area.addDock(self.dock5, 'below', self.dock4)
+        self.area.addDock(self.dock6, 'right', self.dock2) 
+          
         # self.area.addDock(self.dock7, 'bottom', self.dock3)
-        # self.area.addDock(self.dock8, 'right', self.dock4)
-        self.area.addDock(self.dock8, 'bottom', self.dock1)
+        self.area.addDock(self.dock8, 'top', self.dock1)
         
-        
-        # Test ability to move docks programatically after they have been placed
         # self.area.moveDock(self.dock4, 'top', self.dock2)     ## move dock4 to top edge of dock2
-        # self.area.moveDock(self.dock6, 'above', self.dock4)   ## move dock6 to stack on top of dock4
-        # self.area.moveDock(self.dock5, 'top', self.dock2)     ## move dock5 to top edge of dock2
-        # self.area.moveDock(self.dock1, 'above', self.dock3)
+        
     
     def add_widgets(self):
         # Label
@@ -287,7 +283,6 @@ class MainWindow(QWidget):
         )
         self.dock3.addWidget(self.widget3)
         # self.dock3.hideTitleBar()
-        # buffer for dock 3 (accel)
         self.data3_0 = np.empty(200)
         self.data3_1 = np.empty(200)
         self.data3_2 = np.empty(200)
@@ -318,22 +313,114 @@ class MainWindow(QWidget):
             name="Gz"
         )
         self.dock4.addWidget(self.widget4)
-        
         self.data4_0 = np.empty(200)
         self.data4_1 = np.empty(200)
         self.data4_2 = np.empty(200)
         self.ptr2 = 0
         
 
-
-
-        self.widget5 = pg.ImageView()
-        self.widget5.setImage(np.random.normal(size=(5,5)))
+        # widget 5 (Barometer)
+        self.widget5 = pg.PlotWidget(title="barometer")
+        self.widget5.setDownsampling(mode="peak")
+        self.widget5.setClipToView(True)
+        self.widget5.addLegend(offset=(1, 1))
+        self.widget5.setRange(xRange=[-200, 0])
+        self.widget5.setLimits(xMax=0)
+        self.widget5_curve0 = self.widget5.plot(
+            pen=(150, 0, 0),
+            name="alt",
+            labels={
+                "left": self.widget5.setLabel("left", text="Pressure", units="hPa"),
+                "bottom": self.widget5.setLabel("bottom", text="Time", units="s"),
+            },
+        )
+        self.widget5_curve1 = self.widget5.plot(
+            pen=(0, 150, 0),
+            name="int. temp"
+        )
         self.dock5.addWidget(self.widget5)
+        self.data5_0 = np.empty(200)
+        self.data5_1 = np.empty(200)
+        self.ptr3 = 0
 
-        self.widget6 = pg.PlotWidget(title="Dock 6 plot")
-        self.widget6.plot(np.random.normal(size=100))
+
+        # widget 6 (Aircraft Data)
+        self.widget6 = pg.LayoutWidget()
+
+        self.stateGraphic = pg.PlotWidget(title='state')
+        self.stateGraphic.setRange(QtCore.QRectF(-50, -50, 100, 100))
+        self.stateGraphic.hideAxis('bottom')
+        self.stateGraphic.hideAxis('left')
+        self.texttoState = pg.TextItem(f"idle", anchor=(0.5, 0.5), color='w')
+        self.texttoState.setFont(self.font2)
+        self.stateGraphic.addItem(self.texttoState)
+        
+        self.timeGraphic = pg.PlotWidget(title='current_time')
+        self.timeGraphic.setRange(QtCore.QRectF(-50, -50, 100, 100))
+        self.timeGraphic.hideAxis('bottom')
+        self.timeGraphic.hideAxis('left')
+        now = datetime.now()
+        self.texttoTime = pg.TextItem(f"{now.strftime('%H:%M:%S')}", anchor=(0.5, 0.5), color='w')
+        self.texttoTime.setFont(self.font2)
+        self.timeGraphic.addItem(self.texttoTime)
+        
+        self.batteryGraphic = pg.PlotWidget(title='battery voltage')
+        self.batteryGraphic.hideAxis('bottom')
+        self.batteryGraphic.hideAxis('left')
+        self.texttoBattery = pg.TextItem(f"{11.2} V", anchor=(0.5, 0.5), color='w')
+        self.texttoBattery.setFont(self.font2)
+        self.batteryGraphic.addItem(self.texttoBattery)
+        
+        self.pitchGraphic = pg.PlotWidget(title='pitch_imu')
+        self.pitchGraphic.hideAxis('bottom')
+        self.pitchGraphic.hideAxis('left')
+        self.texttoPitch = pg.TextItem(f"0.0°", anchor=(0.5, 0.5), color='w')
+        self.texttoPitch.setFont(self.font2)
+        self.pitchGraphic.addItem(self.texttoPitch)
+        
+        self.rollGraphic = pg.PlotWidget(title='roll_imu')
+        self.rollGraphic.hideAxis('bottom')
+        self.rollGraphic.hideAxis('left')
+        self.texttoRoll = pg.TextItem(f"0.0°", anchor=(0.5, 0.5), color='w')
+        self.texttoRoll.setFont(self.font2)
+        self.rollGraphic.addItem(self.texttoRoll)
+        
+        self.yawGraphic = pg.PlotWidget(title='roll_imu')
+        self.yawGraphic.hideAxis('bottom')
+        self.yawGraphic.hideAxis('left')
+        self.texttoYaw = pg.TextItem(f"0.0°", anchor=(0.5, 0.5), color='w')
+        self.texttoYaw.setFont(self.font2)
+        self.yawGraphic.addItem(self.texttoYaw)
+        
+        self.altitudeGraphic = pg.PlotWidget(title="altitude")
+        self.altitudeGraphic.setRange(QtCore.QRectF(-50, -50, 100, 100))
+        self.altitudeGraphic.hideAxis('bottom')
+        self.altitudeGraphic.hideAxis('left')
+        self.texttoAltitude = pg.TextItem(f"0.01m", anchor=(0.5, 0.5), color='w')
+        self.texttoAltitude.setFont(self.font2)
+        self.altitudeGraphic.addItem(self.texttoAltitude)
+        
+        self.GPSDataGraphic = pg.PlotWidget(title="gps_data")
+        self.GPSDataGraphic.setRange(QtCore.QRectF(-50, -50, 100, 100))
+        self.GPSDataGraphic.hideAxis('bottom')
+        self.GPSDataGraphic.hideAxis('left')
+        self.texttoGPS = pg.TextItem("null", anchor=(0.5, 0.5), color='w')
+        self.texttoGPS.setFont(self.font3)
+        self.GPSDataGraphic.addItem(self.texttoGPS)
+        
+        
+        self.widget6.addWidget(self.stateGraphic,row=0, col=0)
+        
+        self.widget6.addWidget(self.timeGraphic,row=0, col=1)
+        self.widget6.addWidget(self.batteryGraphic,row=0, col=2)
+        self.widget6.addWidget(self.pitchGraphic,row=1, col=0)
+        self.widget6.addWidget(self.rollGraphic,row=1, col=1)
+        self.widget6.addWidget(self.yawGraphic,row=1, col=2)
+        self.widget6.addWidget(self.altitudeGraphic,row=2, col=0)
+        self.widget6.addWidget(self.GPSDataGraphic,row=2, col=1,colspan=2)
+        
         self.dock6.addWidget(self.widget6)
+        
         
         # realtime
         self.widget7 = pg.PlotWidget(name='Plot1', title = "RealTime Data")
@@ -391,14 +478,17 @@ class MainWindow(QWidget):
         
         x,y,z = self.get_xyz_list()
         self.canvas.plot3D(x,y,z)
-                
         
     def load(self):
         global filename
-        filename, _ = QFileDialog.getOpenFileName(self,"Load Data", "", "All files (*)") 
-        print(filename) 
+        # filename, _ = QFileDialog.getOpenFileName(self,"Load Data", "", "All files (*)") 
+        try:
+            filename, _ =QFileDialog.getOpenFileNames(self,"Load Data", "", "All files (*)")
+            print(filename) 
+        except:
+            print(Exception)
         
-        self.plot()
+        # self.plot()
         # Real time graphing https://www.learnpyqt.com/tutorials/plotting-matplotlib/
     
     def get_xyz_list(self):
@@ -554,7 +644,76 @@ class MainWindow(QWidget):
         self.widget4_curve1.setPos(-self.ptr2, 0)
         self.widget4_curve2.setPos(-self.ptr2, 0)
         
+    def update_widget5(self, baro_values):
+        if self.ptr3 < self.random_plot_step:
+            self.data5_0[self.ptr3] = np.random.normal()
+            self.data5_1[self.ptr3] = np.random.normal()
+            
+        else:
+            if len(baro_values) == 2:
+                try:
+                    data5_0_value = round(float(baro_values[0]),3)
+                    data5_1_value = round(float(baro_values[1]),3)
                     
+                    self.data5_0[self.ptr3] = data5_0_value
+                    self.data5_1[self.ptr3] = data5_1_value
+                    
+                except ValueError as error:
+                    print(f"[VALUE ERROR]: {error}")
+                    
+        self.ptr3 += 1
+        
+        if self.ptr3 >= self.data5_0.shape[0]:
+            tmp1_0 = self.data5_0
+            tmp1_1 = self.data5_1
+            
+            self.data5_0 = np.empty(self.data5_0.shape[0]*2)
+            self.data5_1 = np.empty(self.data5_1.shape[0]*2)
+            
+            self.data5_0[: tmp1_0.shape[0]] = tmp1_0
+            self.data5_1[: tmp1_1.shape[0]] = tmp1_1
+
+        self.widget5_curve0.setData(self.data5_0[:self.ptr3])
+        self.widget5_curve1.setData(self.data5_1[:self.ptr3])
+        
+        self.widget5_curve0.setPos(-self.ptr3, 0)
+        self.widget5_curve1.setPos(-self.ptr3, 0)
+                    
+    def update_widget6(self, aircraft_values):
+        self.stateGraphic.removeItem(self.texttoState)
+        self.timeGraphic.removeItem(self.texttoTime)
+        self.batteryGraphic.removeItem(self.texttoBattery)
+        self.pitchGraphic.removeItem(self.texttoPitch)
+        self.rollGraphic.removeItem(self.texttoRoll)
+        self.yawGraphic.removeItem(self.texttoYaw)
+        self.altitudeGraphic.removeItem(self.texttoAltitude)
+        self.GPSDataGraphic.removeItem(self.texttoGPS)
+        
+        self.texttoState = pg.TextItem(str(self.fsm.current_state.value), anchor=(0.5, 0.5), color='w')
+        now = datetime.now()
+        self.texttoTime = pg.TextItem(f"{now.strftime('%H:%M:%S')}", anchor=(0.5, 0.5), color="w")
+        
+        self.texttoState.setFont(self.font2)
+        self.texttoTime.setFont(self.font2)
+        
+        self.stateGraphic.addItem(self.texttoState)
+        self.timeGraphic.addItem(self.texttoTime)
+        
+
+        
+    def update_essential(self):
+        self.stateGraphic.removeItem(self.texttoState)
+        self.timeGraphic.removeItem(self.texttoTime)
+        
+        self.texttoState = pg.TextItem(str(self.fsm.current_state.value), anchor=(0.5, 0.5), color='w')
+        now = datetime.now()
+        self.texttoTime = pg.TextItem(f"{now.strftime('%H:%M:%S')}", anchor=(0.5, 0.5), color="w")
+        
+        self.texttoState.setFont(self.font2)
+        self.texttoTime.setFont(self.font2)
+        self.stateGraphic.addItem(self.texttoState)
+        self.timeGraphic.addItem(self.texttoTime)
+        
     def update(self):
         # print(self.__version__)
         
@@ -579,8 +738,10 @@ class MainWindow(QWidget):
             
             self.update_widget3(self.serial_data[0:3])
             self.update_widget4(self.serial_data[3:6])
+            self.update_widget5(self.serial_data[6:8])
+            self.update_widget6(self.serial_data[6:8])
         else: 
-            pass
+            self.update_essential()
         
     def start(self):
         if (sys.flags.interactive != 1) or not hasattr(QtCore, "PYQT_VERSION"):
@@ -590,7 +751,7 @@ class MainWindow(QWidget):
         # Add stuff here
         timer = pg.QtCore.QTimer()
         timer.timeout.connect(self.update)
-        timer.start(20)
+        timer.start(30)
         self.start()
 
 
