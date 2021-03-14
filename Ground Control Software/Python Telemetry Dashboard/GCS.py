@@ -203,8 +203,8 @@ class GCS_Plotter:
             pen=(150, 0, 0),
             name="Gx",
             labels={
-                # "left": self.graph2.setLabel("left", text="Angular Accel ", units="rad/s2"),
-                # "bottom": self.graph1.setLabel("bottom", text="Time", units="s"),
+                "left": self.graph2.setLabel("left", text="Angular Accel ", units="rad/s2"),
+                "bottom": self.graph1.setLabel("bottom", text="Time", units="s"),
             },
         )
         self.graph2_curve1 = self.graph2.plot(
