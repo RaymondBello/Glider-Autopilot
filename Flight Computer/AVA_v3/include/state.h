@@ -71,8 +71,6 @@ struct State
 
 };
 
-// extern struct State state;
-
 void stateInit();
 void setStateStatus(uint16_t state_status);
 

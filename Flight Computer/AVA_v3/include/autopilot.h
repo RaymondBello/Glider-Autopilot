@@ -21,6 +21,4 @@ struct Autopilot {
   bool detect_ground_once;  ///< enable automatic detection of ground (one shot)
 };
 
-// extern struct Autopilot autopilot;
-
 #endif
