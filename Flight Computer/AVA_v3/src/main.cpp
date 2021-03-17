@@ -9,7 +9,10 @@
 /*************************************************************************************************/
 /************************************** User Defined Files ***************************************/
 /*************************************************************************************************/
+#include "tools/std.h"
 #include "config.h"
+#include "state.h"
+#include "autopilot.h"
 #include "tools/kalman_filter.h"
 #include "tools/radio_comms.h"
 
@@ -177,7 +180,7 @@ bool beepAlternate;
 //Radio comm:
 unsigned long channel_1_pwm, channel_2_pwm, channel_3_pwm, channel_4_pwm, channel_5_pwm, channel_6_pwm, channel_7_pwm, channel_8_pwm;
 
-unsigned long channel_1_pwm_prev, channel_2_pwm_prev, channel_3_pwm_prev, channel_4_pwm_prev;
+unsigned long channel_1_pwm_prev, channel_2_pwm_prev, channel_3_pwm_prev, channel_4_pwm_prev, channel_5_pwm_prev, channel_6_pwm_prev, channel_7_pwm_prev;
 
 //IMU:
 float AccX, AccY, AccZ;
@@ -233,6 +236,11 @@ float m1_command_scaled, m2_command_scaled, m3_command_scaled, m4_command_scaled
 int m1_command_PWM, m2_command_PWM, m3_command_PWM, m4_command_PWM, m5_command_PWM, m6_command_PWM;
 float s1_command_scaled, s2_command_scaled, s3_command_scaled, s4_command_scaled, s5_command_scaled, s6_command_scaled, s7_command_scaled;
 int s1_command_PWM, s2_command_PWM, s3_command_PWM, s4_command_PWM, s5_command_PWM, s6_command_PWM, s7_command_PWM;
+
+// Aircraft state and autopilot management
+State state;
+Autopilot autopilot;
+
 
 void failSafe()
 {
@@ -1009,6 +1017,7 @@ void setChannelsToFailsafe()
     channel_4_pwm = channel_4_fs;
     channel_5_pwm = channel_5_fs;
     channel_6_pwm = channel_6_fs;
+    channel_7_pwm = channel_7_fs;
 }
 
 void getCommands()
@@ -1028,6 +1037,7 @@ void getCommands()
     channel_4_pwm = getRadioPWM(4);
     channel_5_pwm = getRadioPWM(5);
     channel_6_pwm = getRadioPWM(6);
+    channel_7_pwm = getRadioPWM(7);
 
 #elif defined USE_SBUS_RX
     if (sbus.read(&sbusChannels[0], &sbusFailSafe, &sbusLostFrame))
@@ -1050,10 +1060,17 @@ void getCommands()
     channel_2_pwm = (1.0 - b) * channel_2_pwm_prev + b * channel_2_pwm;
     channel_3_pwm = (1.0 - b) * channel_3_pwm_prev + b * channel_3_pwm;
     channel_4_pwm = (1.0 - b) * channel_4_pwm_prev + b * channel_4_pwm;
+    channel_5_pwm = (1.0 - b) * channel_5_pwm_prev + b * channel_5_pwm;
+    channel_6_pwm = (1.0 - b) * channel_6_pwm_prev + b * channel_6_pwm;
+    channel_7_pwm = (1.0 - b) * channel_7_pwm_prev + b * channel_7_pwm;
+
     channel_1_pwm_prev = channel_1_pwm;
     channel_2_pwm_prev = channel_2_pwm;
     channel_3_pwm_prev = channel_3_pwm;
     channel_4_pwm_prev = channel_4_pwm;
+    channel_5_pwm_prev = channel_5_pwm;
+    channel_6_pwm_prev = channel_6_pwm;
+    channel_7_pwm_prev = channel_7_pwm;
 }
 
 void servoSetup()
@@ -1395,7 +1412,9 @@ void printRadioData()
         Serial.print(F(" CH5: "));
         Serial.print(channel_5_pwm);
         Serial.print(F(" CH6: "));
-        Serial.println(channel_6_pwm);
+        Serial.print(channel_6_pwm);
+        Serial.print(F(" CH7: "));
+        Serial.println(channel_7_pwm);
     }
 }
 
@@ -1430,6 +1449,7 @@ void printPIDvalues()
         Serial.println(yaw_PID);
     }
 }
+
 void printLoopRate()
 {
     if (current_time - print_counter > 10000)
@@ -1534,11 +1554,63 @@ void printServoCommands()
     }
 }
 
+void printAircraftState() 
+{
+    /**
+     * @brief Prints out relevant aircraft variables to UART
+     * 
+     */
+    if (current_time - print_counter > 10000)
+    {
+        // Add mode values here
+        Serial.print(state.lla_pos_f.lat);
+        Serial.print(",");
+        Serial.print(state.lla_pos_f.lon);
+        Serial.print(",");
+        Serial.print(state.lla_pos_f.alt);
+        Serial.print(",");
+        Serial.print(state.quat_f.qi);
+        Serial.print(",");
+        Serial.print(state.quat_f.qx);
+        Serial.print(",");
+        Serial.print(state.quat_f.qy);
+        Serial.print(",");
+        Serial.print(state.quat_f.qz);
+        Serial.print(",");
+        Serial.print(state.ned_speed_f.x);
+        Serial.print(",");
+        Serial.print(state.ned_speed_f.y);
+        Serial.print(",");
+        Serial.print(state.ned_speed_f.z);
+        Serial.print(",");
+        Serial.print(state.ned_accel_f.x);
+        Serial.print(",");
+        Serial.print(state.ned_accel_f.y);
+        Serial.print(",");
+        Serial.print(state.ned_accel_f.z);
+        Serial.print(",");
+        Serial.print(state.actuator.throttle);
+        Serial.print(",");
+        Serial.print(state.actuator.aileron);
+        Serial.print(",");
+        Serial.print(state.actuator.elevator);
+        Serial.print(",");
+        Serial.print(state.actuator.rudder);
+        Serial.print(",");
+        Serial.println(state.actuator.flaps);
+    }
+}
+
+/* State & Autopilot Management Functions */
+// Update all state and autopilot management functions
+void updateAllStateVariables()
+{
+    uint16_t zero_array[16] = {0};
+    // state.setStateStatus(zero_array);
+}
+
 void setup()
 {
-    delay(1000);
-    Serial.println("Booting Up");
-    delay(4000);
 
     //Set built in LED to turn on to signal startup & not to disturb vehicle during IMU calibration
     pinMode(LED_BUILTIN, OUTPUT);
@@ -1586,6 +1658,9 @@ void setup()
 
 void loop()
 {
+    // Update State Struct
+    updateAllStateVariables();
+
     // Fail Hard if MPU not setup properly
     failure_if_mpu_not_working();
 
@@ -1605,7 +1680,8 @@ void loop()
     // printPIDoutput();
     // printMotorCommands();
     // printServoCommands();
-    printPIDvalues();
+    // printPIDvalues();
+    printAircraftState();
 
     // Update Aircraft State
     getIMUdata();
@@ -1635,7 +1711,7 @@ void loop()
 
     // Retreive Updated Radio Commands
     getCommands();
-    failSafe();
+    // failSafe();
 
     //Regulate loop rate
     loopRate(2000); // Don't Exceed 2000Hz

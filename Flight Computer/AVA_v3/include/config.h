@@ -59,13 +59,13 @@
 //NOTE: Pins 18 and 19 are reserved for I2C in default setup
 
 //Radio Receiver Channels
-#define CH1_PIN 0
-#define CH2_PIN 1
-#define CH3_PIN 2
-#define CH4_PIN 3
-#define CH5_PIN 4
-#define CH6_PIN 22
-#define CH7_PIN 23
+#define CH1_PIN 9
+#define CH2_PIN 10
+#define CH3_PIN 11
+#define CH4_PIN 12
+#define CH5_PIN 24
+#define CH6_PIN 25
+#define CH7_PIN 7
 #define CH8_PIN 17
 #define PPM_PIN 15
 
@@ -74,13 +74,13 @@
 // #define M2_PIN 1
 
 // Servo Configuration
-#define SERVO1_PIN 8
-#define SERVO2_PIN 7
-#define SERVO3_PIN 6
+#define SERVO1_PIN 2
+#define SERVO2_PIN 3
+#define SERVO3_PIN 4
 #define SERVO4_PIN 5
-#define SERVO5_PIN 10
-#define SERVO6_PIN 11
-#define SERVO7_PIN 12
+#define SERVO5_PIN 6
+#define SERVO6_PIN 22
+#define SERVO7_PIN 23
 
 // Failsafe Configuration
 #define CHAN1_FS 1500

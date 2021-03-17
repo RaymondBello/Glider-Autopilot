@@ -1,11 +1,14 @@
 {
     "cSpell.words": [
+        "Coor",
         "SBUS",
-        "Uinit"
+        "Uinit",
+        "Vect"
     ],
     "files.associations": {
         "*.tcc": "cpp",
         "string": "cpp",
-        "initializer_list": "cpp"
+        "initializer_list": "cpp",
+        "arduino.h": "c"
     }
 }

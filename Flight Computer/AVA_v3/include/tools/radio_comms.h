@@ -70,6 +70,16 @@ void getCh6() {
   }
 }
 
+void getCh7() {
+  int trigger = digitalRead(CH7_PIN);
+  if(trigger == 1) {
+    rising_edge_start_7 = micros();
+  }
+  else if(trigger == 0) {
+    channel_7_raw = micros() - rising_edge_start_7;
+  }
+}
+
 unsigned long getRadioPWM(int ch_num) {
   //DESCRIPTION: Get current radio commands from interrupt routines 
   unsigned long returnPWM;
@@ -92,6 +102,10 @@ unsigned long getRadioPWM(int ch_num) {
   else if (ch_num == 6) {
     returnPWM = channel_6_raw;
   }
+  else if (ch_num == 7) {
+    returnPWM = channel_7_raw;
+  }
+
   
   return returnPWM;
 }
@@ -154,6 +168,7 @@ void radioSetup() {
     pinMode(CH4_PIN, INPUT_PULLUP);
     pinMode(CH5_PIN, INPUT_PULLUP);
     pinMode(CH6_PIN, INPUT_PULLUP);
+    pinMode(CH7_PIN, INPUT_PULLUP);
     delay(20);
     //Attach interrupt and point to corresponding ISR functions
     attachInterrupt(digitalPinToInterrupt(CH1_PIN), getCh1, CHANGE);
@@ -162,6 +177,7 @@ void radioSetup() {
     attachInterrupt(digitalPinToInterrupt(CH4_PIN), getCh4, CHANGE);
     attachInterrupt(digitalPinToInterrupt(CH5_PIN), getCh5, CHANGE);
     attachInterrupt(digitalPinToInterrupt(CH6_PIN), getCh6, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(CH7_PIN), getCh7, CHANGE);
     delay(20);
 
   //SBUS Recevier 
