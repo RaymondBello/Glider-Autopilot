@@ -1,17 +1,16 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+
 __author__ = "Ray Bello"
 __copyright__ = "Copyright 2020, RayTech"
-__license__ = "GPL"
 __version__ = "0.0.1"
 __maintainer__ = "Ray"
-__email__ = "raymondbello11@gmail.com"
 __status__ = "Development"
 
 
-import sys
 import io
+import sys
 import time
 import json
 import math
@@ -50,16 +49,6 @@ class MatplotLibCanvas(FigureCanvas):
         self.fig = Figure(figsize=(width,height),dpi=dpi)
         FigureCanvas.__init__(self,self.fig)
     
-    def plot3D(self, xarray,yarray,zarray):
-        self.fig.clear()
-        self.axe3D = self.fig.add_subplot(111, projection='3d')
-        self.axe3D.plot_trisurf(xarray,yarray,zarray, color='red', alpha=0.6,edgecolor='red',shade=1)
-        self.axe3D.plot(xarray,yarray,zarray,'ok')
-        self.axe3D.set_xlabel('X')
-        self.axe3D.set_ylabel('Y')
-        self.axe3D.set_zlabel('Z')
-        self.draw()
-    
     def plot2D(self, xarray, yarray):
         self.fig.clear()
         self.axe2D = self.fig.add_subplot(111)
@@ -69,7 +58,17 @@ class MatplotLibCanvas(FigureCanvas):
         self.axe2D.set_ylabel('Y')
         self.axe2D.set_zlabel('Z')
         self.draw()
-        
+    
+    def plot3D(self, xarray,yarray,zarray):
+        self.fig.clear()
+        self.axe3D = self.fig.add_subplot(111, projection='3d')
+        self.axe3D.plot_trisurf(xarray,yarray,zarray, color='red', alpha=0.6,edgecolor='red',shade=1)
+        self.axe3D.plot(xarray,yarray,zarray,'ok')
+        self.axe3D.set_xlabel('X')
+        self.axe3D.set_ylabel('Y')
+        self.axe3D.set_zlabel('Z')
+        self.draw()
+
 
 class FiniteStateMachine(StateMachine):
     ''
@@ -838,6 +837,7 @@ class MainWindow(QWidget):
         timer.timeout.connect(self.update)
         timer.start(30)
         self.start()
+
 
 
 if __name__ == '__main__':
