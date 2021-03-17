@@ -69,12 +69,12 @@ struct State
     /* Actuator Values. Unit: Degrees */
     struct Actuator actuator;
 
-    void setStateStatus(uint16_t state_status);
 };
 
-extern struct State state;
+// extern struct State state;
 
-extern void stateInit(void);
+void stateInit();
+void setStateStatus(uint16_t state_status);
 
 
 #endif //STATE_H

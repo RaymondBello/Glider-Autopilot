@@ -10,11 +10,11 @@
 /************************************** User Defined Files ***************************************/
 /*************************************************************************************************/
 #include "tools/std.h"
-#include "config.h"
-#include "state.h"
-#include "autopilot.h"
-#include "tools/kalman_filter.h"
 #include "tools/radio_comms.h"
+#include "tools/kalman_filter.h"
+#include "config.h"
+#include "state.cpp"
+#include "autopilot.cpp"
 
 /*************************************************************************************************/
 /****************************************** Define Guards ***************************************/
@@ -237,9 +237,11 @@ int m1_command_PWM, m2_command_PWM, m3_command_PWM, m4_command_PWM, m5_command_P
 float s1_command_scaled, s2_command_scaled, s3_command_scaled, s4_command_scaled, s5_command_scaled, s6_command_scaled, s7_command_scaled;
 int s1_command_PWM, s2_command_PWM, s3_command_PWM, s4_command_PWM, s5_command_PWM, s6_command_PWM, s7_command_PWM;
 
-// Aircraft state and autopilot management
-State state;
-Autopilot autopilot;
+
+// Aircraft state and autopilot management 
+/*  State state initialized in state.cpp 
+    Autopilot initialized in autopilot.cpp */
+
 
 
 void failSafe()
@@ -1605,8 +1607,9 @@ void printAircraftState()
 // Update all state and autopilot management functions
 void updateAllStateVariables()
 {
-    uint16_t zero_array[16] = {0};
-    // state.setStateStatus(zero_array);
+    uint16_t zero_array[8] = {0};
+    setStateStatus(zero_array);
+    // Serial.println(zero_array[0]);
 }
 
 void setup()
@@ -1615,6 +1618,9 @@ void setup()
     //Set built in LED to turn on to signal startup & not to disturb vehicle during IMU calibration
     pinMode(LED_BUILTIN, OUTPUT);
     digitalWrite(LED_BUILTIN, HIGH);
+
+    // Initialize All State and Autopilot related Variables
+    stateInit();
 
     //Set Buzzer
     pinMode(BUZZER_PIN, OUTPUT);
