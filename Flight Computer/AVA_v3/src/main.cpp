@@ -9,10 +9,10 @@
 /*************************************************************************************************/
 /************************************** User Defined Files ***************************************/
 /*************************************************************************************************/
+#include "config.h"
 #include "tools/std.h"
 #include "tools/radio_comms.h"
 #include "tools/kalman_filter.h"
-#include "config.h"
 #include "state.cpp"
 #include "autopilot.cpp"
 
@@ -236,12 +236,6 @@ float m1_command_scaled, m2_command_scaled, m3_command_scaled, m4_command_scaled
 int m1_command_PWM, m2_command_PWM, m3_command_PWM, m4_command_PWM, m5_command_PWM, m6_command_PWM;
 float s1_command_scaled, s2_command_scaled, s3_command_scaled, s4_command_scaled, s5_command_scaled, s6_command_scaled, s7_command_scaled;
 int s1_command_PWM, s2_command_PWM, s3_command_PWM, s4_command_PWM, s5_command_PWM, s6_command_PWM, s7_command_PWM;
-
-
-// Aircraft state and autopilot management 
-/*  State state initialized in state.cpp 
-    Autopilot initialized in autopilot.cpp */
-
 
 
 void failSafe()
@@ -1365,6 +1359,7 @@ void commandServos()
     // servo7.write(s7_command_PWM);
 }
 
+/* Serial print functions */
 void printIMUdata()
 {
     if (current_time - print_counter > 10000)
@@ -1565,11 +1560,23 @@ void printAircraftState()
     if (current_time - print_counter > 10000)
     {
         // Add mode values here
-        Serial.print(state.lla_pos_f.lat);
+        Serial.print(state.ned_accel_f.x);
         Serial.print(",");
-        Serial.print(state.lla_pos_f.lon);
+        Serial.print(state.ned_accel_f.y);
         Serial.print(",");
-        Serial.print(state.lla_pos_f.alt);
+        Serial.print(state.ned_accel_f.z);
+        Serial.print(",");
+        Serial.print(state.body_gyro_f.p);
+        Serial.print(",");
+        Serial.print(state.body_gyro_f.q);
+        Serial.print(",");
+        Serial.print(state.body_gyro_f.r);
+        Serial.print(",");
+        Serial.print(state.ned_speed_f.x);
+        Serial.print(",");
+        Serial.print(state.ned_speed_f.y);
+        Serial.print(",");
+        Serial.print(state.ned_speed_f.z);
         Serial.print(",");
         Serial.print(state.quat_f.qi);
         Serial.print(",");
@@ -1579,17 +1586,17 @@ void printAircraftState()
         Serial.print(",");
         Serial.print(state.quat_f.qz);
         Serial.print(",");
-        Serial.print(state.ned_speed_f.x);
+        Serial.print(state.eulers_f.theta);
         Serial.print(",");
-        Serial.print(state.ned_speed_f.y);
+        Serial.print(state.eulers_f.psi);
         Serial.print(",");
-        Serial.print(state.ned_speed_f.z);
+        Serial.print(state.eulers_f.phi);
         Serial.print(",");
-        Serial.print(state.ned_accel_f.x);
+        Serial.print(state.lla_pos_f.lat);
         Serial.print(",");
-        Serial.print(state.ned_accel_f.y);
+        Serial.print(state.lla_pos_f.lon);
         Serial.print(",");
-        Serial.print(state.ned_accel_f.z);
+        Serial.print(state.lla_pos_f.alt);
         Serial.print(",");
         Serial.print(state.actuator.throttle);
         Serial.print(",");
@@ -1603,14 +1610,42 @@ void printAircraftState()
     }
 }
 
+
 /* State & Autopilot Management Functions */
-// Update all state and autopilot management functions
-void updateAllStateVariables()
+void updateAircraftStateStruct()
 {
+    FloatQuat aircraftQuaternion;
+    NedCoor_f aircraftAcceleration;
+    FloatRates aircraftAngularRate;
+    FloatEulers aircraftEuler;
+    // Actuator aircraftActuators;
+
     uint16_t zero_array[8] = {0};
     setStateStatus(zero_array);
-    // Serial.println(zero_array[0]);
+
+    aircraftQuaternion.qi = q0;
+    aircraftQuaternion.qx = q1;
+    aircraftQuaternion.qy = q2;
+    aircraftQuaternion.qz = q3;
+    setStateQuaternion(&aircraftQuaternion);
+
+    aircraftAcceleration.x = AccX;
+    aircraftAcceleration.y = AccY;
+    aircraftAcceleration.z = AccZ;
+    setStateAccelNED(&aircraftAcceleration);
+
+    aircraftAngularRate.p = GyroX;
+    aircraftAngularRate.q = GyroY;
+    aircraftAngularRate.r = GyroZ;
+    setStateAngularRates(&aircraftAngularRate);
+
+    aircraftEuler.theta = pitch_IMU;
+    aircraftEuler.phi = roll_IMU;
+    aircraftEuler.psi = yaw_IMU;
+    setStateEulers(&aircraftEuler);
+
 }
+
 
 void setup()
 {
@@ -1664,9 +1699,6 @@ void setup()
 
 void loop()
 {
-    // Update State Struct
-    updateAllStateVariables();
-
     // Fail Hard if MPU not setup properly
     failure_if_mpu_not_working();
 
@@ -1676,18 +1708,6 @@ void loop()
 
     loopBlink(); // Heart-beat blink
     // loopBeep(); // Heart-beat beep
-
-    /** DEBUG FUNCTIONS **/
-    // printRadioData();
-    // printIMUdata();
-    // printBMPdata();
-    // printDesiredState();
-    // printRollPitchYaw();
-    // printPIDoutput();
-    // printMotorCommands();
-    // printServoCommands();
-    // printPIDvalues();
-    printAircraftState();
 
     // Update Aircraft State
     getIMUdata();
@@ -1718,6 +1738,21 @@ void loop()
     // Retreive Updated Radio Commands
     getCommands();
     // failSafe();
+
+    // Update State Struct
+    updateAircraftStateStruct();
+
+    /** DEBUG FUNCTIONS **/
+    // printRadioData();
+    // printIMUdata();
+    // printBMPdata();
+    // printDesiredState();
+    // printRollPitchYaw();
+    // printPIDoutput();
+    // printMotorCommands();
+    // printServoCommands();
+    // printPIDvalues();
+    printAircraftState();
 
     //Regulate loop rate
     loopRate(2000); // Don't Exceed 2000Hz

@@ -108,7 +108,15 @@ struct Actuator {
 };
 
 
-
+/* a = b */
+#define ACTUATOR_COPY(_a, _b)         \
+  {                                   \
+    (_a).throttle = (_b).throttle;    \
+    (_a).aileron  = (_b).aileron;     \
+    (_a).elevator = (_b).elevator;    \
+    (_a).rudder   = (_b).rudder;      \
+    (_a).flaps    = (_b).flaps;       \
+  }
 
 
 /*

@@ -73,6 +73,10 @@ struct State
 
 void stateInit();
 void setStateStatus(uint16_t state_status);
+void setStateQuaternion(FloatQuat *quaternion);
+void setStateAccelNED(NedCoor_f *body_accel);
+void setStateAngularRates(FloatRates *gyro_rates);
+void setStateEulers(FloatEulers *euler_angles);
 
 
 #endif //STATE_H
