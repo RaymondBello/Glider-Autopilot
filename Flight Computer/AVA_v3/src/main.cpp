@@ -1643,7 +1643,6 @@ void updateAircraftStateStruct()
     aircraftEuler.phi = roll_IMU;
     aircraftEuler.psi = yaw_IMU;
     setStateEulers(&aircraftEuler);
-
 }
 
 
