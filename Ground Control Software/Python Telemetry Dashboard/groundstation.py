@@ -129,6 +129,7 @@ class MainWindow(QWidget):
         
         # initialize finite state machine
         self.init_FSM()
+        self.debug_mode = True  
         
         # Graph variables
         self.random_plot_step = 100
@@ -572,9 +573,8 @@ class MainWindow(QWidget):
             self.tcp_mode = False
             try:
                 self.serial_handler.connect( self.selected_portname, baudrate = 115200)
-                for _ in range(2):
-                    print(self.serial_handler.isOpen())
-            except Exception as error:
+                print(f"Is {self.selected_portname} open? {self.serial_handler.isOpen()}")
+            except serial.serialutil.SerialException as error:
                 print(error)
                 
         if current_mode == 'Debug':
@@ -588,7 +588,7 @@ class MainWindow(QWidget):
             self.fsm.initialize()
             # Add init logic here
             print(f"Mode: {self.selected_mode} | Port: {self.selected_portname}")
-            # self.setModeAndPort(self.selected_mode, self.selected_portname)
+            self.setModeAndPort(self.selected_mode, self.selected_portname)
             
         except Exception as Error:
             print(Error)
@@ -833,13 +833,14 @@ class MainWindow(QWidget):
             self.serial_data = self.tcp_handleshack("STATE", self.current_state)
             self.serial_data = self.AVA_model.update(self.serial_data, self.current_state)
             
-        self.debug_mode = True  # Placeholder while adding comboBox
+        
         
         if self.debug_mode:
             self.serial_data = self.generate_data(self.serial_data)
         
         if self.serial_mode:
             try:
+                # print('Trying to get serial')
                 print(self.serial_handler.getData())
             except Exception as error:
                 print(error)

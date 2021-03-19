@@ -44,10 +44,13 @@ class Comms:
 
     def getData(self):
         '''Get serial data from COM port'''
-        raw_data = self.ser.readline()  # read line (single raw_data) from the serial port
-        
-        data = str(str(raw_data)).split(",")
-        return data
+        try:
+            raw_data = self.ser.readline()  # read line (single raw_data) from the serial port
+            data = str(str(raw_data)).split(",")
+            return data
+        except Exception as error:
+            print(error)
+            return 0
 
     def isOpen(self):
         '''check is serial connection is open'''
