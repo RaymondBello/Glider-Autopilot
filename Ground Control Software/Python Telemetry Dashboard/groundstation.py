@@ -30,6 +30,7 @@ from statemachine import StateMachine, State
 
 import pyqtgraph as pg
 import pyqtgraph.console
+import pyqtgraph.opengl as gl
 from pyqtgraph.Qt import QtCore, QtGui
 from pyqtgraph.dockarea import *
 
@@ -120,10 +121,11 @@ class MainWindow(QWidget):
     def __init__(self):
         self.app = pg.mkQApp()
         self.win = QtGui.QMainWindow()
-        self.area = area = DockArea()
+        self.area = DockArea()
         
-        self.win.setCentralWidget(area)
+        self.win.setCentralWidget(self.area)
         self.win.resize(self.WINDOW_WIDTH, self.WINDOW_HEIGHT)
+        self.win.showMaximized()
         self.win.setWindowTitle(self.MainWindowTitle)
         super().__init__()
         
@@ -229,12 +231,14 @@ class MainWindow(QWidget):
         self.dock7 = Dock("7) RealTime - Plot", size=(500,200))
         self.dock8 = Dock("8) GCS Map",size=(500,300))
         self.dock9 = Dock("9) MatplotLib", size=(500,300))
+        self.dock10 = Dock("10) 3D Trajectory",size=(500,500))
         
         self.area.addDock(self.dock1, 'left')      
         self.area.addDock(self.dock2, 'right', self.dock1)     
         self.area.addDock(self.dock3, 'top', self.dock2)
-        self.area.addDock(self.dock4, 'below',self.dock3)     
+        self.area.addDock(self.dock4, 'below',self.dock3)
         self.area.addDock(self.dock5, 'below', self.dock4)
+        self.area.addDock(self.dock10, 'below',self.dock5)     
         self.area.addDock(self.dock6, 'right', self.dock2) 
           
         # self.area.addDock(self.dock7, 'bottom', self.dock3)
@@ -504,6 +508,13 @@ class MainWindow(QWidget):
         self.widget9.addWidget(toolbar)
         self.widget9.addWidget(self.canvas)
         self.dock9.addWidget(self.widget9)
+        
+        # 3D Trajectory Plot
+        self.widget10 = gl.GLViewWidget()
+        self.widget10.setBackgroundColor((235,235,235))
+        grid = gl.GLGridItem()
+        
+        self.dock10.addWidget(self.widget10)
         
     def rand(self, n):
         data = np.random.random(n)
