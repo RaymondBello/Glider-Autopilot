@@ -4,7 +4,6 @@
 Simple use of DataTreeWidget to display a structure of nested dicts, lists, and arrays
 """
 
-
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
 import numpy as np

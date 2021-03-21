@@ -7,10 +7,10 @@
         "jcontent",
         "ptime",
         "serialutil",
-        "textto"
+        "textto",
+        "traj"
     ],
     "jupyter.jupyterServerType": "local",
     "python.pythonPath": "C:\\Users\\raymo\\AppData\\Local\\Programs\\Python\\Python37\\python.exe",
     "python.formatting.provider": "black",
-    
 }
