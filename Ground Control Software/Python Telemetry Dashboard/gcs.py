@@ -153,7 +153,7 @@ class MainWindow(QWidget):
         self.add_clickevents()
         
         self.win.show()
-        # self.win.showMaximized()
+        self.win.showMaximized()
         
         # framerate variables
         self.prev_sec = 0
@@ -235,6 +235,7 @@ class MainWindow(QWidget):
         self.dock8 = Dock("8) GCS Map",size=(500,300))
         self.dock9 = Dock("9) MatplotLib", size=(500,300))
         self.dock10 = Dock("10) 3D Trajectory",size=(500,700))
+        self.dock11 = Dock("11) Primary Flight Display", size=(500,300))
         
         self.area.addDock(self.dock1, 'left')      
         self.area.addDock(self.dock2, 'right', self.dock1)     
@@ -243,12 +244,11 @@ class MainWindow(QWidget):
         self.area.addDock(self.dock5, 'below', self.dock4)
         self.area.addDock(self.dock10, 'below',self.dock5)     
         self.area.addDock(self.dock6, 'right', self.dock2) 
-          
         # self.area.addDock(self.dock7, 'bottom', self.dock3)
         self.area.addDock(self.dock8, 'bottom', self.dock1)
         self.area.addDock(self.dock9, 'above', self.dock2)
-        
-        # self.area.moveDock(self.dock4, 'top', self.dock2)     ## move dock4 to top edge of dock2
+        self.area.addDock(self.dock11, 'above', self.dock3)
+        # self.area.moveDock(self.dock10, 'above', self.dock8)     # move dock4 to top edge of dock2
         
     def update_mode_comboBox(self, index):
         indx = self.model.index(index, 0, self.comboModes.rootModelIndex())
@@ -480,7 +480,6 @@ class MainWindow(QWidget):
         self.GPSDataGraphic.addItem(self.texttoGPS)
         
         self.widget6.addWidget(self.stateGraphic,row=0, col=0)
-        
         self.widget6.addWidget(self.timeGraphic,row=0, col=1)
         self.widget6.addWidget(self.batteryGraphic,row=0, col=2)
         self.widget6.addWidget(self.pitchGraphic,row=1, col=0)
@@ -488,7 +487,6 @@ class MainWindow(QWidget):
         self.widget6.addWidget(self.yawGraphic,row=1, col=2)
         self.widget6.addWidget(self.altitudeGraphic,row=2, col=0)
         self.widget6.addWidget(self.GPSDataGraphic,row=2, col=1,colspan=2)
-        
         self.dock6.addWidget(self.widget6)
         
         
@@ -502,7 +500,10 @@ class MainWindow(QWidget):
         self.curve7.setPen((200,200,100))
         self.dock7.addWidget(self.widget7)
         
+        
+        # Load PyLeaflet Map
         # self.load_map()  # Loads map and disables button, uncomment to manually load map
+        
         
         # Matplot lib plot
         self.widget9 = pg.LayoutWidget()
@@ -543,6 +544,27 @@ class MainWindow(QWidget):
         self.widget10.addItem(plt)
         self.widget10.addItem(self.glider_mesh)
         self.dock10.addWidget(self.widget10)
+        
+        
+        # Primary Flight Display (Using HTML)
+        self.widget11 = pg.LayoutWidget()
+        self.pfd = QWebEngineView()
+        
+        with open('gcs.html','r') as f:
+            raw_html = f.read()
+            self.pfd.setHtml(raw_html)
+        # self.pfd.setHtml()
+        # self.pfd.setUrl(QUrl("www.google.com"))
+        self.widget11.addWidget(self.pfd)
+        self.dock11.addWidget(self.widget11)
+
+       
+
+        
+        
+        
+        
+        
         
     def rand(self, n):
         data = np.random.random(n)
