@@ -222,7 +222,7 @@ class MainWindow(QWidget):
         # self.udp_socket = UDP_Manager()
         
     def init_serial_handler(self):
-        self.serial_handler = Comms(baudrate=115200,timeout=1)
+        self.serial_handler = Comms(baudrate=115200,timeout=2)
         
     def create_docks(self):
         self.dock1 = Dock("1) Control Logic", size=(1, 1))     ## give this dock the minimum possible size
