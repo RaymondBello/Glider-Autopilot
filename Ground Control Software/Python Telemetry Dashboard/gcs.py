@@ -43,7 +43,6 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
 
-
 class MatplotLibCanvas(FigureCanvas):
     
     def __init__(self, width=10,height=10, dpi=100):
@@ -81,7 +80,9 @@ class FiniteStateMachine(StateMachine):
 
 
 class MainWindow(QWidget):
-     
+    '''
+    Main Window from Ground Control System
+    '''
     MainWindowTitle = "UAV Ground Control System"
     __version__ = 0.1
     
@@ -154,11 +155,10 @@ class MainWindow(QWidget):
         self.win.show()
         # self.win.showMaximized()
         
-        #framerate variables
+        # framerate variables
         self.prev_sec = 0
         self.fps_count = 0
         
-    
     @classmethod
     def from_argv(cls):
         """Class constructor using arguments
@@ -879,7 +879,7 @@ class MainWindow(QWidget):
                 print(f"Serial error: {error}" )
                 return [0 for i in range(20)]
     
-    def regulate_fps(self, delta,fps=60):
+    def regulate_fps(self, delta, fps=60):
         period_ms = delta * 1000    # sec->ms
         
         # print(f"period {period_ms} :count {self.fps_count}")
@@ -890,7 +890,6 @@ class MainWindow(QWidget):
             self.fps_count += period_ms
             return False
         
-    
     def update(self):
         '''
         called to update system variable
@@ -917,10 +916,6 @@ class MainWindow(QWidget):
                 self.update_widget6(self.serial_data[0:3])
             else: 
                 self.update_essential()
-        
-        
-        
-            
         
     def start(self):
         if (sys.flags.interactive != 1) or not hasattr(QtCore, "PYQT_VERSION"):
