@@ -234,7 +234,7 @@ class MainWindow(QWidget):
         self.dock7 = Dock("7) RealTime - Plot", size=(500,200))
         self.dock8 = Dock("8) GCS Map",size=(500,300))
         self.dock9 = Dock("9) MatplotLib", size=(500,300))
-        self.dock10 = Dock("10) 3D Trajectory",size=(500,700))
+        self.dock10 = Dock("10) 3D Trajectory",size=(300,300))
         self.dock11 = Dock("11) Primary Flight Display", size=(500,300))
         
         self.area.addDock(self.dock1, 'left')      
@@ -242,10 +242,10 @@ class MainWindow(QWidget):
         self.area.addDock(self.dock3, 'top', self.dock2)
         self.area.addDock(self.dock4, 'below',self.dock3)
         self.area.addDock(self.dock5, 'below', self.dock4)
-        self.area.addDock(self.dock10, 'below',self.dock5)     
         self.area.addDock(self.dock6, 'right', self.dock2) 
         # self.area.addDock(self.dock7, 'bottom', self.dock3)
         self.area.addDock(self.dock8, 'bottom', self.dock1)
+        self.area.addDock(self.dock10, 'below',self.dock8)     
         self.area.addDock(self.dock9, 'above', self.dock2)
         self.area.addDock(self.dock11, 'above', self.dock3)
         # self.area.moveDock(self.dock10, 'above', self.dock8)     # move dock4 to top edge of dock2
@@ -516,18 +516,18 @@ class MainWindow(QWidget):
         
         # 3D Trajectory Plot
         self.widget10 = gl.GLViewWidget()
-        # self.widget10.setBackgroundColor((20,20,20))             # Black
+        self.widget10.setBackgroundColor((30,30,30))             # Black
         # self.widget10.setBackgroundColor((255,255,255))       # White
-        self.widget10.setBackgroundColor((235,235,235))       # Light Grey
+        # self.widget10.setBackgroundColor((235,235,235))       # Light Grey
         self.widget10.setCameraPosition(distance=17, azimuth=45, elevation=25)
         
-        grid = gl.GLGridItem(color=(0,0,0,40))
+        grid = gl.GLGridItem(color=(0,0,0,1))
         grid.scale(5,5,1) 
         self.widget10.addItem(grid)
         
         model = Model("resources/glider.obj")
         meshdata = gl.MeshData(vertexes=model.returnMesh())
-        self.glider_mesh = gl.GLMeshItem(meshdata=meshdata, color=(1, 1, 1, 2), smooth=False, shader='shaded', glOptions='opaque')
+        self.glider_mesh = gl.GLMeshItem(meshdata=meshdata, color=(255, 255, 255, 2), smooth=False, shader='shaded', glOptions='opaque')
         
         # Initialize Simulation related Objects
         h_initial = 0
