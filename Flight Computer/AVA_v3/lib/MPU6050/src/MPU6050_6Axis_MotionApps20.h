@@ -277,7 +277,7 @@ const unsigned char dmpMemory[MPU6050_DMP_CODE_SIZE] PROGMEM = {
 // I Simplified this:
 uint8_t MPU6050::dmpInitialize() {
 	// reset device
-	DEBUG_PRINTLN(F("\n\nResetting MPU6050..."));
+	DEBUG_PRINTLN(F("\n\n\tResetting MPU6050..."));
 	reset();
 	delay(30); // wait after reset
 
@@ -293,10 +293,10 @@ uint8_t MPU6050::dmpInitialize() {
 	// get MPU hardware revision
 	setMemoryBank(0x10, true, true);
 	setMemoryStartAddress(0x06);
-	Serial.println(F("Checking hardware revision..."));
-	Serial.print(F("Revision @ user[16][6] = "));
+	Serial.println(F("\tChecking hardware revision..."));
+	Serial.print(F("\tRevision @ user[16][6] = "));
 	Serial.println(readMemoryByte(), HEX);
-	Serial.println(F("Resetting memory bank selection to 0..."));
+	Serial.println(F("\tResetting memory bank selection to 0..."));
 	setMemoryBank(0, false, false);
 
 	// check OTP bank valid

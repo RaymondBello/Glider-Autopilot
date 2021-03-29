@@ -3,12 +3,31 @@
         "Coor",
         "SBUS",
         "Uinit",
-        "Vect"
+        "Vect",
+        "calib"
     ],
     "files.associations": {
         "*.tcc": "cpp",
         "string": "cpp",
         "initializer_list": "cpp",
-        "arduino.h": "c"
+        "arduino.h": "c",
+        "cctype": "cpp",
+        "clocale": "cpp",
+        "cmath": "cpp",
+        "cstdarg": "cpp",
+        "cstdint": "cpp",
+        "cstdio": "cpp",
+        "cstdlib": "cpp",
+        "cstring": "cpp",
+        "cwchar": "cpp",
+        "cwctype": "cpp",
+        "exception": "cpp",
+        "type_traits": "cpp",
+        "iosfwd": "cpp",
+        "limits": "cpp",
+        "new": "cpp",
+        "cinttypes": "cpp",
+        "utility": "cpp",
+        "typeinfo": "cpp"
     }
 }
