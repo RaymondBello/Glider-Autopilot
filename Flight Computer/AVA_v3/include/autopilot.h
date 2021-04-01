@@ -1,5 +1,5 @@
-#ifndef AUTOPILOT_H
-#define AUTOPILOT_H
+#ifndef _AUTOPILOT_H_
+#define _AUTOPILOT_H_
 
 #include "tools/std.h"
 #include "state.h"

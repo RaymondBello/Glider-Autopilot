@@ -1,6 +1,8 @@
-#include "Arduino.h"
-#include "CLI.h"
-#include <SimpleCLI.h>
+#include "cli.h"
+#include "main.h"
+
+
+
 
 void CliCommand::handleSerial() 
 {

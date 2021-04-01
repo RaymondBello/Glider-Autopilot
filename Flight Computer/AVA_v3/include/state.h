@@ -1,18 +1,9 @@
-/**
- * @file state.h
- *
- * API to get/set the generic vehicle states.
- *
- *
- * @author Raymond Bello
- */
+#ifndef _STATE_H_
+#define _STATE_H_
 
-#ifndef STATE_H
-#define STATE_H
-
+#include <string.h>
 #include "tools/std.h"
 #include "tools/float_struct.h"
-#include <string.h>
 
 
 struct State
@@ -79,4 +70,4 @@ void setStateAngularRates(FloatRates *gyro_rates);
 void setStateEulers(FloatEulers *euler_angles);
 
 
-#endif //STATE_H
+#endif // _STATE_H_

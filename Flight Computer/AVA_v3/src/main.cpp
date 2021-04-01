@@ -5,17 +5,18 @@
 #include <PWMServo.h>
 #include <I2Cdev.h>
 #include <Wire.h>
-
 /*************************************************************************************************/
 /************************************** User Defined Files ***************************************/
 /*************************************************************************************************/
 #include "config.h"
+
 #include "state.cpp"
 #include "autopilot.cpp"
+#include "cli.cpp"
+
 #include "tools/std.h"
 #include "tools/radio_comms.h"
 #include "tools/kalman_filter.h"
-#include "tools/CLI/CLI.cpp"
 
 #ifndef UNIT_TEST  
 
@@ -1693,6 +1694,7 @@ void updateAircraftStateStruct()
     aircraftEuler.psi = yaw_IMU;
     setStateEulers(&aircraftEuler);
 }
+
 
 /* Command-line Functions */
 void ExecCallback(cmd *execmd)
