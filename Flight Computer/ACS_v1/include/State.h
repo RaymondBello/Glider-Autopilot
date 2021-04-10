@@ -43,11 +43,11 @@ class State
     struct NedCoor_f ned_accel_f;
 
     /* Horizontal windspeed. Units: m/s with x=north, y=east, z=down */
-    union {
+    union 
+    {
         struct FloatVect3 vect3;
         struct FloatVect2 vect2;
     } windspeed_f;
-
 
     /* Relative air speed. Unit: m/s */
     float airspeed_f;
@@ -80,7 +80,6 @@ void State::stateInit(void)
   this->sideslip_f = 0;
 }
 
-// Dummy Function Testing
 int State::stateSetPosLla(struct LlaCoor_f *lla_pos)
 {
   LLA_COPY(this->lla_pos_f, *lla_pos);

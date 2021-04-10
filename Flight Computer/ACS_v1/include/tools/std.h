@@ -119,6 +119,12 @@ static inline bool str_equal(const char *a, const char *b)
   return TRUE;
 }
 
+struct BoolInt 
+{
+  bool flag = false;
+  uint8_t ErrCode = -1;
+};
+
 #ifdef __GNUC__
 #  define UNUSED __attribute__((__unused__))
 #  define WEAK __attribute__((weak))

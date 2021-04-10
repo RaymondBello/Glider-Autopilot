@@ -7,6 +7,7 @@ Simple use of DataTreeWidget to display a structure of nested dicts, lists, and 
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
 import numpy as np
+import time
 
 
 # for generating a traceback object to display
@@ -22,14 +23,36 @@ def some_func2():
 
 app = QtGui.QApplication([])
 d = {
-    'a list': [1,2,3,4,5,6, {'nested1': 'aaaaa', 'nested2': 'bbbbb'}, "seven"],
-    'a dict': {
-        'x': 1,
-        'y': 2,
-        'z': 'three'
+    'Flight Plan': {
+        'Info': 1,
+        'Date & Time': f"{time.localtime().tm_year}/{time.localtime().tm_mon}/{time.localtime().tm_mday}  {time.localtime().tm_hour}:{time.localtime().tm_min}:{time.localtime().tm_sec}",
+        'Waypoints': [
+            {
+                'id':0,
+                'lat':45.8,
+                'lon':34.2,
+                'alt':453,
+                'head':270,
+                'speed':14,
+            },
+            {
+                'id':1,
+                'lat':15.8,
+                'lon':32.2,
+                'alt':253,
+                'head':240,
+                'speed':10,
+            },
+            {
+                'id':2,
+                'lat':55.8,
+                'lon':37.2,
+                'alt':200,
+                'head':200,
+                'speed':6,
+            }
+        ]
     },
-    'an array': np.random.randint(10, size=(40,10)),
-    'a traceback': some_func1(),
     'a function': some_func1,
     'a class': pg.DataTreeWidget,
 }

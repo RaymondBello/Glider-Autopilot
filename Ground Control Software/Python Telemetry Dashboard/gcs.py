@@ -38,6 +38,9 @@ from PyQt5.QtWidgets import QPushButton,QWidget, QBoxLayout, QVBoxLayout, QFileD
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 
+from PyQt5.QtOpenGL import QGL, QGLFormat, QGLWidget
+from PyQt5.QtSvg import QGraphicsSvgItem
+
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
@@ -226,28 +229,30 @@ class MainWindow(QWidget):
         
     def create_docks(self):
         self.dock1 = Dock("1) Control Logic", size=(1, 1))     ## give this dock the minimum possible size
-        self.dock2 = Dock("2) Py Console", size=(500,200), closable=True)
+        self.dock2 = Dock("2) Py Console", size=(500,500), closable=True)
         self.dock3 = Dock("3) Accelerometer", size=(500,400))
         self.dock4 = Dock("4) Gyroscope", size=(500,400))
         self.dock5 = Dock("5) Barometer", size=(500,400))
-        self.dock6 = Dock("6) Aircraft Data", size=(500,400))
+        self.dock6 = Dock("6) Aircraft Data", size=(200,400))
         self.dock7 = Dock("7) RealTime - Plot", size=(500,200))
         self.dock8 = Dock("8) GCS Map",size=(500,300))
         self.dock9 = Dock("9) MatplotLib", size=(500,300))
-        self.dock10 = Dock("10) 3D Trajectory",size=(300,300))
-        self.dock11 = Dock("11) Primary Flight Display", size=(500,300))
+        self.dock10 = Dock("10) 3D Trajectory",size=(300,400))
+        self.dock11 = Dock("11) Primary Flight Display", size=(900,1100))
+        self.dock12 = Dock("12) Instrument Panel", size=(300,400))
         
         self.area.addDock(self.dock1, 'left')      
         self.area.addDock(self.dock2, 'right', self.dock1)     
-        self.area.addDock(self.dock3, 'top', self.dock2)
-        self.area.addDock(self.dock4, 'below',self.dock3)
-        self.area.addDock(self.dock5, 'below', self.dock4)
-        self.area.addDock(self.dock6, 'right', self.dock2) 
+        self.area.addDock(self.dock3, 'above', self.dock2)
+        self.area.addDock(self.dock4, 'above',self.dock3)
+        self.area.addDock(self.dock5, 'above', self.dock4)
+        self.area.addDock(self.dock6, 'bottom', self.dock5) 
         # self.area.addDock(self.dock7, 'bottom', self.dock3)
         self.area.addDock(self.dock8, 'bottom', self.dock1)
         self.area.addDock(self.dock10, 'below',self.dock8)     
         self.area.addDock(self.dock9, 'above', self.dock2)
         self.area.addDock(self.dock11, 'above', self.dock3)
+        self.area.addDock(self.dock12, 'above', self.dock10)
         # self.area.moveDock(self.dock10, 'above', self.dock8)     # move dock4 to top edge of dock2
         
     def update_mode_comboBox(self, index):
@@ -548,15 +553,25 @@ class MainWindow(QWidget):
         
         # Primary Flight Display (Using HTML)
         self.widget11 = pg.LayoutWidget()
-        self.pfd = QWebEngineView()
+        self.gcs = QWebEngineView()
         
         with open('gcs.html','r') as f:
             raw_html = f.read()
-            self.pfd.setHtml(raw_html)
-        # self.pfd.setHtml()
-        # self.pfd.setUrl(QUrl("www.google.com"))
-        self.widget11.addWidget(self.pfd)
+            self.gcs.setHtml(raw_html)
+        # self.gcs.setHtml()
+        # self.gcs.setUrl(QUrl("www.google.com"))
+        self.widget11.addWidget(self.gcs)
         self.dock11.addWidget(self.widget11)
+        
+        # Instrument Panel
+        self.widget12 = pg.LayoutWidget()
+        self.pfd = QWebEngineView()
+        with open('pfd.html','r') as f:
+            raw_html1 = f.read()
+            self.pfd.setHtml(raw_html1)
+        self.widget12.addWidget(self.pfd)
+        self.dock12.addWidget(self.widget12)
+        
 
        
 

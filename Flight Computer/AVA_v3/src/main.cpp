@@ -502,15 +502,6 @@ void IMUinit()
 
         packetSize = mpu.dmpGetFIFOPacketSize();
     }
-    else
-    {
-        // ERROR!
-        // 1 = initial memory load failed
-        // 2 = DMP configuration updates failed
-        Serial.print(F("DMP Initialization failed (code "));
-        Serial.print(devStatus);
-        Serial.println(F(")"));
-    }
 
 #elif defined USE_MPU9250_SPI
     int status = mpu9250.begin();
