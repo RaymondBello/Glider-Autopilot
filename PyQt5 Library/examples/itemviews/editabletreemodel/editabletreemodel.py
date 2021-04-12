@@ -377,7 +377,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         for column in range(model.columnCount(index.parent())):
             child = model.index(index.row()+1, column, index.parent())
-            model.setData(child, "[No data]", Qt.EditRole)
+            model.setData(child, "[No data]", Qt.EdRole)
 
     def removeColumn(self):
         model = self.view.model()

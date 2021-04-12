@@ -24,6 +24,7 @@ data = np.array([
     ], dtype=[('Column 1', int), ('Column 2', float), ('Column 3', object)])
     
 w.setData(data)
+w.setEditable()
 
 
 ## Start Qt event loop unless running in interactive mode or using pyside.

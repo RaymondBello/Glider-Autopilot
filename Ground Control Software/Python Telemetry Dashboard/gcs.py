@@ -15,6 +15,7 @@ import json
 import math
 import serial
 import socket
+import json
 import numpy as np
 from datetime import datetime
 from pyqtlet import L, MapWidget
@@ -34,7 +35,7 @@ import pyqtgraph.opengl as gl
 from pyqtgraph.Qt import QtCore, QtGui
 from pyqtgraph.dockarea import *
 
-from PyQt5.QtWidgets import QPushButton,QWidget, QBoxLayout, QVBoxLayout, QFileDialog, QAction, QComboBox
+from PyQt5.QtWidgets import QPushButton,QWidget, QBoxLayout, QVBoxLayout, QFileDialog, QAction, QComboBox, QPlainTextEdit
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 
@@ -209,6 +210,10 @@ class MainWindow(QWidget):
         self.font_combobox = QtGui.QFont()
         self.font_combobox.setPixelSize(12)
         self.font_combobox.setFamily('Fira Code')
+        self.font_textInput = QtGui.QFont()
+        self.font_textInput.setPixelSize(17)
+        self.font_textInput.setFamily('Fira Code')
+        
         
     def init_network(self):
         '''
@@ -248,11 +253,12 @@ class MainWindow(QWidget):
         self.area.addDock(self.dock5, 'above', self.dock4)
         self.area.addDock(self.dock6, 'bottom', self.dock5) 
         # self.area.addDock(self.dock7, 'bottom', self.dock3)
-        self.area.addDock(self.dock8, 'bottom', self.dock1)
+        self.area.addDock(self.dock8, 'below', self.dock1)
         self.area.addDock(self.dock10, 'below',self.dock8)     
         self.area.addDock(self.dock9, 'above', self.dock2)
-        self.area.addDock(self.dock11, 'above', self.dock3)
-        self.area.addDock(self.dock12, 'above', self.dock10)
+        self.area.addDock(self.dock11, 'below', self.dock3)
+        self.area.addDock(self.dock12, 'below', self.dock10)
+        self.area.moveDock(self.dock1, 'above', self.dock12)
         # self.area.moveDock(self.dock10, 'above', self.dock8)     # move dock4 to top edge of dock2
         
     def update_mode_comboBox(self, index):
@@ -323,6 +329,17 @@ class MainWindow(QWidget):
         self.widget1.addWidget(self.comboModes, row=4, col=1)
         self.widget1.addWidget(self.port_label, row=4,col=2)
         self.widget1.addWidget(self.comboPorts, row=4, col=3)
+        
+        self.textInput = QPlainTextEdit()
+        self.textInput.setFixedHeight(30)
+        self.textInput.setFont(self.font_textInput)
+        
+        self.sendCmdBtn = QtGui.QPushButton('Send Cmd')
+        self.sendCmdBtn.setStyleSheet(self.ButtonStyle_white)
+        
+        self.widget1.addWidget(self.textInput,row=5,col=0,colspan=3)
+        self.widget1.addWidget(self.sendCmdBtn, row=5,col=3)
+        
         self.dock1.addWidget(self.widget1)
         
         
@@ -563,22 +580,11 @@ class MainWindow(QWidget):
         self.widget11.addWidget(self.gcs)
         self.dock11.addWidget(self.widget11)
         
-        # Instrument Panel
+        
+        # Text Input
         self.widget12 = pg.LayoutWidget()
-        self.pfd = QWebEngineView()
-        with open('pfd.html','r') as f:
-            raw_html1 = f.read()
-            self.pfd.setHtml(raw_html1)
-        self.widget12.addWidget(self.pfd)
+        
         self.dock12.addWidget(self.widget12)
-        
-
-       
-
-        
-        
-        
-        
         
         
     def rand(self, n):
@@ -681,6 +687,24 @@ class MainWindow(QWidget):
     def restore(self):
         # global state
         self.area.restoreState(self.state)
+    
+    # Color Switch Counter
+    i = 0
+    
+    def send_cmd(self):
+        print(f"Command Sent: {self.textInput.toPlainText()}")
+        self.textInput.clear()
+        
+        if self.i%3 == 0:
+            self.sendCmdBtn.setStyleSheet(self.ButtonStyle_red)
+        elif self.i%3 == 1:
+            self.sendCmdBtn.setStyleSheet(self.ButtonStyle_yellow)
+        elif self.i%3 == 2:
+            self.sendCmdBtn.setStyleSheet(self.ButtonStyle_green)
+            
+        self.i +=1
+        if self.i == 3:
+            self.i = 0
         
     def add_clickevents(self):
         self.saveBtn.clicked.connect(self.save)   
@@ -689,8 +713,10 @@ class MainWindow(QWidget):
         self.abortBtn.clicked.connect(self.abort)
         self.loadBtn.clicked.connect(self.load)
         self.mapBtn.clicked.connect(self.load_map)
+        self.sendCmdBtn.clicked.connect(self.send_cmd)
         self.comboModes.currentIndexChanged.connect(self.update_mode_comboBox)
         self.comboPorts.currentTextChanged.connect(self.get_selected_portname)
+        
     
     def generate_data(self, data):
         """Generates sin waves to be displayed for UI debugging and developmentpython -m pyqtgraph.examples
