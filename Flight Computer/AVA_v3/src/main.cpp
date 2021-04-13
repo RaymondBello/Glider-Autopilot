@@ -1889,16 +1889,16 @@ void loop()
     updateAircraftStateStruct();
 
     /** DEBUG FUNCTIONS **/
-    // printRadioData();
-    // printIMUdata();
-    // printBMPdata();
-    // printDesiredState();
-    // printRollPitchYaw();
-    // printPIDoutput();
-    // printMotorCommands();
-    // printServoCommands();
-    // printPIDvalues();
-    // printAircraftState();
+    printRadioData();
+    printIMUdata();
+    printBMPdata();
+    printDesiredState();
+    printRollPitchYaw();
+    printPIDoutput();
+    printMotorCommands();
+    printServoCommands();
+    printPIDvalues();
+    printAircraftState();
 
     /** Handle CLI message **/
     cli.handleSerial();

@@ -251,7 +251,7 @@ class MainWindow(QWidget):
         self.area.addDock(self.dock3, 'above', self.dock2)
         self.area.addDock(self.dock4, 'above',self.dock3)
         self.area.addDock(self.dock5, 'above', self.dock4)
-        self.area.addDock(self.dock6, 'bottom', self.dock5) 
+        self.area.addDock(self.dock6, 'bottom', self.dock1) 
         # self.area.addDock(self.dock7, 'bottom', self.dock3)
         self.area.addDock(self.dock8, 'below', self.dock1)
         self.area.addDock(self.dock10, 'below',self.dock8)     

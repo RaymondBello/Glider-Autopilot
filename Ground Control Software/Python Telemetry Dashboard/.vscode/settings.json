@@ -13,4 +13,5 @@
     "jupyter.jupyterServerType": "local",
     "python.pythonPath": "C:\\Users\\raymo\\AppData\\Local\\Programs\\Python\\Python37\\python.exe",
     "python.formatting.provider": "black",
+    "git.ignoreLimitWarning": true,
 }
