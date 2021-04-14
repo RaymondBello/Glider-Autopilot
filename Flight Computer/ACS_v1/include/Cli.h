@@ -1,8 +1,8 @@
-#ifndef __CLI_H__
-#define __CLI_H__
+#pragma once
 
 #include <Arduino.h>
 #include <SimpleCLI.h>
+#include <FC.h>
 
 class CliCommand {
 
@@ -16,10 +16,9 @@ class CliCommand {
         CliCommand();
         void handleReceivedMessage(char* msg);
         void handleSerial();
-        void processGetCommand(const char*);
+        void processGetCommand(const char* setting);
         void processSetCommand(const char* setting, const char* value);
 };
-
 
 void CliCommand::handleSerial() 
 {
@@ -101,7 +100,27 @@ void CliCommand::handleReceivedMessage(char* msg)
     } 
 }
 
+void CliCommand::processGetCommand(const char *setting)
+{
+    if (strcmp(setting, "buzzer") == 0)
+    {
+        int val = 0;
+        Serial.printf("\tkey: %s, val: %i", setting, val);
+        Serial.println();
+    }
+    else if (strcmp(setting, "state") == 0)
+    {
+        // cliAircraftState();
+        Serial.println("State Get Command");
+    }
+    else if ((strcmp(setting, "t_states") == 0) | (strcmp(setting, "t_state") == 0))
+    {
+        Serial.println("\t[IDLE, TAXI, TAKEOFF, IN_FLIGHT, DESCENT, TOUCHDOWN, POWERDOWN]");
+    }
+}
+
+void CliCommand::processSetCommand(const char *setting, const char *value)
+{
+}
 
 
-
-#endif // _CLI_H_
