@@ -41,11 +41,20 @@ class Comms:
         try:
             raw_data = self.ser.readline()  # read line (single raw_data) from the serial port
             
-            data = str(str(raw_data)).split("'")[1].split("\\")[0].split(",")
-            return data
+            
+            return raw_data
         except Exception as error:
             print(error)
             return 0
+        
+    def sendData(self, buffer):
+        
+        try:
+            self.ser.write(str.encode(buffer))
+            
+        except Exception as error:
+            print(error)
+            
 
     def isOpen(self):
         '''check is serial connection is open'''

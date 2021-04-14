@@ -35,7 +35,7 @@ import pyqtgraph.opengl as gl
 from pyqtgraph.Qt import QtCore, QtGui
 from pyqtgraph.dockarea import *
 
-from PyQt5.QtWidgets import QPushButton,QWidget, QBoxLayout, QVBoxLayout, QFileDialog, QAction, QComboBox, QPlainTextEdit
+from PyQt5.QtWidgets import QPushButton,QWidget, QBoxLayout, QVBoxLayout, QFileDialog, QAction, QComboBox, QLineEdit, QTextEdit
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 
@@ -157,7 +157,7 @@ class MainWindow(QWidget):
         self.add_clickevents()
         
         self.win.show()
-        self.win.showMaximized()
+        # self.win.showMaximized()
         
         # framerate variables
         self.prev_sec = 0
@@ -214,7 +214,6 @@ class MainWindow(QWidget):
         self.font_textInput.setPixelSize(17)
         self.font_textInput.setFamily('Fira Code')
         
-        
     def init_network(self):
         '''
         start up networking interfaces
@@ -239,7 +238,7 @@ class MainWindow(QWidget):
         self.dock4 = Dock("4) Gyroscope", size=(500,400))
         self.dock5 = Dock("5) Barometer", size=(500,400))
         self.dock6 = Dock("6) Aircraft Data", size=(200,400))
-        self.dock7 = Dock("7) RealTime - Plot", size=(500,200))
+        self.dock7 = Dock("7) Serial Monitor", size=(500,200))
         self.dock8 = Dock("8) GCS Map",size=(500,300))
         self.dock9 = Dock("9) MatplotLib", size=(500,300))
         self.dock10 = Dock("10) 3D Trajectory",size=(300,400))
@@ -252,9 +251,9 @@ class MainWindow(QWidget):
         self.area.addDock(self.dock4, 'above',self.dock3)
         self.area.addDock(self.dock5, 'above', self.dock4)
         self.area.addDock(self.dock6, 'bottom', self.dock1) 
-        # self.area.addDock(self.dock7, 'bottom', self.dock3)
-        self.area.addDock(self.dock8, 'below', self.dock1)
-        self.area.addDock(self.dock10, 'below',self.dock8)     
+        self.area.addDock(self.dock7, 'bottom', self.dock3)
+        # self.area.addDock(self.dock8, 'below', self.dock1)
+        self.area.addDock(self.dock10, 'below',self.dock1)     
         self.area.addDock(self.dock9, 'above', self.dock2)
         self.area.addDock(self.dock11, 'below', self.dock3)
         self.area.addDock(self.dock12, 'below', self.dock10)
@@ -330,7 +329,7 @@ class MainWindow(QWidget):
         self.widget1.addWidget(self.port_label, row=4,col=2)
         self.widget1.addWidget(self.comboPorts, row=4, col=3)
         
-        self.textInput = QPlainTextEdit()
+        self.textInput = QLineEdit()
         self.textInput.setFixedHeight(30)
         self.textInput.setFont(self.font_textInput)
         
@@ -513,14 +512,27 @@ class MainWindow(QWidget):
         
         
         # realtime
-        self.widget7 = pg.PlotWidget(name='Plot1', title = "RealTime Data")
-        self.widget7.setLabel('left', 'Value', units='V')
-        self.widget7.setLabel('bottom', 'Time', units='s')
-        self.widget7.setXRange(0, 2)
-        self.widget7.setYRange(0, 1e-10)
-        self.curve7 = self.widget7.plot()
-        self.curve7.setPen((200,200,100))
+        self.widget7 = pg.LayoutWidget()
+        
+        self.serialText = QTextEdit()
+        self.serialText.setFont(self.font_textInput)
+        
+
+        self.serialMonitor = pg.PlotWidget(title='Serial Monitor')
+        self.serialMonitor.setRange(QtCore.QRectF(-50, -50, 100, 100))
+        self.serialMonitor.hideAxis('bottom')
+        self.serialMonitor.hideAxis('left')
+        self.serialMonitor.setBackground((255,255,255, 1))
+        self.textSerial = pg.TextItem(f"idle", anchor=(0.5, 0.5), color=(0,0,0))
+        self.textSerial.setFont(self.font_textInput)
+        self.serialMonitor.addItem(self.textSerial)
+        
+        self.widget7.addWidget(self.serialText)
+        
+        
         self.dock7.addWidget(self.widget7)
+        
+        
         
         
         # Load PyLeaflet Map
@@ -585,7 +597,6 @@ class MainWindow(QWidget):
         self.widget12 = pg.LayoutWidget()
         
         self.dock12.addWidget(self.widget12)
-        
         
     def rand(self, n):
         data = np.random.random(n)
@@ -692,8 +703,12 @@ class MainWindow(QWidget):
     i = 0
     
     def send_cmd(self):
-        print(f"Command Sent: {self.textInput.toPlainText()}")
+        textBuffer = self.textInput.text() + ' \n'
+        print(f"Command Sent: {str.encode(textBuffer)}")
         self.textInput.clear()
+        
+        if self.serial_mode:
+            self.serial_handler.sendData(textBuffer)
         
         if self.i%3 == 0:
             self.sendCmdBtn.setStyleSheet(self.ButtonStyle_red)
@@ -969,14 +984,20 @@ class MainWindow(QWidget):
             # Depending on current build mode change data source
             self.serial_data = self.mode_arbitration()
             
+            # data = str(str(raw_data)).split("'")[1].split("\\")[0].split(",")
+            
+            
             # Display based on state
             if not self.fsm.is_idle:
-                # yd, xd = self.rand(10000)
-                # self.curve7.setData(y = yd, x =xd)
-                self.update_widget3(self.serial_data[0:3])
-                self.update_widget4(self.serial_data[3:6])
-                self.update_widget5(self.serial_data[6:8])
-                self.update_widget6(self.serial_data[0:3])
+                self.update_essential()
+                # self.update_widget3(self.serial_data[0:3])
+                # self.update_widget4(self.serial_data[3:6])
+                # self.update_widget5(self.serial_data[6:8])
+                # self.update_widget6(self.serial_data[0:3])
+                
+                
+                self.serialText.append(str(self.serial_data))
+                pass
             else: 
                 self.update_essential()
         
