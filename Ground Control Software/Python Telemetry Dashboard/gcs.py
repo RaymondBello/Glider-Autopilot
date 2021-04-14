@@ -238,7 +238,7 @@ class MainWindow(QWidget):
         self.dock4 = Dock("4) Gyroscope", size=(500,400))
         self.dock5 = Dock("5) Barometer", size=(500,400))
         self.dock6 = Dock("6) Aircraft Data", size=(200,400))
-        self.dock7 = Dock("7) Serial Monitor", size=(500,200))
+        self.dock7 = Dock("7) Serial Monitor", size=(500,400))
         self.dock8 = Dock("8) GCS Map",size=(500,300))
         self.dock9 = Dock("9) MatplotLib", size=(500,300))
         self.dock10 = Dock("10) 3D Trajectory",size=(300,400))
@@ -704,7 +704,7 @@ class MainWindow(QWidget):
     
     def send_cmd(self):
         textBuffer = self.textInput.text() + ' \n'
-        print(f"Command Sent: {str.encode(textBuffer)}")
+        # print(f"Command Sent: {str.encode(textBuffer)}")
         self.textInput.clear()
         
         if self.serial_mode:
@@ -732,7 +732,6 @@ class MainWindow(QWidget):
         self.comboModes.currentIndexChanged.connect(self.update_mode_comboBox)
         self.comboPorts.currentTextChanged.connect(self.get_selected_portname)
         
-    
     def generate_data(self, data):
         """Generates sin waves to be displayed for UI debugging and developmentpython -m pyqtgraph.examples
         available only in DEBUG MODE (self.build_mode = 0)
@@ -949,8 +948,12 @@ class MainWindow(QWidget):
         
         if self.serial_mode:
             try:
-                serial_data = self.serial_handler.getData()
-                # print(serial_data)
+                serial_data = None
+                if self.serial_handler.ser.inWaiting():
+                    serial_data = self.serial_handler.getData()
+                
+                    # print(serial_data)
+                    
                 return serial_data
                 
             except Exception as error:
@@ -995,9 +998,8 @@ class MainWindow(QWidget):
                 # self.update_widget5(self.serial_data[6:8])
                 # self.update_widget6(self.serial_data[0:3])
                 
-                
-                self.serialText.append(str(self.serial_data))
-                pass
+                if self.serial_data != None:
+                    self.serialText.append(str(self.serial_data))
             else: 
                 self.update_essential()
         

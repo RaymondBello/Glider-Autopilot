@@ -41,7 +41,6 @@ class Comms:
         try:
             raw_data = self.ser.readline()  # read line (single raw_data) from the serial port
             
-            
             return raw_data
         except Exception as error:
             print(error)
