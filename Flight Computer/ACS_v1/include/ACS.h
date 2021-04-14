@@ -1,11 +1,11 @@
 #pragma once
 
 #include <Arduino.h>
+#include <SimpleCLI.h>
 #include "config.h"
 #include "tools/std.h"
 #include "State.h"
 #include "Radio.h"
-#include "cli.h"
 #include "FC.h"
 
 /**
