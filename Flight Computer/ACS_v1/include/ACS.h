@@ -588,7 +588,7 @@ void ACS::handleReceivedMessage(char *msg)
 {
   String str(msg);
 
-  Serial.printf("# %s", msg);
+  Serial.printf("$ %s", msg);
   Serial.println("");
 
   this->cli.parse(str.c_str());
