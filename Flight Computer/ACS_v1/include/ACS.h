@@ -160,17 +160,18 @@ void ACS::loop()
   }
   case Initialization:
   {
-    Serial.println("Initialization");
+    Serial.println("INFO, ACS-Mode: Initialization");
     this->setupReceiver();
     BoolInt boolint = this->setupFlightController();
     boolint.flag ? (0) : (this->mode = Mode::Error);
     BoolInt boolint1 = this->calibrateFlightController();
     boolint1.flag ? (this->mode = Mode::Active) : (this->mode = Mode::Error);
-    Serial.println("\tINFO: Boot subroutine completed\n");
+    Serial.println("INFO, ACS boot SR completed");
     delay(1000);
     break;
   }
   case Active:
+  {
     // Serial.println("Active");
     flightController.loopBlink();
     updateFlightControllerTime();
@@ -179,17 +180,32 @@ void ACS::loop()
     printDebugMessages();
 
     /** Handle CLI message **/
+    // Serial.println("Wrote to Motors");
+    
     handleSerial();
 
     flightController.loopRate(2000);
     break;
+  }
   case Idle:
-    Serial.println("Idle");
+  {
+    Serial.println("INFO, ACS-Mode: Idle");
     break;
+  }
   case Error:
-    Serial.println("Error");
+  {
+    Serial.println("INFO, ACS-Mode: Error");
     flightController.loopBeep();
     break;
+  }
+  default:
+  {
+    Serial.println("FATAL, FATAL ACS-Mode Error! Rebooting...");
+    this->setupBeep(4, 160, 70);
+    delay(50);
+    SCB_AIRCR = 0x05FA0004;
+    break;
+  }
   }
 }
 
@@ -266,7 +282,7 @@ void ACS::printDebugMessages()
   // printRadioData();
   // printIMUdata();
   // printBMPdata();
-  // printDesiredState();
+  printDesiredState();
   // printRollPitchYaw();
   // printPIDoutput();
   // printMotorCommands();
@@ -570,7 +586,7 @@ void ACS::execCallback(cmd *execmd)
   switch (curr_cmd)
   {
   case REBOOT:
-    Serial.println("\tINFO: Rebooting...");
+    Serial.println("INFO: Rebooting...");
     // this->setupBeep(4, 160, 70);
     delay(50);
     SCB_AIRCR = 0x05FA0004;

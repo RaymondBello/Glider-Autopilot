@@ -1,5 +1,12 @@
 #pragma once
 
+/**************************************************************/
+/************* VEHICLE CONFIGURATION  *************************/
+/**************************************************************/
+#define AIRFRAME_QUADCOPTER             // Quad-copter configuration
+// #define AIRFRAME_FIXEDWING
+// #define USE_DIFFERENTIAL_THRUST
+
 
 /*** @brief USB Serial Data rate (bps)
  */
@@ -83,10 +90,10 @@
 
 /*** @brief Servo Actuator Configuration
  */
-#define SERVO1_PIN 2                    // Ailerons
-#define SERVO2_PIN 3                    // Elevators
-#define SERVO3_PIN 4                    // Rudder
-#define SERVO4_PIN 5                    // Flaps
+#define SERVO1_PIN 2                    // Ailerons/    Motor 1
+#define SERVO2_PIN 3                    // Elevators/   Motor 2
+#define SERVO3_PIN 4                    // Rudder/      Motor 3
+#define SERVO4_PIN 5                    // Flaps/       Motor 4
 #define SERVO5_PIN 6
 #define SERVO6_PIN 22
 #define SERVO7_PIN 23
@@ -154,9 +161,6 @@
 #endif
 
 
-/**************************************************************/
-/************* VEHICLE CONFIGURATION  *************************/
-/**************************************************************/
-// #define USE_DIFFERENTIAL_THRUST
+
 
 

@@ -21,6 +21,12 @@
 
 #endif
 
+enum SetpointController
+{
+    SETPOINT_RC_RECEIVER,
+    SETPOINT_ACS,
+};
+
 struct Servos
 {
     PWMServo servo1;
@@ -34,10 +40,10 @@ struct Servos
 
 struct Motor
 {
-    bool motorArmed = false;
-    int throttlePercent;
-    int throttlePWM;
-    PWMServo actMotor;
+    bool motor_armed = false;
+    int throttle_percent = 0;
+    int throttle_pwm = 1000;
+    PWMServo motorPWM;
 };
 
 class FC
@@ -138,9 +144,19 @@ public:
     float s1_command_scaled, s2_command_scaled, s3_command_scaled, s4_command_scaled, s5_command_scaled, s6_command_scaled, s7_command_scaled;
     int s1_command_PWM, s2_command_PWM, s3_command_PWM, s4_command_PWM, s5_command_PWM, s6_command_PWM, s7_command_PWM;
 
+
+#ifdef AIRFRAME_FIXEDWING
+    Motor motorFC_1;      // Flight Controller Main Motor
+#endif
+#ifdef AIRFRAME_QUADCOPTER
+    Motor motor1;
+    Motor motor2;
+    Motor motor3;
+    Motor motor4;
+#endif
+
     State stateFC;        // Flight Controller State
     Servos actFC;         // Flight Controller Actuator
-    Motor motorFC_1;      // Flight Controller Main Motor
     MPU6050 IMU;          // Flight Controller Inertial Measurement Unit
     Adafruit_BMP280 Baro; // Flight Controller Barometer
 
@@ -180,38 +196,54 @@ FC::~FC()
 
 void FC::init()
 {
+    #ifdef AIRFRAME_FIXEDWING
+        // Setup Actuators
+        this->actFC.servo1.attach(servo1Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
+        this->actFC.servo2.attach(servo2Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
+        this->actFC.servo3.attach(servo3Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
+        this->actFC.servo4.attach(servo4Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
+        this->actFC.servo5.attach(servo5Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
+        this->actFC.servo6.attach(servo6Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
+        this->actFC.servo7.attach(servo7Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
 
-    // Setup Actuators
-    this->actFC.servo1.attach(servo1Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
-    this->actFC.servo2.attach(servo2Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
-    this->actFC.servo3.attach(servo3Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
-    this->actFC.servo4.attach(servo4Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
-    this->actFC.servo5.attach(servo5Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
-    this->actFC.servo6.attach(servo6Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
-    this->actFC.servo7.attach(servo7Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
+        // Initialize & Arm Motors
+        // this->motorFC_1.actMotor.attach(servo1Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
+        this->motorFC_1.motorArmed = true;
+        this->motorFC_1.throttlePercent = 0;
 
-    //Arm Servos
-    this->actFC.servo1.write(90);
-    this->actFC.servo2.write(90);
-    this->actFC.servo3.write(90);
-    this->actFC.servo4.write(90);
-    this->actFC.servo5.write(0);
-    this->actFC.servo6.write(0);
-    this->actFC.servo7.write(0);
+        //Arm Servos
+        this->actFC.servo1.write(0);
+        this->actFC.servo2.write(0);
+        this->actFC.servo3.write(0);
+        this->actFC.servo4.write(0);
+        this->actFC.servo5.write(0);
+        this->actFC.servo6.write(0);
+        this->actFC.servo7.write(0);
 
-    // Setup Channel failsafes
-    this->channel_1_pwm = CHAN1_FS; //ailerons
-    this->channel_2_pwm = CHAN2_FS; //elevator
-    this->channel_4_pwm = CHAN3_FS; //elev
-    this->channel_5_pwm = CHAN4_FS; //rudd
-    this->channel_6_pwm = CHAN5_FS; //left dial //gear, greater than 1500 = throttle cut
-    this->channel_7_pwm = CHAN6_FS; //right dial
-    this->channel_8_pwm = CHAN8_FS; //right 2-way
+        // Setup Channel failsafes
+        this->channel_1_pwm = CHAN1_FS; //ailerons
+        this->channel_2_pwm = CHAN2_FS; //elevator
+        this->channel_4_pwm = CHAN3_FS; //elev
+        this->channel_5_pwm = CHAN4_FS; //rudd
+        this->channel_6_pwm = CHAN5_FS; //left dial //gear, greater than 1500 = throttle cut
+        this->channel_7_pwm = CHAN6_FS; //right dial
+        this->channel_8_pwm = CHAN8_FS; //right 2-way
+    #endif 
 
-    // Initialize & Arm Motors
-    // this->motorFC_1.actMotor.attach(servo1Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
-    this->motorFC_1.motorArmed = true;
-    this->motorFC_1.throttlePercent = 0;
+    #ifdef AIRFRAME_QUADCOPTER
+        // Setup Actuators
+        this->motor1.motor_armed = bool(this->motor1.motorPWM.attach(SERVO1_PIN, MIN_SERVO_PWM, MAX_SERVO_PWM));
+        this->motor2.motor_armed = bool(this->motor2.motorPWM.attach(SERVO2_PIN, MIN_SERVO_PWM, MAX_SERVO_PWM));
+        this->motor3.motor_armed = bool(this->motor3.motorPWM.attach(SERVO3_PIN, MIN_SERVO_PWM, MAX_SERVO_PWM));
+        this->motor4.motor_armed = bool(this->motor4.motorPWM.attach(SERVO4_PIN, MIN_SERVO_PWM, MAX_SERVO_PWM));
+
+        //Arm Servos
+        // this->motor1.motorPWM.write();
+
+#endif
+    
+
+    
 }
 
 BoolInt FC::initIMU()
@@ -222,10 +254,10 @@ BoolInt FC::initIMU()
     Wire.begin();
     Wire.setClock(1000000); //Note this is 2.5 times the spec sheet 400 kHz max...
     // Wire.setClock(400000);       // 400kHz I2C clock. Comment this line if having compilation difficulties
-    Serial.println("\tMPU6050 initialization...");
+    Serial.println("INFO, MPU6050 initialization...");
     this->IMU.initialize(GYRO_SCALE, ACCEL_SCALE);
 
-    Serial.println("\tInitializing DMP...");
+    Serial.println("INFO, Initializing DMP...");
     pass_err.ErrCode = this->IMU.dmpInitialize();
 
     // Enter offsets here
@@ -241,14 +273,14 @@ BoolInt FC::initIMU()
         this->IMU.CalibrateGyro(6);
         this->IMU.PrintActiveOffsets();
         // turn on the DMP, now that it's ready
-        Serial.println(F("\tEnabling DMP..."));
+        Serial.println(F("INFO, Enabling DMP..."));
         this->IMU.setDMPEnabled(true);
         // Serial.print(F("Enabling interrupt detection (Teensy external interrupt "));
         // Serial.print(digitalPinToInterrupt(INTERRUPT_PIN));
         // Serial.println(F(""));
         // attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), dmpDataReady, RISING);
         mpuIntStatus = this->IMU.getIntStatus();
-        Serial.println("\tDMP ready!");
+        Serial.println("INFO, DMP ready!");
         dmpReady = true;
         pass_err.flag = true;
         packetSize = this->IMU.dmpGetFIFOPacketSize();
@@ -258,9 +290,9 @@ BoolInt FC::initIMU()
         // ERROR!
         // 1 = initial memory load failed
         // 2 = DMP configuration updates failed
-        Serial.print(F("DMP Initialization failed (code "));
+        Serial.print("INFO, DMP Initialization failed (code ");
         Serial.print(pass_err.ErrCode);
-        Serial.println(F(")"));
+        Serial.println(")");
     }
 
 #elif defined USE_MPU9250_SPI
@@ -278,7 +310,7 @@ BoolInt FC::initBaro()
     if (!Baro.begin())
     {
         Serial.println(F("Could not find BMP280 sensor, check wiring"));
-        Serial.println("[ERROR] : Failed to connect to BMP280");
+        Serial.println("ERROR, Failed to connect to BMP280");
         pass_err.ErrCode = -1;
         pass_err.flag = false;
     }
@@ -290,7 +322,7 @@ BoolInt FC::initBaro()
                          Adafruit_BMP280::SAMPLING_X2,    /* Pressure oversampling */
                          Adafruit_BMP280::FILTER_X2,      /* Filtering. */
                          Adafruit_BMP280::STANDBY_MS_63); /* Standby time. */
-        Serial.println("\tBarometer Sampling Settings SET");
+        Serial.println("INFO, Barometer Sampling Settings SET");
         pass_err.ErrCode = 0;
         pass_err.flag = true;
     }
@@ -309,7 +341,7 @@ void FC::calculateIMUerror()
     // int16_t AcX, AcY, AcZ, GyX, GyY, GyZ, MgX, MgY, MgZ;
     int16_t AcX, AcY, AcZ, GyX, GyY, GyZ;
 
-    Serial.println("\tCalculating IMU error...");
+    Serial.println("INFO, Calculating IMU error...");
 
     //Read IMU values 12000 times
     int c = 0;
@@ -350,7 +382,7 @@ void FC::calibrateAttitude(bool verbose)
 {
     //Used to warm up the main loop to allow the madwick filter to converge before commands can be sent to the actuators assuming vehicle is powered up on level surface!
 
-    Serial.println("\tCalibrating Attitude. Warming up Madgwick filter...");
+    Serial.println("INFO, Calibrating Attitude. Warming up Madgwick filter...");
     //Warm up IMU and madgwick filter in simulated main loop
 
     int verbose_count = 0;
@@ -375,7 +407,7 @@ void FC::calibrateAttitude(bool verbose)
             verbose_count++;
         }
     }
-    Serial.println("\tCalibration Complete\n");
+    Serial.println("INFO, Calibration Complete\n");
 }
 
 void FC::getIMUdata()
@@ -742,10 +774,16 @@ void FC::getDesiredState()
     (rate mode). yaw_des is scaled to be within max yaw in degrees/sec. Also creates roll_passthru, pitch_passthru, and
     yaw_passthru variables, to be used in commanding motors/servos with direct un-stabilized commands in controlMixer().
     */
+
+
+
+
     roll_des = (channel_1_pwm - 1500.0) / 500.0;  //between -1 and 1
     pitch_des = (channel_2_pwm - 1500.0) / 500.0; //between -1 and 1
     thro_des = (channel_3_pwm - 1000.0) / 1000.0; //between 0 and 1
     yaw_des = (channel_4_pwm - 1500.0) / 500.0;   //between -1 and 1
+
+
 
     //Constrain within normalized bounds
     thro_des = constrain(thro_des, 0.0, 1.0);               //between 0 and 1
@@ -821,13 +859,14 @@ void FC::controlMixer()
     m2_command_scaled = thro_des;
 #endif
 
-#if defined USE_QUADCOPTER
-    m1_command_scaled = thro_des - pitch_PID + roll_PID + yaw_PID;
-    m2_command_scaled = thro_des - pitch_PID - roll_PID - yaw_PID;
-    m3_command_scaled = thro_des + pitch_PID - roll_PID + yaw_PID;
-    m4_command_scaled = thro_des + pitch_PID + roll_PID - yaw_PID;
+#ifdef AIRFRAME_QUADCOPTER
+    s1_command_scaled = thro_des - pitch_PID + roll_PID + yaw_PID;
+    s2_command_scaled = thro_des - pitch_PID - roll_PID - yaw_PID;
+    s3_command_scaled = thro_des + pitch_PID - roll_PID + yaw_PID;
+    s4_command_scaled = thro_des + pitch_PID + roll_PID - yaw_PID;
 #endif
 
+#ifdef AIRFRAME_FIXEDWING   
     //0.5 is centered servo, 0 is zero throttle if connecting to ESC for conventional PWM, 1 is max throttle
     s1_command_scaled = pitch_PID;
     s2_command_scaled = roll_PID;
@@ -837,6 +876,9 @@ void FC::controlMixer()
     s6_command_scaled = 0;
     s7_command_scaled = 0;
 
+#endif
+
+    
     //Example use of the linear fader for float type variables. Linearly interpolate between minimum and maximum values for Kp_pitch_rate variable based on state of channel 6:
     // if (channel_6_pwm > 1500){ //go to max specified value in 5.5 seconds
     //     //parameter, minimum value, maximum value, fadeTime (seconds), state (0 min or 1 max), loop frequency

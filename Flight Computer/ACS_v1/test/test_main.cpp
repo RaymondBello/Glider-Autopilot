@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <unity.h>
+#include <Config.h>
 
 #ifdef UNIT_TEST
 
