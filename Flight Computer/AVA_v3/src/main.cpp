@@ -461,98 +461,112 @@ void dmpDataReady()
 
 void IMUinit()
 {
-#if defined USE_MPU6050_I2C
-    Wire.begin();
-    Wire.setClock(1000000); //Note this is 2.5 times the spec sheet 400 kHz max...
-    // Wire.setClock(400000);  // 400kHz I2C clock. Comment this line if having compilation difficulties
+    #if defined USE_MPU6050_I2C
+        Wire.begin();
+        Wire.setClock(1000000); //Note this is 2.5 times the spec sheet 400 kHz max...
+        // Wire.setClock(400000);  // 400kHz I2C clock. Comment this line if having compilation difficulties
 
-    Serial.println("\tMPU9250 initialization...");
-    mpu.initialize(GYRO_SCALE, ACCEL_SCALE);
-    // pinMode(INTERRUPT_PIN, INPUT);
+        Serial.println("\tMPU9250 initialization...");
+        mpu.initialize(GYRO_SCALE, ACCEL_SCALE);
+        // pinMode(INTERRUPT_PIN, INPUT);
 
-    Serial.println("\tInitializing DMP...");
-    devStatus = mpu.dmpInitialize();
+        Serial.println("\tInitializing DMP...");
+        devStatus = mpu.dmpInitialize();
 
-    // Enter offsets here
-    mpu.setXGyroOffset(220);
-    mpu.setYGyroOffset(76);
-    mpu.setZGyroOffset(-85);
-    mpu.setZAccelOffset(1788); // 1688 factory default
+        // Enter offsets here
+        mpu.setXGyroOffset(220);
+        mpu.setYGyroOffset(76);
+        mpu.setZGyroOffset(-85);
+        mpu.setZAccelOffset(1788); // 1688 factory default
 
-    // make sure it worked (returns 0 if so)
-    if (devStatus == 0)
-    {
-        // Calibration Time: generate offsets and calibrate our MPU6050
-        mpu.CalibrateAccel(6);
-        mpu.CalibrateGyro(6);
-        mpu.PrintActiveOffsets();
-        // turn on the DMP, now that it's ready
-        Serial.println(F("\tEnabling DMP..."));
-        mpu.setDMPEnabled(true);
+        // make sure it worked (returns 0 if so)
+        if (devStatus == 0)
+        {
+            // Calibration Time: generate offsets and calibrate our MPU6050
+            mpu.CalibrateAccel(6);
+            mpu.CalibrateGyro(6);
+            mpu.PrintActiveOffsets();
+            // turn on the DMP, now that it's ready
+            Serial.println(F("\tEnabling DMP..."));
+            mpu.setDMPEnabled(true);
 
-        // Serial.print(F("Enabling interrupt detection (Teensy external interrupt "));
-        // Serial.print(digitalPinToInterrupt(INTERRUPT_PIN));
-        // Serial.println(F(""));
-        // attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), dmpDataReady, RISING);
+            // Serial.print(F("Enabling interrupt detection (Teensy external interrupt "));
+            // Serial.print(digitalPinToInterrupt(INTERRUPT_PIN));
+            // Serial.println(F(""));
+            // attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), dmpDataReady, RISING);
 
-        mpuIntStatus = mpu.getIntStatus();
+            mpuIntStatus = mpu.getIntStatus();
 
-        Serial.println("\tDMP ready!");
-        dmpReady = true;
+            Serial.println("\tDMP ready!");
+            dmpReady = true;
 
+<<<<<<< Updated upstream
         packetSize = mpu.dmpGetFIFOPacketSize();
     }
-
-#elif defined USE_MPU9250_SPI
-    int status = mpu9250.begin();
-
-    if (status < 0)
-    {
-        Serial.println("MPU9250 initialization unsuccessful");
-        Serial.println("Check MPU9250 wiring or try cycling power");
-        Serial.print("Status: ");
-        Serial.println(status);
-        while (1)
-        {
+=======
+            packetSize = mpu.dmpGetFIFOPacketSize();
         }
-    }
+        else
+        {
+            // ERROR!
+            // 1 = initial memory load failed
+            // 2 = DMP configuration updates failed
+            Serial.print(F("DMP Initialization failed (code "));
+            Serial.print(devStatus);
+            Serial.println(F(")"));
+        }
+>>>>>>> Stashed changes
 
-    //From the reset state all registers should be 0x00, so we should be at
-    //max sample rate with digital low pass filter(s) off.  All we need to
-    //do is set the desired fullscale ranges
-    mpu9250.setGyroRange(GYRO_SCALE);
-    mpu9250.setAccelRange(ACCEL_SCALE);
-    mpu9250.setMagCalX(MagErrorX, MagScaleX);
-    mpu9250.setMagCalY(MagErrorY, MagScaleY);
-    mpu9250.setMagCalZ(MagErrorZ, MagScaleZ);
-    mpu9250.setSrd(0); //sets gyro and accel read to 1khz, magnetometer read to 100hz
-#endif
+    #elif defined USE_MPU9250_SPI
+        int status = mpu9250.begin();
+
+        if (status < 0)
+        {
+            Serial.println("MPU9250 initialization unsuccessful");
+            Serial.println("Check MPU9250 wiring or try cycling power");
+            Serial.print("Status: ");
+            Serial.println(status);
+            while (1)
+            {
+            }
+        }
+
+        //From the reset state all registers should be 0x00, so we should be at
+        //max sample rate with digital low pass filter(s) off.  All we need to
+        //do is set the desired fullscale ranges
+        mpu9250.setGyroRange(GYRO_SCALE);
+        mpu9250.setAccelRange(ACCEL_SCALE);
+        mpu9250.setMagCalX(MagErrorX, MagScaleX);
+        mpu9250.setMagCalY(MagErrorY, MagScaleY);
+        mpu9250.setMagCalZ(MagErrorZ, MagScaleZ);
+        mpu9250.setSrd(0); //sets gyro and accel read to 1khz, magnetometer read to 100hz
+    #endif
 }
 
 void BMPinit()
 {
-#if defined USE_BMP280_I2C
-    // start communication to Barometer
-    if (!bmp.begin())
-    {
-        Serial.println(F("Could not find BMP280 sensor, check wiring"));
-        while (1)
+    #if defined USE_BMP280_I2C
+        // start communication to Barometer
+        if (!bmp.begin())
         {
-            Serial.println("[ERROR] : Failed to connect to BMP280");
-            ;
+            Serial.println(F("Could not find BMP280 sensor, check wiring"));
+            while (1)
+            {
+                Serial.println("[ERROR] : Failed to connect to BMP280");
+                ;
+            }
         }
-    }
-    else
-    {
-        /* Default settings from datasheet. */
-        bmp.setSampling(Adafruit_BMP280::MODE_NORMAL,     /* Operating Mode. */
-                        Adafruit_BMP280::SAMPLING_NONE,   /* Temp. oversampling */
-                        Adafruit_BMP280::SAMPLING_NONE,   /* Pressure oversampling */
-                        Adafruit_BMP280::FILTER_OFF,      /* Filtering. */
-                        Adafruit_BMP280::STANDBY_MS_500); /* Standby time. */
-        Serial.println("\tBarometer Sampling Settings SET");
-    }
-#endif
+        else
+        {
+            /* Default settings from datasheet. */
+            bmp.setSampling(Adafruit_BMP280::MODE_NORMAL,     /* Operating Mode. */
+                            Adafruit_BMP280::SAMPLING_NONE,   /* Temp. oversampling */
+                            Adafruit_BMP280::SAMPLING_NONE,   /* Pressure oversampling */
+                            Adafruit_BMP280::FILTER_OFF,      /* Filtering. */
+                            Adafruit_BMP280::STANDBY_MS_500); /* Standby time. */
+            Serial.println("\tBarometer Sampling Settings SET");
+        }
+    #endif
 }
 
 void getIMUdata()
