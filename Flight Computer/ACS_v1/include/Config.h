@@ -61,8 +61,8 @@
  */
 #define MAX_SERVO_ANGLE 120
 #define MIN_SERVO_ANGLE 60
-#define MAX_SERVO_PWM 2100
-#define MIN_SERVO_PWM 900
+#define MAX_SERVO_PWM 2000
+#define MIN_SERVO_PWM 1000
 
 
 /*** @brief GPS Recever Pin Defines
@@ -102,7 +102,7 @@
  */
 #define CHAN1_FS 1500
 #define CHAN2_FS 1500
-#define CHAN3_FS 1500
+#define CHAN3_FS 1000
 #define CHAN4_FS 1500
 #define CHAN5_FS 1500
 #define CHAN6_FS 1500

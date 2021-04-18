@@ -263,7 +263,7 @@ void ACS::updateFlightControllerPIDloop()
   // flightController.throttleCut();           //directly sets motor commands to low based on state of ch5
 
   // Command Motors
-  // flightController.commandMotors();         //sends command pulses to each motor pin using OneShot125 protocol
+  flightController.commandMotors();         //sends command pulses to each motor pin using OneShot125 protocol
 
   // Command Servos
   flightController.commandServos();

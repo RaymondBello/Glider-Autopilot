@@ -21,10 +21,31 @@
 
 #endif
 
-enum SetpointController
+enum SetpointControl
 {
     SETPOINT_RC_RECEIVER,
     SETPOINT_ACS,
+};
+
+struct SetpointACS
+{
+    unsigned long roll_pwm      = 0;
+    unsigned long pitch_pwm     = 0;
+    unsigned long throttle_pwm  = 0;
+    unsigned long yaw_pwm       = 0;
+
+    unsigned long deg2pwm(float deg)
+    {
+        float pwm = 5;
+        return pwm;
+    }
+
+    unsigned long percent2pwm(int percentage)
+    {
+        unsigned long pwm = 0;
+        return pwm;
+    }
+
 };
 
 struct Servos
@@ -41,8 +62,9 @@ struct Servos
 struct Motor
 {
     bool motor_armed = false;
-    int throttle_percent = 0;
-    int throttle_pwm = 1000;
+    int value_percent = 0;
+    int value_pwm = 1000;
+    float value_scaled;
     PWMServo motorPWM;
 };
 
@@ -144,9 +166,8 @@ public:
     float s1_command_scaled, s2_command_scaled, s3_command_scaled, s4_command_scaled, s5_command_scaled, s6_command_scaled, s7_command_scaled;
     int s1_command_PWM, s2_command_PWM, s3_command_PWM, s4_command_PWM, s5_command_PWM, s6_command_PWM, s7_command_PWM;
 
-
 #ifdef AIRFRAME_FIXEDWING
-    Motor motorFC_1;      // Flight Controller Main Motor
+    Motor motorFC_1; // Flight Controller Main Motor
 #endif
 #ifdef AIRFRAME_QUADCOPTER
     Motor motor1;
@@ -159,6 +180,9 @@ public:
     Servos actFC;         // Flight Controller Actuator
     MPU6050 IMU;          // Flight Controller Inertial Measurement Unit
     Adafruit_BMP280 Baro; // Flight Controller Barometer
+
+    SetpointControl setpoint_ctrl;
+    SetpointACS setpoint_acs;
 
     FC(/* args */);
     ~FC();
@@ -196,54 +220,66 @@ FC::~FC()
 
 void FC::init()
 {
-    #ifdef AIRFRAME_FIXEDWING
-        // Setup Actuators
-        this->actFC.servo1.attach(servo1Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
-        this->actFC.servo2.attach(servo2Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
-        this->actFC.servo3.attach(servo3Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
-        this->actFC.servo4.attach(servo4Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
-        this->actFC.servo5.attach(servo5Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
-        this->actFC.servo6.attach(servo6Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
-        this->actFC.servo7.attach(servo7Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
+#ifdef AIRFRAME_FIXEDWING
+    // Setup Actuators
+    this->actFC.servo1.attach(servo1Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
+    this->actFC.servo2.attach(servo2Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
+    this->actFC.servo3.attach(servo3Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
+    this->actFC.servo4.attach(servo4Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
+    this->actFC.servo5.attach(servo5Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
+    this->actFC.servo6.attach(servo6Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
+    this->actFC.servo7.attach(servo7Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
 
-        // Initialize & Arm Motors
-        // this->motorFC_1.actMotor.attach(servo1Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
-        this->motorFC_1.motorArmed = true;
-        this->motorFC_1.throttlePercent = 0;
+    // Initialize & Arm Motors
+    // this->motorFC_1.actMotor.attach(servo1Pin, MIN_SERVO_PWM, MAX_SERVO_PWM);
+    this->motorFC_1.motorArmed = true;
+    this->motorFC_1.throttlePercent = 0;
 
-        //Arm Servos
-        this->actFC.servo1.write(0);
-        this->actFC.servo2.write(0);
-        this->actFC.servo3.write(0);
-        this->actFC.servo4.write(0);
-        this->actFC.servo5.write(0);
-        this->actFC.servo6.write(0);
-        this->actFC.servo7.write(0);
+    //Arm Servos
+    this->actFC.servo1.write(0);
+    this->actFC.servo2.write(0);
+    this->actFC.servo3.write(0);
+    this->actFC.servo4.write(0);
+    this->actFC.servo5.write(0);
+    this->actFC.servo6.write(0);
+    this->actFC.servo7.write(0);
 
-        // Setup Channel failsafes
-        this->channel_1_pwm = CHAN1_FS; //ailerons
-        this->channel_2_pwm = CHAN2_FS; //elevator
-        this->channel_4_pwm = CHAN3_FS; //elev
-        this->channel_5_pwm = CHAN4_FS; //rudd
-        this->channel_6_pwm = CHAN5_FS; //left dial //gear, greater than 1500 = throttle cut
-        this->channel_7_pwm = CHAN6_FS; //right dial
-        this->channel_8_pwm = CHAN8_FS; //right 2-way
-    #endif 
+    // Setup Channel failsafes
+    this->channel_1_pwm = CHAN1_FS; //ailerons
+    this->channel_2_pwm = CHAN2_FS; //elevator
+    this->channel_4_pwm = CHAN3_FS; //throttle
+    this->channel_5_pwm = CHAN4_FS; //rudd
+    this->channel_6_pwm = CHAN5_FS; //left dial //gear, greater than 1500 = throttle cut
+    this->channel_7_pwm = CHAN6_FS; //right dial
+    this->channel_8_pwm = CHAN8_FS; //right 2-way
 
-    #ifdef AIRFRAME_QUADCOPTER
-        // Setup Actuators
-        this->motor1.motor_armed = bool(this->motor1.motorPWM.attach(SERVO1_PIN, MIN_SERVO_PWM, MAX_SERVO_PWM));
-        this->motor2.motor_armed = bool(this->motor2.motorPWM.attach(SERVO2_PIN, MIN_SERVO_PWM, MAX_SERVO_PWM));
-        this->motor3.motor_armed = bool(this->motor3.motorPWM.attach(SERVO3_PIN, MIN_SERVO_PWM, MAX_SERVO_PWM));
-        this->motor4.motor_armed = bool(this->motor4.motorPWM.attach(SERVO4_PIN, MIN_SERVO_PWM, MAX_SERVO_PWM));
-
-        //Arm Servos
-        this->motor1.motorPWM.write(0);
-
+    this->setpoint_ctrl = SETPOINT_RC_RECEIVER;
 #endif
-    
 
-    
+#ifdef AIRFRAME_QUADCOPTER
+    // Setup Actuators
+    this->motor1.motor_armed = bool(this->motor1.motorPWM.attach(SERVO1_PIN, MIN_SERVO_PWM, MAX_SERVO_PWM));
+    this->motor2.motor_armed = bool(this->motor2.motorPWM.attach(SERVO2_PIN, MIN_SERVO_PWM, MAX_SERVO_PWM));
+    this->motor3.motor_armed = bool(this->motor3.motorPWM.attach(SERVO3_PIN, MIN_SERVO_PWM, MAX_SERVO_PWM));
+    this->motor4.motor_armed = bool(this->motor4.motorPWM.attach(SERVO4_PIN, MIN_SERVO_PWM, MAX_SERVO_PWM));
+
+    //Arm Servos
+    this->motor1.motorPWM.write(0);
+    this->motor2.motorPWM.write(0);
+    this->motor3.motorPWM.write(0);
+    this->motor4.motorPWM.write(0);
+
+    // Setup Channel failsafes
+    this->channel_1_pwm = CHAN1_FS; //ailerons
+    this->channel_2_pwm = CHAN2_FS; //elevator
+    this->channel_4_pwm = CHAN3_FS; //throttle
+    this->channel_5_pwm = CHAN4_FS; //rudder
+    this->channel_6_pwm = CHAN5_FS; //left dial //gear, greater than 1500 = throttle cut
+    this->channel_7_pwm = CHAN6_FS; //right dial
+    this->channel_8_pwm = CHAN8_FS; //right 2-way
+
+    this->setpoint_ctrl = SETPOINT_RC_RECEIVER;
+#endif
 }
 
 BoolInt FC::initIMU()
@@ -775,15 +811,10 @@ void FC::getDesiredState()
     yaw_passthru variables, to be used in commanding motors/servos with direct un-stabilized commands in controlMixer().
     */
 
-
-
-
     roll_des = (channel_1_pwm - 1500.0) / 500.0;  //between -1 and 1
     pitch_des = (channel_2_pwm - 1500.0) / 500.0; //between -1 and 1
     thro_des = (channel_3_pwm - 1000.0) / 1000.0; //between 0 and 1
     yaw_des = (channel_4_pwm - 1500.0) / 500.0;   //between -1 and 1
-
-
 
     //Constrain within normalized bounds
     thro_des = constrain(thro_des, 0.0, 1.0);               //between 0 and 1
@@ -860,13 +891,18 @@ void FC::controlMixer()
 #endif
 
 #ifdef AIRFRAME_QUADCOPTER
-    s1_command_scaled = thro_des - pitch_PID + roll_PID + yaw_PID;
-    s2_command_scaled = thro_des - pitch_PID - roll_PID - yaw_PID;
-    s3_command_scaled = thro_des + pitch_PID - roll_PID + yaw_PID;
-    s4_command_scaled = thro_des + pitch_PID + roll_PID - yaw_PID;
+    motor1.value_scaled = thro_des - pitch_PID + roll_PID + yaw_PID;
+    motor2.value_scaled = thro_des - pitch_PID - roll_PID - yaw_PID;
+    motor3.value_scaled = thro_des + pitch_PID - roll_PID + yaw_PID;
+    motor4.value_scaled = thro_des + pitch_PID + roll_PID - yaw_PID;
+
+    s1_command_scaled = motor1.value_scaled;
+    s2_command_scaled = motor2.value_scaled;
+    s3_command_scaled = motor3.value_scaled;
+    s4_command_scaled = motor4.value_scaled;
 #endif
 
-#ifdef AIRFRAME_FIXEDWING   
+#ifdef AIRFRAME_FIXEDWING
     //0.5 is centered servo, 0 is zero throttle if connecting to ESC for conventional PWM, 1 is max throttle
     s1_command_scaled = pitch_PID;
     s2_command_scaled = roll_PID;
@@ -878,7 +914,6 @@ void FC::controlMixer()
 
 #endif
 
-    
     //Example use of the linear fader for float type variables. Linearly interpolate between minimum and maximum values for Kp_pitch_rate variable based on state of channel 6:
     // if (channel_6_pwm > 1500){ //go to max specified value in 5.5 seconds
     //     //parameter, minimum value, maximum value, fadeTime (seconds), state (0 min or 1 max), loop frequency
@@ -899,29 +934,34 @@ void FC::scaleCommands()
    sX_command_PWM are updated which are used to command the servos.
    */
 
-    //Scaled to 125us - 250us for oneshot125 protocol
-    m1_command_PWM = m1_command_scaled * 125 + 125;
-    m2_command_PWM = m2_command_scaled * 125 + 125;
-    //Constrain commands to motors within oneshot125 bounds
-    m1_command_PWM = constrain(m1_command_PWM, 125, 250);
-    m2_command_PWM = constrain(m2_command_PWM, 125, 250);
+    #if defined(AIRFRAME_FIXEDWING)
+        //Scaled to 125us - 250us for oneshot125 protocol
+        m1_command_PWM = m1_command_scaled * 125 + 125;
+        m2_command_PWM = m2_command_scaled * 125 + 125;
+        //Constrain commands to motors within oneshot125 bounds
+        m1_command_PWM = constrain(m1_command_PWM, 125, 250);
+        m2_command_PWM = constrain(m2_command_PWM, 125, 250);
 
-    //Scaled to 0-180 for servo library
-    s1_command_PWM = s1_command_scaled * 180;
-    s2_command_PWM = s2_command_scaled * 180;
-    s3_command_PWM = s3_command_scaled * 180;
-    s4_command_PWM = s4_command_scaled * 180;
-    s5_command_PWM = s5_command_scaled * 180;
-    s6_command_PWM = s6_command_scaled * 180;
-    s7_command_PWM = s7_command_scaled * 180;
-    //Constrain commands to servos within servo library bounds
-    s1_command_PWM = constrain(s1_command_PWM, 0, 180);
-    s2_command_PWM = constrain(s2_command_PWM, 0, 180);
-    s3_command_PWM = constrain(s3_command_PWM, 0, 180);
-    s4_command_PWM = constrain(s4_command_PWM, 0, 180);
-    s5_command_PWM = constrain(s5_command_PWM, 0, 180);
-    s6_command_PWM = constrain(s6_command_PWM, 0, 180);
-    s7_command_PWM = constrain(s7_command_PWM, 0, 180);
+        //Scaled to 0-180 for servo library
+        s1_command_PWM = s1_command_scaled * 180;
+        s2_command_PWM = s2_command_scaled * 180;
+        s3_command_PWM = s3_command_scaled * 180;
+        s4_command_PWM = s4_command_scaled * 180;
+        s5_command_PWM = s5_command_scaled * 180;
+        s6_command_PWM = s6_command_scaled * 180;
+        s7_command_PWM = s7_command_scaled * 180;
+        //Constrain commands to servos within servo library bounds
+        s1_command_PWM = constrain(s1_command_PWM, 0, 180);
+        s2_command_PWM = constrain(s2_command_PWM, 0, 180);
+        s3_command_PWM = constrain(s3_command_PWM, 0, 180);
+        s4_command_PWM = constrain(s4_command_PWM, 0, 180);
+        s5_command_PWM = constrain(s5_command_PWM, 0, 180);
+        s6_command_PWM = constrain(s6_command_PWM, 0, 180);
+        s7_command_PWM = constrain(s7_command_PWM, 0, 180);
+    #elif defined(AIRFRAME_QUADCOPTER)
+        // Finish this
+    #endif
+
 }
 
 void FC::throttleCut()
@@ -1014,10 +1054,13 @@ void FC::commandMotors()
     //         flagM6 = 1;
     //     }
     // }
+    #if defined(AIRFRAME_QUADCOPTER)
+    #endif
 }
 
 void FC::commandServos()
 {
+    #if defined(AIRFRAME_FIXEDWING)
     actFC.servo1.write(s1_command_PWM);
     actFC.servo2.write(s2_command_PWM);
     actFC.servo3.write(s3_command_PWM);
@@ -1025,6 +1068,7 @@ void FC::commandServos()
     // actFC.servo5.write(s5_command_PWM);
     // actFC.servo6.write(s6_command_PWM);
     // actFC.servo7.write(s7_command_PWM);
+    #endif
 }
 
 void FC::getCommands(Radio receiver)
@@ -1037,7 +1081,7 @@ void FC::getCommands(Radio receiver)
    * The raw radio commands are filtered with a first order low-pass filter to eliminate any really high frequency noise. 
    */
 
-#if defined USE_PPM_RX || defined USE_PWM_RX
+#if defined(USE_PWM_RX) && defined(AIRFRAME_FIXEDWING)
     channel_1_pwm = receiver.getRadioPWM(1);
     channel_2_pwm = receiver.getRadioPWM(2);
     channel_3_pwm = receiver.getRadioPWM(3);
@@ -1046,7 +1090,32 @@ void FC::getCommands(Radio receiver)
     channel_6_pwm = receiver.getRadioPWM(6);
     channel_7_pwm = receiver.getRadioPWM(7);
 
-#elif defined USE_SBUS_RX
+#elif defined(USE_PWM_RX) && defined(AIRFRAME_QUADCOPTER)
+    switch (this->setpoint_ctrl)
+    {
+    case SETPOINT_RC_RECEIVER:
+    {
+        channel_1_pwm = receiver.getRadioPWM(1);
+        channel_2_pwm = receiver.getRadioPWM(2);
+        channel_3_pwm = receiver.getRadioPWM(3);
+        channel_4_pwm = receiver.getRadioPWM(4);
+        Serial.println("Using RC");
+        break;
+    }
+    case SETPOINT_ACS:
+    {
+        channel_1_pwm = setpoint_acs.roll_pwm;
+        channel_2_pwm = setpoint_acs.pitch_pwm;
+        channel_3_pwm = setpoint_acs.throttle_pwm;
+        channel_4_pwm = setpoint_acs.yaw_pwm;
+        Serial.println("Using ACS");
+    }
+    default:
+        this->setpoint_ctrl = SETPOINT_RC_RECEIVER;
+        break;
+    }
+
+#elif defined(USE_SBUS_RX)
     if (sbus.read(&sbusChannels[0], &sbusFailSafe, &sbusLostFrame))
     {
         //sBus scaling below is for Taranis-Plus and X4R-SB
@@ -1062,7 +1131,7 @@ void FC::getCommands(Radio receiver)
 #endif
 
     //Low-pass the critical commands and update previous values
-    float b = 0.2; //lower=slower, higher=noiser
+    float b = 0.2; //lower=slower, higher=noisier
     channel_1_pwm = (1.0 - b) * channel_1_pwm_prev + b * channel_1_pwm;
     channel_2_pwm = (1.0 - b) * channel_2_pwm_prev + b * channel_2_pwm;
     channel_3_pwm = (1.0 - b) * channel_3_pwm_prev + b * channel_3_pwm;
