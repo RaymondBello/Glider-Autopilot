@@ -238,7 +238,7 @@ void FC::init()
         this->motor4.motor_armed = bool(this->motor4.motorPWM.attach(SERVO4_PIN, MIN_SERVO_PWM, MAX_SERVO_PWM));
 
         //Arm Servos
-        // this->motor1.motorPWM.write();
+        this->motor1.motorPWM.write(0);
 
 #endif
     
