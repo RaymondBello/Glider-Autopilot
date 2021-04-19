@@ -179,9 +179,13 @@ void ACS::loop()
     updateFlightControllerPIDloop();
     printDebugMessages();
 
+    if (flightController.setpoint_ctrl==1){
+      printDesiredState();
+    }
+
     /** Handle CLI message **/
     // Serial.println("Wrote to Motors");
-    
+
     handleSerial();
 
     flightController.loopRate(2000);
@@ -263,7 +267,7 @@ void ACS::updateFlightControllerPIDloop()
   // flightController.throttleCut();           //directly sets motor commands to low based on state of ch5
 
   // Command Motors
-  flightController.commandMotors();         //sends command pulses to each motor pin using OneShot125 protocol
+  flightController.commandMotors(); //sends command pulses to each motor pin using OneShot125 protocol
 
   // Command Servos
   flightController.commandServos();
@@ -282,7 +286,7 @@ void ACS::printDebugMessages()
   // printRadioData();
   // printIMUdata();
   // printBMPdata();
-  printDesiredState();
+  // printDesiredState();
   // printRollPitchYaw();
   // printPIDoutput();
   // printMotorCommands();
@@ -643,8 +647,6 @@ void ACS::handleReceivedMessage(char *msg)
     if (cmd == this->cmdSet)
     {
       processSetCommand(setting.c_str(), value.c_str());
-      Serial.printf("# SetCmd: %s | Val: %s", setting.c_str());
-      Serial.println();
     }
   }
 }
@@ -718,6 +720,64 @@ void ACS::processGetCommand(const char *setting)
 
 void ACS::processSetCommand(const char *setting, const char *value)
 {
+  if (strcmp(setting, "test") == 0)
+  {
+    Serial.print("# TEST value: ");
+    Serial.println(atoi(value));
+  }
+  else if (strcmp(setting, "controller") == 0)
+  {
+    Serial.print("# Setpoint controller value: ");
+    Serial.println(atoi(value));
+
+    switch (atoi(value))
+    {
+    case SETPOINT_RC_RECEIVER:
+    {
+      flightController.setpoint_ctrl = SETPOINT_RC_RECEIVER;
+      break;
+    }
+    case SETPOINT_ACS:
+    {
+      flightController.setpoint_ctrl = SETPOINT_ACS;
+      break;
+    }
+    }
+  }
+
+  else if (strcmp(setting, "m0") == 0)
+  {
+    flightController.motor1.motorPWM.write(0);
+    flightController.motor2.motorPWM.write(0);
+    flightController.motor3.motorPWM.write(0);
+    flightController.motor4.motorPWM.write(0);
+    Serial.print("# All motors set to :");
+    Serial.println(atoi(value));
+  }
+  else if (strcmp(setting, "m1") == 0)
+  {
+    flightController.motor1.motorPWM.write(50);
+    Serial.print("# Motor 1 set to :");
+    Serial.println(atoi(value));
+  }
+  else if (strcmp(setting, "m2") == 0)
+  {
+    flightController.motor2.motorPWM.write(50);
+    Serial.print("# Motor 2 set to :");
+    Serial.println(atoi(value));
+  }
+  else if (strcmp(setting, "m3") == 0)
+  {
+    flightController.motor3.motorPWM.write(50);
+    Serial.print("# Motor 3 set to :");
+    Serial.println(atoi(value));
+  }
+  else if (strcmp(setting, "m4") == 0)
+  {
+    flightController.motor4.motorPWM.write(50);
+    Serial.print("# Motor 4 set to :");
+    Serial.println(atoi(value));
+  }
 }
 
 /**

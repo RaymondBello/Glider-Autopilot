@@ -29,10 +29,10 @@ enum SetpointControl
 
 struct SetpointACS
 {
-    unsigned long roll_pwm      = 0;
-    unsigned long pitch_pwm     = 0;
-    unsigned long throttle_pwm  = 0;
-    unsigned long yaw_pwm       = 0;
+    unsigned long roll_pwm      = 1500; // default values
+    unsigned long pitch_pwm     = 1500;
+    unsigned long throttle_pwm  = 1000;
+    unsigned long yaw_pwm       = 1500;
 
     unsigned long deg2pwm(float deg)
     {
@@ -890,7 +890,16 @@ void FC::controlMixer()
     m2_command_scaled = thro_des;
 #endif
 
-#ifdef AIRFRAME_QUADCOPTER
+#if defined(AIRFRAME_FIXEDWING)
+    //0.5 is centered servo, 0 is zero throttle if connecting to ESC for conventional PWM, 1 is max throttle
+    s1_command_scaled = pitch_PID;
+    s2_command_scaled = roll_PID;
+    s3_command_scaled = yaw_PID;
+    s4_command_scaled = 0;
+    s5_command_scaled = 0;
+    s6_command_scaled = 0;
+    s7_command_scaled = 0;
+#elif defined(AIRFRAME_QUADCOPTER)
     motor1.value_scaled = thro_des - pitch_PID + roll_PID + yaw_PID;
     motor2.value_scaled = thro_des - pitch_PID - roll_PID - yaw_PID;
     motor3.value_scaled = thro_des + pitch_PID - roll_PID + yaw_PID;
@@ -901,19 +910,6 @@ void FC::controlMixer()
     s3_command_scaled = motor3.value_scaled;
     s4_command_scaled = motor4.value_scaled;
 #endif
-
-#ifdef AIRFRAME_FIXEDWING
-    //0.5 is centered servo, 0 is zero throttle if connecting to ESC for conventional PWM, 1 is max throttle
-    s1_command_scaled = pitch_PID;
-    s2_command_scaled = roll_PID;
-    s3_command_scaled = yaw_PID;
-    s4_command_scaled = 0;
-    s5_command_scaled = 0;
-    s6_command_scaled = 0;
-    s7_command_scaled = 0;
-
-#endif
-
     //Example use of the linear fader for float type variables. Linearly interpolate between minimum and maximum values for Kp_pitch_rate variable based on state of channel 6:
     // if (channel_6_pwm > 1500){ //go to max specified value in 5.5 seconds
     //     //parameter, minimum value, maximum value, fadeTime (seconds), state (0 min or 1 max), loop frequency
@@ -1055,6 +1051,7 @@ void FC::commandMotors()
     //     }
     // }
     #if defined(AIRFRAME_QUADCOPTER)
+
     #endif
 }
 
@@ -1099,7 +1096,7 @@ void FC::getCommands(Radio receiver)
         channel_2_pwm = receiver.getRadioPWM(2);
         channel_3_pwm = receiver.getRadioPWM(3);
         channel_4_pwm = receiver.getRadioPWM(4);
-        Serial.println("Using RC");
+        // Serial.println("Using RC");
         break;
     }
     case SETPOINT_ACS:
@@ -1108,11 +1105,15 @@ void FC::getCommands(Radio receiver)
         channel_2_pwm = setpoint_acs.pitch_pwm;
         channel_3_pwm = setpoint_acs.throttle_pwm;
         channel_4_pwm = setpoint_acs.yaw_pwm;
-        Serial.println("Using ACS");
+        
+        // Serial.println("Using ACS");
+        break;
     }
     default:
+    {
         this->setpoint_ctrl = SETPOINT_RC_RECEIVER;
         break;
+    }
     }
 
 #elif defined(USE_SBUS_RX)
