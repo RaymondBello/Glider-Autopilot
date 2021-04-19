@@ -29,10 +29,10 @@ enum SetpointControl
 
 struct SetpointACS
 {
-    unsigned long roll_pwm      = 1500; // default values
-    unsigned long pitch_pwm     = 1500;
-    unsigned long throttle_pwm  = 1000;
-    unsigned long yaw_pwm       = 1500;
+    unsigned long roll_pwm = 1500; // default values
+    unsigned long pitch_pwm = 1500;
+    unsigned long throttle_pwm = 1000;
+    unsigned long yaw_pwm = 1500;
 
     unsigned long deg2pwm(float deg)
     {
@@ -45,7 +45,6 @@ struct SetpointACS
         unsigned long pwm = 0;
         return pwm;
     }
-
 };
 
 struct Servos
@@ -930,34 +929,45 @@ void FC::scaleCommands()
    sX_command_PWM are updated which are used to command the servos.
    */
 
-    #if defined(AIRFRAME_FIXEDWING)
-        //Scaled to 125us - 250us for oneshot125 protocol
-        m1_command_PWM = m1_command_scaled * 125 + 125;
-        m2_command_PWM = m2_command_scaled * 125 + 125;
-        //Constrain commands to motors within oneshot125 bounds
-        m1_command_PWM = constrain(m1_command_PWM, 125, 250);
-        m2_command_PWM = constrain(m2_command_PWM, 125, 250);
+#if defined(AIRFRAME_FIXEDWING)
+    //Scaled to 125us - 250us for oneshot125 protocol
+    m1_command_PWM = m1_command_scaled * 125 + 125;
+    m2_command_PWM = m2_command_scaled * 125 + 125;
+    //Constrain commands to motors within oneshot125 bounds
+    m1_command_PWM = constrain(m1_command_PWM, 125, 250);
+    m2_command_PWM = constrain(m2_command_PWM, 125, 250);
 
-        //Scaled to 0-180 for servo library
-        s1_command_PWM = s1_command_scaled * 180;
-        s2_command_PWM = s2_command_scaled * 180;
-        s3_command_PWM = s3_command_scaled * 180;
-        s4_command_PWM = s4_command_scaled * 180;
-        s5_command_PWM = s5_command_scaled * 180;
-        s6_command_PWM = s6_command_scaled * 180;
-        s7_command_PWM = s7_command_scaled * 180;
-        //Constrain commands to servos within servo library bounds
-        s1_command_PWM = constrain(s1_command_PWM, 0, 180);
-        s2_command_PWM = constrain(s2_command_PWM, 0, 180);
-        s3_command_PWM = constrain(s3_command_PWM, 0, 180);
-        s4_command_PWM = constrain(s4_command_PWM, 0, 180);
-        s5_command_PWM = constrain(s5_command_PWM, 0, 180);
-        s6_command_PWM = constrain(s6_command_PWM, 0, 180);
-        s7_command_PWM = constrain(s7_command_PWM, 0, 180);
-    #elif defined(AIRFRAME_QUADCOPTER)
-        // Finish this
-    #endif
+    //Scaled to 0-180 for servo library
+    s1_command_PWM = s1_command_scaled * 180;
+    s2_command_PWM = s2_command_scaled * 180;
+    s3_command_PWM = s3_command_scaled * 180;
+    s4_command_PWM = s4_command_scaled * 180;
+    s5_command_PWM = s5_command_scaled * 180;
+    s6_command_PWM = s6_command_scaled * 180;
+    s7_command_PWM = s7_command_scaled * 180;
+    //Constrain commands to servos within servo library bounds
+    s1_command_PWM = constrain(s1_command_PWM, 0, 180);
+    s2_command_PWM = constrain(s2_command_PWM, 0, 180);
+    s3_command_PWM = constrain(s3_command_PWM, 0, 180);
+    s4_command_PWM = constrain(s4_command_PWM, 0, 180);
+    s5_command_PWM = constrain(s5_command_PWM, 0, 180);
+    s6_command_PWM = constrain(s6_command_PWM, 0, 180);
+    s7_command_PWM = constrain(s7_command_PWM, 0, 180);
+#elif defined(AIRFRAME_QUADCOPTER)
 
+    //Scaled to 0-180 for servo library
+    motor1.value_pwm = motor1.value_scaled * 1000;
+    motor2.value_pwm = motor2.value_scaled * 1000;
+    motor3.value_pwm = motor3.value_scaled * 1000;
+    motor4.value_pwm = motor4.value_scaled * 1000;
+
+    //Constrain commands to servos within servo library bounds
+    motor1.value_pwm = constrain(motor1.value_pwm, 1000, 2000);
+    motor2.value_pwm = constrain(motor2.value_pwm, 1000, 2000);
+    motor3.value_pwm = constrain(motor3.value_pwm, 1000, 2000);
+    motor4.value_pwm = constrain(motor4.value_pwm, 1000, 2000);
+
+#endif
 }
 
 void FC::throttleCut()
@@ -985,87 +995,104 @@ void FC::throttleCut()
 
 void FC::commandMotors()
 {
-    //DESCRIPTION: Send pulses to motor pins, oneshot125 protocol
-    /*
+//DESCRIPTION: Send pulses to motor pins, oneshot125 protocol
+/*
    * My crude implimentation of OneShot125 protocol which sends 125 - 250us pulses to the ESCs (mXPin). The pulselengths being
    * sent are mX_command_PWM, computed in scaleCommands(). This may be replaced by something more efficient in the future.
    */
-    // int wentLow = 0;
-    // int pulseStart, timer;
-    // int flagM1 = 0;
-    // int flagM2 = 0;
-    // int flagM3 = 0;
-    // int flagM4 = 0;
-    // int flagM5 = 0;
-    // int flagM6 = 0;
+// int wentLow = 0;
+// int pulseStart, timer;
+// int flagM1 = 0;
+// int flagM2 = 0;
+// int flagM3 = 0;
+// int flagM4 = 0;
+// int flagM5 = 0;
+// int flagM6 = 0;
 
-    // //Write all motor pins high
-    // digitalWrite(m1Pin, HIGH);
-    // digitalWrite(m2Pin, HIGH);
-    // digitalWrite(m3Pin, HIGH);
-    // digitalWrite(m4Pin, HIGH);
-    // digitalWrite(m5Pin, HIGH);
-    // digitalWrite(m6Pin, HIGH);
+// //Write all motor pins high
+// digitalWrite(m1Pin, HIGH);
+// digitalWrite(m2Pin, HIGH);
+// digitalWrite(m3Pin, HIGH);
+// digitalWrite(m4Pin, HIGH);
+// digitalWrite(m5Pin, HIGH);
+// digitalWrite(m6Pin, HIGH);
 
-    // pulseStart = micros();
+// pulseStart = micros();
 
-    // //Write each motor pin low as correct pulse length is reached
-    // while (wentLow < 6)
-    // { //keep going until final (6th) pulse is finished, then done
-    //     timer = micros();
-    //     if ((m1_command_PWM <= timer - pulseStart) && (flagM1 == 0))
-    //     {
-    //         digitalWrite(m1Pin, LOW);
-    //         wentLow = wentLow + 1;
-    //         flagM1 = 1;
-    //     }
-    //     if ((m2_command_PWM <= timer - pulseStart) && (flagM2 == 0))
-    //     {
-    //         digitalWrite(m2Pin, LOW);
-    //         wentLow = wentLow + 1;
-    //         flagM2 = 1;
-    //     }
-    //     if ((m3_command_PWM <= timer - pulseStart) && (flagM3 == 0))
-    //     {
-    //         digitalWrite(m3Pin, LOW);
-    //         wentLow = wentLow + 1;
-    //         flagM3 = 1;
-    //     }
-    //     if ((m4_command_PWM <= timer - pulseStart) && (flagM4 == 0))
-    //     {
-    //         digitalWrite(m4Pin, LOW);
-    //         wentLow = wentLow + 1;
-    //         flagM4 = 1;
-    //     }
-    //     if ((m5_command_PWM <= timer - pulseStart) && (flagM5 == 0))
-    //     {
-    //         digitalWrite(m5Pin, LOW);
-    //         wentLow = wentLow + 1;
-    //         flagM5 = 1;
-    //     }
-    //     if ((m6_command_PWM <= timer - pulseStart) && (flagM6 == 0))
-    //     {
-    //         digitalWrite(m6Pin, LOW);
-    //         wentLow = wentLow + 1;
-    //         flagM6 = 1;
-    //     }
-    // }
-    #if defined(AIRFRAME_QUADCOPTER)
+// //Write each motor pin low as correct pulse length is reached
+// while (wentLow < 6)
+// { //keep going until final (6th) pulse is finished, then done
+//     timer = micros();
+//     if ((m1_command_PWM <= timer - pulseStart) && (flagM1 == 0))
+//     {
+//         digitalWrite(m1Pin, LOW);
+//         wentLow = wentLow + 1;
+//         flagM1 = 1;
+//     }
+//     if ((m2_command_PWM <= timer - pulseStart) && (flagM2 == 0))
+//     {
+//         digitalWrite(m2Pin, LOW);
+//         wentLow = wentLow + 1;
+//         flagM2 = 1;
+//     }
+//     if ((m3_command_PWM <= timer - pulseStart) && (flagM3 == 0))
+//     {
+//         digitalWrite(m3Pin, LOW);
+//         wentLow = wentLow + 1;
+//         flagM3 = 1;
+//     }
+//     if ((m4_command_PWM <= timer - pulseStart) && (flagM4 == 0))
+//     {
+//         digitalWrite(m4Pin, LOW);
+//         wentLow = wentLow + 1;
+//         flagM4 = 1;
+//     }
+//     if ((m5_command_PWM <= timer - pulseStart) && (flagM5 == 0))
+//     {
+//         digitalWrite(m5Pin, LOW);
+//         wentLow = wentLow + 1;
+//         flagM5 = 1;
+//     }
+//     if ((m6_command_PWM <= timer - pulseStart) && (flagM6 == 0))
+//     {
+//         digitalWrite(m6Pin, LOW);
+//         wentLow = wentLow + 1;
+//         flagM6 = 1;
+//     }
+// }
+#if defined(AIRFRAME_QUADCOPTER)
 
-    #endif
+    // motor1.motorPWM.write_pwm(motor1.value_pwm);
+    // motor2.motorPWM.write_pwm(motor2.value_pwm);
+    // motor3.motorPWM.write_pwm(motor3.value_pwm);
+    // motor4.motorPWM.write_pwm(motor4.value_pwm);
+
+    // motor1.motorPWM.write(((1500-1000)/1000) * 180);
+    motor1.motorPWM.write(90);
+
+    int val = 56;
+    Serial.println(val);
+    // motor2.motorPWM.write(90);
+    // motor3.motorPWM.write(90);
+    // motor4.motorPWM.write(90);
+
+
+
+
+#endif
 }
 
 void FC::commandServos()
 {
-    #if defined(AIRFRAME_FIXEDWING)
+#if defined(AIRFRAME_FIXEDWING)
     actFC.servo1.write(s1_command_PWM);
     actFC.servo2.write(s2_command_PWM);
     actFC.servo3.write(s3_command_PWM);
     actFC.servo4.write(s4_command_PWM);
-    // actFC.servo5.write(s5_command_PWM);
-    // actFC.servo6.write(s6_command_PWM);
-    // actFC.servo7.write(s7_command_PWM);
-    #endif
+// actFC.servo5.write(s5_command_PWM);
+// actFC.servo6.write(s6_command_PWM);
+// actFC.servo7.write(s7_command_PWM);
+#endif
 }
 
 void FC::getCommands(Radio receiver)
@@ -1105,7 +1132,7 @@ void FC::getCommands(Radio receiver)
         channel_2_pwm = setpoint_acs.pitch_pwm;
         channel_3_pwm = setpoint_acs.throttle_pwm;
         channel_4_pwm = setpoint_acs.yaw_pwm;
-        
+
         // Serial.println("Using ACS");
         break;
     }

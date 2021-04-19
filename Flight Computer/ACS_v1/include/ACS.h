@@ -179,10 +179,6 @@ void ACS::loop()
     updateFlightControllerPIDloop();
     printDebugMessages();
 
-    if (flightController.setpoint_ctrl==1){
-      printDesiredState();
-    }
-
     /** Handle CLI message **/
     // Serial.println("Wrote to Motors");
 
@@ -727,7 +723,7 @@ void ACS::processSetCommand(const char *setting, const char *value)
   }
   else if (strcmp(setting, "controller") == 0)
   {
-    Serial.print("# Setpoint controller value: ");
+    Serial.print("#, Setpoint controller value: ");
     Serial.println(atoi(value));
 
     switch (atoi(value))
@@ -742,40 +738,51 @@ void ACS::processSetCommand(const char *setting, const char *value)
       flightController.setpoint_ctrl = SETPOINT_ACS;
       break;
     }
+    default:
+      Serial.print("#, ERROR: can only be 0, 1. Received: ");
+      Serial.println(atoi(value));
+      break;
     }
   }
 
-  else if (strcmp(setting, "m0") == 0)
+  else if (strcmp(setting, "all_zero") == 0)
   {
-    flightController.motor1.motorPWM.write(0);
-    flightController.motor2.motorPWM.write(0);
-    flightController.motor3.motorPWM.write(0);
-    flightController.motor4.motorPWM.write(0);
-    Serial.print("# All motors set to :");
+    if (atoi(value) == 0)
+    {
+      flightController.setpoint_acs.roll_pwm = 1000;
+      flightController.setpoint_acs.pitch_pwm = 1000;
+      flightController.setpoint_acs.throttle_pwm = 1000;
+      flightController.setpoint_acs.yaw_pwm = 1000;
+      Serial.print("#, All setpoints set to: ");
+      Serial.println(atoi(value));
+    }
+    else{
+      Serial.print("#, 'all_zero' value must be 0 to confirm. value = ");
+      Serial.println(atoi(value));
+    }
+    }
+  else if (strcmp(setting, "throttle") == 0)
+  {
+    flightController.setpoint_acs.throttle_pwm = (atoi(value)/100) *1000 + 1000;
+    Serial.print("#, Throttle = ");
     Serial.println(atoi(value));
   }
-  else if (strcmp(setting, "m1") == 0)
+  else if (strcmp(setting, "roll") == 0)
   {
-    flightController.motor1.motorPWM.write(50);
-    Serial.print("# Motor 1 set to :");
+    flightController.setpoint_acs.roll_pwm = ((atoi(value) + 90) / 180) * 1000 + 1000;
+    Serial.print("#, Roll = ");
     Serial.println(atoi(value));
   }
-  else if (strcmp(setting, "m2") == 0)
+  else if (strcmp(setting, "pitch") == 0)
   {
-    flightController.motor2.motorPWM.write(50);
-    Serial.print("# Motor 2 set to :");
+    flightController.setpoint_acs.pitch_pwm = ((atoi(value) + 90) / 180) * 1000 + 1000;
+    Serial.print("#, Pitch = ");
     Serial.println(atoi(value));
   }
-  else if (strcmp(setting, "m3") == 0)
+  else if (strcmp(setting, "yaw") == 0)
   {
-    flightController.motor3.motorPWM.write(50);
-    Serial.print("# Motor 3 set to :");
-    Serial.println(atoi(value));
-  }
-  else if (strcmp(setting, "m4") == 0)
-  {
-    flightController.motor4.motorPWM.write(50);
-    Serial.print("# Motor 4 set to :");
+    flightController.setpoint_acs.pitch_pwm = (atoi(value)/ 360) * 1000 + 1000;
+    Serial.print("#, Yaw = ");
     Serial.println(atoi(value));
   }
 }

@@ -20,7 +20,8 @@
         "cinttypes": "cpp",
         "utility": "cpp",
         "typeinfo": "cpp",
-        "string": "cpp"
+        "string": "cpp",
+        "array": "cpp"
     },
     "cSpell.words": [
         "Corientation"
