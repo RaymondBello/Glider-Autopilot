@@ -268,7 +268,7 @@ class MainWindow(QWidget):
     def get_selected_portname(self):
         self.selected_mode = self.comboModes.currentText()
         self.selected_portname = self.comboPorts.currentText()
-        print(f"Mode:{self.selected_mode}, Port:{self.selected_portname}")
+        self.serialText.append(f"Mode:{self.selected_mode}, Port:{self.selected_portname}")
         
     def add_widgets(self):
         # Label
@@ -515,18 +515,8 @@ class MainWindow(QWidget):
         self.widget7 = pg.LayoutWidget()
         
         self.serialText = QTextEdit()
+        self.serialText.setReadOnly(True)
         self.serialText.setFont(self.font_textInput)
-        
-
-        self.serialMonitor = pg.PlotWidget(title='Serial Monitor')
-        self.serialMonitor.setRange(QtCore.QRectF(-50, -50, 100, 100))
-        self.serialMonitor.hideAxis('bottom')
-        self.serialMonitor.hideAxis('left')
-        self.serialMonitor.setBackground((255,255,255, 1))
-        self.textSerial = pg.TextItem(f"idle", anchor=(0.5, 0.5), color=(0,0,0))
-        self.textSerial.setFont(self.font_textInput)
-        self.serialMonitor.addItem(self.textSerial)
-        
         self.widget7.addWidget(self.serialText)
         
         
@@ -615,7 +605,7 @@ class MainWindow(QWidget):
     def load(self):
         global filename
         filename, _ = QFileDialog.getOpenFileName(self,"Load Data", "", "All files (*)") 
-        print(filename) 
+        self.serialText.append(str(filename))
         
         self.plot()
         # Real time graphing https://www.learnpyqt.com/tutorials/plotting-matplotlib/
@@ -665,9 +655,9 @@ class MainWindow(QWidget):
             self.tcp_mode = False
             try:
                 self.serial_handler.connect( self.selected_portname ) 
-                print(f"Is {self.selected_portname} open? {self.serial_handler.isOpen()}")
+                self.serialText.append(f"Is {self.selected_portname} open? {self.serial_handler.isOpen()}")
             except serial.serialutil.SerialException as error:
-                print(error)
+                self.serialText.append(str(error))
                 
         if selected_mode == 'Debug':
             self.serial_mode = False
@@ -678,17 +668,17 @@ class MainWindow(QWidget):
         try:
             self.fsm.initialize()
             # Add init logic here
-            print(f"Mode: {self.selected_mode} | Port: {self.selected_portname}")
+            self.serialText.append(f"Mode: {self.selected_mode}, Port: {self.selected_portname}")
             self.setModeAndPort(self.selected_mode, self.selected_portname)
             
         except Exception as Error:
-            print(Error)
+            self.serialText.append(str(Error))
             
     def abort(self):
         try:
             self.fsm.abort()
         except Exception as Error:
-            print(Error)
+            self.serialText.append(str(Error))
             
     def save(self):
         # global state
@@ -704,7 +694,7 @@ class MainWindow(QWidget):
     
     def send_cmd(self):
         textBuffer = self.textInput.text() + ' \n'
-        # print(f"Command Sent: {str.encode(textBuffer)}")
+        self.serialText.append(f"Command Sent: {str.encode(textBuffer)}")
         self.textInput.clear()
         
         if self.serial_mode:
@@ -771,7 +761,7 @@ class MainWindow(QWidget):
                     self.data3_1[self.ptr1] = data3_1_value
                     self.data3_2[self.ptr1] = data3_2_value
                 except ValueError as error:
-                    print(f"[VALUE ERROR]: {error}")
+                    self.serialText.append(f"[VALUE ERROR]: {error}")
                     
         self.ptr1 += 1
         
@@ -813,7 +803,7 @@ class MainWindow(QWidget):
                     self.data4_1[self.ptr2] = data4_1_value
                     self.data4_2[self.ptr2] = data4_2_value
                 except ValueError as error:
-                    print(f"[VALUE ERROR]: {error}")
+                    self.serialText.append(f"[VALUE ERROR]: {error}")
                     
         self.ptr2 += 1
         
@@ -853,7 +843,7 @@ class MainWindow(QWidget):
                     self.data5_1[self.ptr3] = data5_1_value
                     
                 except ValueError as error:
-                    print(f"[VALUE ERROR]: {error}")
+                    self.serialText.append(f"[VALUE ERROR]: {error}")
                     
         self.ptr3 += 1
         
@@ -940,7 +930,7 @@ class MainWindow(QWidget):
             return serial_data
         
         if self.sim_mode:
-            print("running sim mode")
+            self.serialText.append("running sim mode")
             
         if self.debug_mode:
             serial_data = self.generate_data(self.serial_data)
@@ -957,7 +947,7 @@ class MainWindow(QWidget):
                 return serial_data
                 
             except Exception as error:
-                print(f"Serial error: {error}" )
+                self.serialText.append(f"Serial error: {error}" )
                 return [0 for i in range(20)]
     
     def regulate_fps(self, delta, fps=60):
