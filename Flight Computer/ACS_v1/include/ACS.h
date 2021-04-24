@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 #include <SimpleCLI.h>
-#include "config.h"
+#include "Config.h"
 #include "tools/std.h"
 #include "State.h"
 #include "Radio.h"
@@ -131,9 +131,9 @@ BoolInt ACS::setupFlightController()
 BoolInt ACS::calibrateFlightController()
 {
   BoolInt passErr;
-  this->flightController.calculateIMUerror();
+  this->flightController.calculate_imu_error();
   delay(10);
-  this->flightController.calibrateAttitude(0);
+  this->flightController.calibrate_attitude(0);
   delay(10);
   //Indicate entering main loop with 3 quick blinks
   setupBlink(3, 160, 70); //numBlinks, upTime (ms), downTime (ms)
@@ -173,7 +173,7 @@ void ACS::loop()
   case Active:
   {
     // Serial.println("Active");
-    flightController.loopBlink();
+    flightController.loop_blink();
     updateFlightControllerTime();
     updateFlightControllerOrientation();
     updateFlightControllerPIDloop();
@@ -184,7 +184,7 @@ void ACS::loop()
 
     handleSerial();
 
-    flightController.loopRate(2000);
+    flightController.loop_rate(2000);
     break;
   }
   case Idle:
@@ -195,7 +195,7 @@ void ACS::loop()
   case Error:
   {
     Serial.println("INFO, ACS-Mode: Error");
-    flightController.loopBeep();
+    flightController.loop_beep();
     break;
   }
   default:
@@ -241,32 +241,32 @@ void ACS::updateFlightControllerTime()
 
 void ACS::updateFlightControllerOrientation()
 {
-  flightController.getIMUdata();
-  flightController.Madgwick(flightController.GyroX, -flightController.GyroY, -flightController.GyroZ, -flightController.AccX, flightController.AccY, flightController.AccZ, flightController.MagY, -flightController.MagX, flightController.MagZ, flightController.dt);
-  flightController.getBMPdata();
+  flightController.get_imu_data();
+  flightController.madgwick(flightController.GyroX, -flightController.GyroY, -flightController.GyroZ, -flightController.AccX, flightController.AccY, flightController.AccZ, flightController.MagY, -flightController.MagX, flightController.MagZ, flightController.dt);
+  flightController.get_baro_data();
 }
 
 void ACS::updateFlightControllerPIDloop()
 {
-  flightController.getDesiredState();
+  flightController.get_desired_aircraft_state();
 
   // PID Controllers
-  flightController.controlAngle(); // stabilize on angle setpoint
-  // flightController.controlAngle2();         // stabilize on angle setpoint using cascaded method
+  flightController.control_desired_angle(); // stabilize on angle setpoint
+  // flightController.control_desired_angle2();         // stabilize on angle setpoint using cascaded method
   // flightController.controlRate();           // stabilize on rate setpoint
 
   // Actuator mixing and scaling
-  flightController.controlMixer();
-  flightController.scaleCommands();
+  flightController.control_mixer();
+  flightController.scale_commands();
 
   //Throttle cut check
-  // flightController.throttleCut();           //directly sets motor commands to low based on state of ch5
+  // flightController.cut_throttle();           //directly sets motor commands to low based on state of ch5
 
   // Command Motors
-  flightController.commandMotors(); //sends command pulses to each motor pin using OneShot125 protocol
+  flightController.command_motors(); //sends command pulses to each motor pin using OneShot125 protocol
 
   // Command Servos
-  flightController.commandServos();
+  flightController.command_servos();
 
   // Retreive Updated Radio Commands
   flightController.getCommands(receiver);
@@ -592,7 +592,7 @@ void ACS::execCallback(cmd *execmd)
     SCB_AIRCR = 0x05FA0004;
     break;
   case CALIBRATE:
-    // this->flightController.calibrateAttitude(verbose);
+    // this->flightController.calibrate_attitude(verbose);
     Serial.print("Executing Calibrating");
     break;
   default:

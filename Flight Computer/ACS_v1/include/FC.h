@@ -1,14 +1,13 @@
 #pragma once
 
-#include <Config.h>
+#include "Config.h"
 #include <Arduino.h>
 #include <PWMServo.h>
 #include <Radio.h>
 #include <I2Cdev.h>
 #include <Wire.h>
-#include "config.h"
 #include "tools/std.h"
-#include "state.h"
+#include "State.h"
 
 #if defined USE_MPU6050_I2C
 #include "MPU6050_6Axis_MotionApps20.h"
@@ -80,7 +79,7 @@ private:
     const int servo7Pin = SERVO7_PIN;
 
     //Filter parameters - Defaults tuned for 2kHz loop rate
-    float B_madgwick = 0.04; //Madgwick filter parameter
+    float B_madgwick = 0.04; //madgwick filter parameter
     float B_accel = 0.2;     //Accelerometer LP filter paramter, (MPU6050 default: 0.14. MPU9250 default: 0.2)
     float B_gyro = 0.17;     //Gyro LP filter paramter, (MPU6050 default: 0.1. MPU9250 default: 0.17)
     float B_mag = 1.0;       //Magnetometer LP filter parameter
@@ -188,25 +187,26 @@ public:
     void init();
     BoolInt initIMU();
     BoolInt initBaro();
-    void calculateIMUerror();
-    void getIMUdata();
-    void getBMPdata();
-    void calibrateAttitude(bool verbose);
-    void Madgwick(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz, float invSampleFreq);
-    void Madgwick6DOF(float gx, float gy, float gz, float ax, float ay, float az, float invSampleFreq);
-    float invSqrt(float x);
-    void loopRate(int freq);
-    void loopBlink();
-    void loopBeep();
-    void getDesiredState();
-    void controlAngle();
-    void controlMixer();
-    void scaleCommands();
-    void throttleCut();
-    void commandMotors();
-    void commandServos();
+    void calculate_imu_error();
+    void get_imu_data();
+    void get_baro_data();
+    void calibrate_attitude(bool verbose);
+    void madgwick(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz, float invSampleFreq);
+    void madgwick_6dof(float gx, float gy, float gz, float ax, float ay, float az, float invSampleFreq);
+    float inverse_sqrt(float x);
+    void loop_rate(int freq);
+    void loop_blink();
+    void loop_beep();
+    void get_desired_aircraft_state();
+    void control_desired_angle();
+    void control_mixer();
+    void scale_commands();
+    void cut_throttle();
+    void command_motors();
+    void command_servos();
     void getCommands(Radio receiver);
     void updateAircraftStateStruct();
+    void sendHeartbeat();
 };
 
 FC::FC(/* args */)
@@ -365,12 +365,12 @@ BoolInt FC::initBaro()
     return pass_err;
 }
 
-void FC::calculateIMUerror()
+void FC::calculate_imu_error()
 {
     //DESCRIPTION: Computes IMU accelerometer and gyro error on startup. Note: vehicle should be powered up on flat surface
     /*
    * Don't worry too much about what this is doing. The error values it computes are applied to the raw gyro and 
-   * accelerometer values AccX, AccY, AccZ, GyroX, GyroY, GyroZ in getIMUdata(). This eliminates drift in the
+   * accelerometer values AccX, AccY, AccZ, GyroX, GyroY, GyroZ in get_imu_data(). This eliminates drift in the
    * measurement. 
    */
     // int16_t AcX, AcY, AcZ, GyX, GyY, GyZ, MgX, MgY, MgZ;
@@ -413,11 +413,11 @@ void FC::calculateIMUerror()
     GyroErrorZ = GyroErrorZ / c;
 }
 
-void FC::calibrateAttitude(bool verbose)
+void FC::calibrate_attitude(bool verbose)
 {
     //Used to warm up the main loop to allow the madwick filter to converge before commands can be sent to the actuators assuming vehicle is powered up on level surface!
 
-    Serial.println("INFO, Calibrating Attitude. Warming up Madgwick filter...");
+    Serial.println("INFO, Calibrating Attitude. Warming up madgwick filter...");
     //Warm up IMU and madgwick filter in simulated main loop
 
     int verbose_count = 0;
@@ -427,9 +427,9 @@ void FC::calibrateAttitude(bool verbose)
         prev_time = current_time;
         current_time = micros();
         dt = (current_time - prev_time) / 1000000.0;
-        getIMUdata();
-        Madgwick(GyroX, -GyroY, -GyroZ, -AccX, AccY, AccZ, MagY, -MagX, MagZ, dt);
-        loopRate(2000); //do not exceed 2000Hz
+        get_imu_data();
+        madgwick(GyroX, -GyroY, -GyroZ, -AccX, AccY, AccZ, MagY, -MagX, MagZ, dt);
+        loop_rate(2000); //do not exceed 2000Hz
 
         if (verbose)
         {
@@ -445,7 +445,7 @@ void FC::calibrateAttitude(bool verbose)
     Serial.println("INFO, Calibration Complete\n");
 }
 
-void FC::getIMUdata()
+void FC::get_imu_data()
 {
     //DESCRIPTION: Request full dataset from IMU and LP filter gyro, accelerometer, and magnetometer data
     /*
@@ -513,7 +513,7 @@ void FC::getIMUdata()
     MagZ_prev = MagZ;
 }
 
-void FC::Madgwick(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz, float invSampleFreq)
+void FC::madgwick(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz, float invSampleFreq)
 {
     float recipNorm;
     float s0, s1, s2, s3;
@@ -524,14 +524,14 @@ void FC::Madgwick(float gx, float gy, float gz, float ax, float ay, float az, fl
 
 //use 6DOF algorithm if MPU6050 is being used
 #if defined USE_MPU6050_I2C
-    Madgwick6DOF(gx, gy, gz, ax, ay, az, invSampleFreq);
+    madgwick_6dof(gx, gy, gz, ax, ay, az, invSampleFreq);
     return;
 #endif
 
     //Use 6DOF algorithm if magnetometer measurement invalid (avoids NaN in magnetometer normalisation)
     if ((mx == 0.0f) && (my == 0.0f) && (mz == 0.0f))
     {
-        Madgwick6DOF(gx, gy, gz, ax, ay, az, invSampleFreq);
+        madgwick_6dof(gx, gy, gz, ax, ay, az, invSampleFreq);
         return;
     }
 
@@ -551,13 +551,13 @@ void FC::Madgwick(float gx, float gy, float gz, float ax, float ay, float az, fl
     {
 
         //Normalise accelerometer measurement
-        recipNorm = invSqrt(ax * ax + ay * ay + az * az);
+        recipNorm = inverse_sqrt(ax * ax + ay * ay + az * az);
         ax *= recipNorm;
         ay *= recipNorm;
         az *= recipNorm;
 
         //Normalise magnetometer measurement
-        recipNorm = invSqrt(mx * mx + my * my + mz * mz);
+        recipNorm = inverse_sqrt(mx * mx + my * my + mz * mz);
         mx *= recipNorm;
         my *= recipNorm;
         mz *= recipNorm;
@@ -597,7 +597,7 @@ void FC::Madgwick(float gx, float gy, float gz, float ax, float ay, float az, fl
         s1 = _2q3 * (2.0f * q1q3 - _2q0q2 - ax) + _2q0 * (2.0f * q0q1 + _2q2q3 - ay) - 4.0f * q1 * (1 - 2.0f * q1q1 - 2.0f * q2q2 - az) + _2bz * q3 * (_2bx * (0.5f - q2q2 - q3q3) + _2bz * (q1q3 - q0q2) - mx) + (_2bx * q2 + _2bz * q0) * (_2bx * (q1q2 - q0q3) + _2bz * (q0q1 + q2q3) - my) + (_2bx * q3 - _4bz * q1) * (_2bx * (q0q2 + q1q3) + _2bz * (0.5f - q1q1 - q2q2) - mz);
         s2 = -_2q0 * (2.0f * q1q3 - _2q0q2 - ax) + _2q3 * (2.0f * q0q1 + _2q2q3 - ay) - 4.0f * q2 * (1 - 2.0f * q1q1 - 2.0f * q2q2 - az) + (-_4bx * q2 - _2bz * q0) * (_2bx * (0.5f - q2q2 - q3q3) + _2bz * (q1q3 - q0q2) - mx) + (_2bx * q1 + _2bz * q3) * (_2bx * (q1q2 - q0q3) + _2bz * (q0q1 + q2q3) - my) + (_2bx * q0 - _4bz * q2) * (_2bx * (q0q2 + q1q3) + _2bz * (0.5f - q1q1 - q2q2) - mz);
         s3 = _2q1 * (2.0f * q1q3 - _2q0q2 - ax) + _2q2 * (2.0f * q0q1 + _2q2q3 - ay) + (-_4bx * q3 + _2bz * q1) * (_2bx * (0.5f - q2q2 - q3q3) + _2bz * (q1q3 - q0q2) - mx) + (-_2bx * q0 + _2bz * q2) * (_2bx * (q1q2 - q0q3) + _2bz * (q0q1 + q2q3) - my) + _2bx * q1 * (_2bx * (q0q2 + q1q3) + _2bz * (0.5f - q1q1 - q2q2) - mz);
-        recipNorm = invSqrt(s0 * s0 + s1 * s1 + s2 * s2 + s3 * s3); // normalise step magnitude
+        recipNorm = inverse_sqrt(s0 * s0 + s1 * s1 + s2 * s2 + s3 * s3); // normalise step magnitude
         s0 *= recipNorm;
         s1 *= recipNorm;
         s2 *= recipNorm;
@@ -617,7 +617,7 @@ void FC::Madgwick(float gx, float gy, float gz, float ax, float ay, float az, fl
     q3 += qDot4 * invSampleFreq;
 
     //Normalise quaternion
-    recipNorm = invSqrt(q0 * q0 + q1 * q1 + q2 * q2 + q3 * q3);
+    recipNorm = inverse_sqrt(q0 * q0 + q1 * q1 + q2 * q2 + q3 * q3);
     q0 *= recipNorm;
     q1 *= recipNorm;
     q2 *= recipNorm;
@@ -629,11 +629,11 @@ void FC::Madgwick(float gx, float gy, float gz, float ax, float ay, float az, fl
     yaw_IMU = -atan2(q1 * q2 + q0 * q3, 0.5f - q2 * q2 - q3 * q3) * 57.29577951; //degrees
 }
 
-void FC::Madgwick6DOF(float gx, float gy, float gz, float ax, float ay, float az, float invSampleFreq)
+void FC::madgwick_6dof(float gx, float gy, float gz, float ax, float ay, float az, float invSampleFreq)
 {
     //DESCRIPTION: Attitude estimation through sensor fusion - 6DOF
     /*
-   * See description of Madgwick() for more information. This is a 6DOF implimentation for when magnetometer data is not
+   * See description of madgwick() for more information. This is a 6DOF implimentation for when magnetometer data is not
    * available (for example when using the recommended MPU6050 IMU for the default setup).
    */
     float recipNorm;
@@ -656,7 +656,7 @@ void FC::Madgwick6DOF(float gx, float gy, float gz, float ax, float ay, float az
     if (!((ax == 0.0f) && (ay == 0.0f) && (az == 0.0f)))
     {
         //Normalise accelerometer measurement
-        recipNorm = invSqrt(ax * ax + ay * ay + az * az);
+        recipNorm = inverse_sqrt(ax * ax + ay * ay + az * az);
         ax *= recipNorm;
         ay *= recipNorm;
         az *= recipNorm;
@@ -681,7 +681,7 @@ void FC::Madgwick6DOF(float gx, float gy, float gz, float ax, float ay, float az
         s1 = _4q1 * q3q3 - _2q3 * ax + 4.0f * q0q0 * q1 - _2q0 * ay - _4q1 + _8q1 * q1q1 + _8q1 * q2q2 + _4q1 * az;
         s2 = 4.0f * q0q0 * q2 + _2q0 * ax + _4q2 * q3q3 - _2q3 * ay - _4q2 + _8q2 * q1q1 + _8q2 * q2q2 + _4q2 * az;
         s3 = 4.0f * q1q1 * q3 - _2q1 * ax + 4.0f * q2q2 * q3 - _2q2 * ay;
-        recipNorm = invSqrt(s0 * s0 + s1 * s1 + s2 * s2 + s3 * s3); //normalise step magnitude
+        recipNorm = inverse_sqrt(s0 * s0 + s1 * s1 + s2 * s2 + s3 * s3); //normalise step magnitude
         s0 *= recipNorm;
         s1 *= recipNorm;
         s2 *= recipNorm;
@@ -701,7 +701,7 @@ void FC::Madgwick6DOF(float gx, float gy, float gz, float ax, float ay, float az
     q3 += qDot4 * invSampleFreq;
 
     //Normalise quaternion
-    recipNorm = invSqrt(q0 * q0 + q1 * q1 + q2 * q2 + q3 * q3);
+    recipNorm = inverse_sqrt(q0 * q0 + q1 * q1 + q2 * q2 + q3 * q3);
     q0 *= recipNorm;
     q1 *= recipNorm;
     q2 *= recipNorm;
@@ -714,7 +714,7 @@ void FC::Madgwick6DOF(float gx, float gy, float gz, float ax, float ay, float az
     yaw_IMU = -atan2(q1 * q2 + q0 * q3, 0.5f - q2 * q2 - q3 * q3) * 57.29577951; //degrees
 }
 
-float FC::invSqrt(float x)
+float FC::inverse_sqrt(float x)
 {
     //Fast inverse sqrt for madgwick filter
     /*
@@ -734,7 +734,7 @@ float FC::invSqrt(float x)
     return y;
 }
 
-void FC::loopRate(int freq)
+void FC::loop_rate(int freq)
 {
     //DESCRIPTION: Regulate main loop rate to specified frequency in Hz
     /*
@@ -754,7 +754,7 @@ void FC::loopRate(int freq)
     }
 }
 
-void FC::loopBlink()
+void FC::loop_blink()
 {
     //DESCRIPTION: Blink LED on board to indicate main loop is running
     /*
@@ -778,7 +778,7 @@ void FC::loopBlink()
     }
 }
 
-void FC::loopBeep()
+void FC::loop_beep()
 {
 
     if (current_time - beep_counter > beep_delay)
@@ -799,7 +799,12 @@ void FC::loopBeep()
     }
 }
 
-void FC::getDesiredState()
+void FC::sendHeartbeat()
+{
+
+}
+
+void FC::get_desired_aircraft_state()
 {
     /*
     Normalizes desired control values to appropriate values
@@ -807,7 +812,7 @@ void FC::getDesiredState()
     These are computed by using the raw RC pwm commands and scaling them to be within our limits defined in config.
     roll_des and pitch_des are scaled to be within max roll/pitch amount in either degrees (angle mode) or degrees/sec
     (rate mode). yaw_des is scaled to be within max yaw in degrees/sec. Also creates roll_passthru, pitch_passthru, and
-    yaw_passthru variables, to be used in commanding motors/servos with direct un-stabilized commands in controlMixer().
+    yaw_passthru variables, to be used in commanding motors/servos with direct un-stabilized commands in control_mixer().
     */
 
     roll_des = (channel_1_pwm - 1500.0) / 500.0;  //between -1 and 1
@@ -826,7 +831,7 @@ void FC::getDesiredState()
     yaw_passthru = yaw_des / (2 * maxYaw);
 }
 
-void FC::controlAngle()
+void FC::control_desired_angle()
 {
     //Roll
     error_roll = roll_des - roll_IMU;
@@ -871,7 +876,7 @@ void FC::controlAngle()
     integral_yaw_prev = integral_yaw;
 }
 
-void FC::controlMixer()
+void FC::control_mixer()
 {
     /*
    Takes roll_PID, pitch_PID, and yaw_PID computed from the PID controller and appropriately mixes them for the desired
@@ -879,7 +884,7 @@ void FC::controlMixer()
    should have -roll_PID. Front two should have -pitch_PID and the back two should have +pitch_PID etc... every motor has
    normalized (0 to 1) thro_des command for throttle control. Can also apply direct un-stabilized commands from the with 
    roll_passthru, pitch_passthru, and yaw_passthu. mX_command_scaled and sX_command scaled variables 
-   are used in scaleCommands() in preparation to be sent to the motor ESCs and servos.
+   are used in scale_commands() in preparation to be sent to the motor ESCs and servos.
    */
 #if defined USE_DIFFERENTIAL_THRUST
     m1_command_scaled = thro_des + yaw_des;
@@ -920,12 +925,12 @@ void FC::controlMixer()
     // }
 }
 
-void FC::scaleCommands()
+void FC::scale_commands()
 {
     /*
    mX_command_scaled variables from the mixer function are scaled to 125-250us for OneShot125 protocol. 
    sX_command_scaled variables from the mixer function are scaled to 0-180 for the servo library using standard PWM.
-   mX_command_PWM are updated here which are used to command the motors in commandMotors(). 
+   mX_command_PWM are updated here which are used to command the motors in command_motors(). 
    sX_command_PWM are updated which are used to command the servos.
    */
 
@@ -970,11 +975,11 @@ void FC::scaleCommands()
 #endif
 }
 
-void FC::throttleCut()
+void FC::cut_throttle()
 {
     /*
     Monitors the state of radio command channel_5_pwm and directly sets the mx_command_PWM values to minimum (120 is
-    minimum for oneshot125 protocol, 0 is minimum for standard PWM servo library used) if channel 5 is high. This is the last function called before commandMotors() is called so that the last thing checked is if the user is giving permission to 
+    minimum for oneshot125 protocol, 0 is minimum for standard PWM servo library used) if channel 5 is high. This is the last function called before command_motors() is called so that the last thing checked is if the user is giving permission to 
     command the motors to anything other than minimum value. Safety first. 
     */
     if (channel_6_pwm < 1500)
@@ -993,12 +998,12 @@ void FC::throttleCut()
     }
 }
 
-void FC::commandMotors()
+void FC::command_motors()
 {
 //DESCRIPTION: Send pulses to motor pins, oneshot125 protocol
 /*
    * My crude implimentation of OneShot125 protocol which sends 125 - 250us pulses to the ESCs (mXPin). The pulselengths being
-   * sent are mX_command_PWM, computed in scaleCommands(). This may be replaced by something more efficient in the future.
+   * sent are mX_command_PWM, computed in scale_commands(). This may be replaced by something more efficient in the future.
    */
 // int wentLow = 0;
 // int pulseStart, timer;
@@ -1068,10 +1073,10 @@ void FC::commandMotors()
     // motor4.motorPWM.write_pwm(motor4.value_pwm);
 
     // motor1.motorPWM.write(((1500-1000)/1000) * 180);
-    motor1.motorPWM.write(90);
+    // motor1.motorPWM.write(90);
 
-    int val = 56;
-    Serial.println(val);
+    // int val = 56;
+    // Serial.println(val);
     // motor2.motorPWM.write(90);
     // motor3.motorPWM.write(90);
     // motor4.motorPWM.write(90);
@@ -1082,7 +1087,7 @@ void FC::commandMotors()
 #endif
 }
 
-void FC::commandServos()
+void FC::command_servos()
 {
 #if defined(AIRFRAME_FIXEDWING)
     actFC.servo1.write(s1_command_PWM);
@@ -1210,7 +1215,7 @@ void FC::updateAircraftStateStruct()
     stateFC.setStateEulers(&aircraftEuler);
 }
 
-void FC::getBMPdata()
+void FC::get_baro_data()
 {
 #if defined USE_BMP280_I2C
     static uint32_t prev_ms = millis();
