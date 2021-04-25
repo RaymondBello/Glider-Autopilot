@@ -979,14 +979,13 @@ class MainWindow(QWidget):
             
             # data = str(str(raw_data)).split("'")[1].split("\\")[0].split(",")
             
-            
             # Display based on state
             if not self.fsm.is_idle:
                 self.update_essential()
-                # self.update_widget3(self.serial_data[0:3])
-                # self.update_widget4(self.serial_data[3:6])
-                # self.update_widget5(self.serial_data[6:8])
-                # self.update_widget6(self.serial_data[0:3])
+                self.update_widget3(self.serial_data[0:3])
+                self.update_widget4(self.serial_data[3:6])
+                self.update_widget5(self.serial_data[6:8])
+                self.update_widget6(self.serial_data[0:3])
                 
                 if self.serial_data != None:
                     self.serialText.append(str(self.serial_data))
@@ -1000,7 +999,7 @@ class MainWindow(QWidget):
     def animation(self):
         timer = pg.QtCore.QTimer()
         timer.timeout.connect(self.update)
-        timer.start(1)
+        timer.start(250)
         self.start()
         
 

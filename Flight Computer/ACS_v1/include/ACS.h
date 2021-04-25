@@ -56,33 +56,33 @@ public:
 
   ACS();
   ~ACS();
-  void setupMCU();
-  void setupReceiver() { receiver.radioSetup(); };
-  void setupBlink(int numBlinks, int upTime, int downTime);
-  void setupBeep(int numBeeps, int upTime, int downTime);
-  BoolInt setupFlightController();
-  BoolInt calibrateFlightController();
+  void setup_mcu();
+  void setup_radio_receiver() { receiver.radioSetup(); };
+  void setup_led_blink(int numBlinks, int upTime, int downTime);
+  void setup_beep(int numBeeps, int upTime, int downTime);
+  BoolInt setup_flightcontroller();
+  BoolInt calibrate_flightcontroller();
   void loop();
-  void updateFlightControllerTime();
-  void updateFlightControllerOrientation();
-  void updateFlightControllerPIDloop();
-  void printDebugMessages();
-  void printRadioData();
-  void printIMUdata();
-  void printBMPdata();
-  void printDesiredState();
-  void printRollPitchYaw();
-  void printPIDoutput();
-  void printMotorCommands();
-  void printServoCommands();
-  void printPIDvalues();
-  void printAircraftState();
+  void update_flightcontroller_time();
+  void update_flightcontroller_orientation();
+  void update_flightcontroller_pid_loop();
+  void print_debug_msg();
+  void print_radio_data();
+  void print_imu_data();
+  void print_baro_data();
+  void print_desired_state();
+  void print_roll_pitch_yaw();
+  void print_pid_output();
+  void print_motor_cmds();
+  void print_servo_cmds();
+  void print_pid_values();
+  void print_aircraft_state();
 
-  static void execCallback(cmd *execmd);
-  void handleSerial();
-  void handleReceivedMessage(char *msg);
-  void processGetCommand(const char *setting);
-  void processSetCommand(const char *setting, const char *value);
+  static void exec_cmd_callback(cmd *execmd);
+  void handle_serial();
+  void handle_received_msg(char *msg);
+  void process_get_cmd(const char *setting);
+  void process_set_cmd(const char *setting, const char *value);
 };
 
 /**
@@ -100,10 +100,10 @@ ACS::ACS(/* args */)
   cmdSet.addPositionalArgument("setting");
   cmdSet.addPositionalArgument("val/ue");
 
-  cmdExec = cli.addBoundlessCommand("exec", execCallback);
+  cmdExec = cli.addBoundlessCommand("exec", exec_cmd_callback);
 }
 
-void ACS::setupMCU()
+void ACS::setup_mcu()
 {
   this->stateACS.stateInit();
 
@@ -115,7 +115,7 @@ void ACS::setupMCU()
   pinMode(BUZZER_PIN, OUTPUT);
 }
 
-BoolInt ACS::setupFlightController()
+BoolInt ACS::setup_flightcontroller()
 {
 
   this->flightController.init();
@@ -128,7 +128,7 @@ BoolInt ACS::setupFlightController()
   return passErr;
 }
 
-BoolInt ACS::calibrateFlightController()
+BoolInt ACS::calibrate_flightcontroller()
 {
   BoolInt passErr;
   this->flightController.calculate_imu_error();
@@ -136,8 +136,8 @@ BoolInt ACS::calibrateFlightController()
   this->flightController.calibrate_attitude(0);
   delay(10);
   //Indicate entering main loop with 3 quick blinks
-  setupBlink(3, 160, 70); //numBlinks, upTime (ms), downTime (ms)
-  setupBeep(2, 160, 70);
+  setup_led_blink(3, 160, 70); //numBlinks, upTime (ms), downTime (ms)
+  setup_beep(2, 160, 70);
 
   passErr.flag = 1;
   passErr.ErrCode = 0;
@@ -154,17 +154,17 @@ void ACS::loop()
   {
     delay(1000);
     Serial.println("Uninitialized");
-    this->setupMCU();
+    this->setup_mcu();
     this->mode = Mode::Initialization;
     break;
   }
   case Initialization:
   {
     Serial.println("INFO, ACS-Mode: Initialization");
-    this->setupReceiver();
-    BoolInt boolint = this->setupFlightController();
+    this->setup_radio_receiver();
+    BoolInt boolint = this->setup_flightcontroller();
     boolint.flag ? (0) : (this->mode = Mode::Error);
-    BoolInt boolint1 = this->calibrateFlightController();
+    BoolInt boolint1 = this->calibrate_flightcontroller();
     boolint1.flag ? (this->mode = Mode::Active) : (this->mode = Mode::Error);
     Serial.println("INFO, ACS boot SR completed");
     delay(1000);
@@ -174,15 +174,15 @@ void ACS::loop()
   {
     // Serial.println("Active");
     flightController.loop_blink();
-    updateFlightControllerTime();
-    updateFlightControllerOrientation();
-    updateFlightControllerPIDloop();
-    printDebugMessages();
+    update_flightcontroller_time();
+    update_flightcontroller_orientation();
+    update_flightcontroller_pid_loop();
+    print_debug_msg();
 
     /** Handle CLI message **/
     // Serial.println("Wrote to Motors");
 
-    handleSerial();
+    handle_serial();
 
     flightController.loop_rate(2000);
     break;
@@ -201,7 +201,7 @@ void ACS::loop()
   default:
   {
     Serial.println("FATAL, FATAL ACS-Mode Error! Rebooting...");
-    this->setupBeep(4, 160, 70);
+    this->setup_beep(4, 160, 70);
     delay(50);
     SCB_AIRCR = 0x05FA0004;
     break;
@@ -209,7 +209,7 @@ void ACS::loop()
   }
 }
 
-void ACS::setupBlink(int numBlinks, int upTime, int downTime)
+void ACS::setup_led_blink(int numBlinks, int upTime, int downTime)
 {
   for (int j = 1; j <= numBlinks; j++)
   {
@@ -220,7 +220,7 @@ void ACS::setupBlink(int numBlinks, int upTime, int downTime)
   }
 }
 
-void ACS::setupBeep(int numBeeps, int upTime, int downTime)
+void ACS::setup_beep(int numBeeps, int upTime, int downTime)
 {
   for (int j = 1; j <= numBeeps; j++)
   {
@@ -232,21 +232,21 @@ void ACS::setupBeep(int numBeeps, int upTime, int downTime)
   digitalWrite(BUZZER_PIN, LOW);
 }
 
-void ACS::updateFlightControllerTime()
+void ACS::update_flightcontroller_time()
 {
   flightController.prev_time = flightController.current_time;
   flightController.current_time = micros();
   flightController.dt = (flightController.current_time - flightController.prev_time) / 1000000.0;
 }
 
-void ACS::updateFlightControllerOrientation()
+void ACS::update_flightcontroller_orientation()
 {
   flightController.get_imu_data();
   flightController.madgwick(flightController.GyroX, -flightController.GyroY, -flightController.GyroZ, -flightController.AccX, flightController.AccY, flightController.AccZ, flightController.MagY, -flightController.MagX, flightController.MagZ, flightController.dt);
   flightController.get_baro_data();
 }
 
-void ACS::updateFlightControllerPIDloop()
+void ACS::update_flightcontroller_pid_loop()
 {
   flightController.get_desired_aircraft_state();
 
@@ -269,29 +269,29 @@ void ACS::updateFlightControllerPIDloop()
   flightController.command_servos();
 
   // Retreive Updated Radio Commands
-  flightController.getCommands(receiver);
+  flightController.get_commands(receiver);
   // flightController.failSafe();
 
   // Update State Struct
-  flightController.updateAircraftStateStruct();
+  flightController.update_aircrafte_state_struct();
 }
 
-void ACS::printDebugMessages()
+void ACS::print_debug_msg()
 {
   /** DEBUG FUNCTIONS **/
-  // printRadioData();
-  // printIMUdata();
-  // printBMPdata();
-  // printDesiredState();
-  // printRollPitchYaw();
-  // printPIDoutput();
-  // printMotorCommands();
-  // printServoCommands();
-  // printPIDvalues();
-  // printAircraftState();
+  // print_radio_data();
+  // print_imu_data();
+  // print_baro_data();
+  // print_desired_state();
+  // print_roll_pitch_yaw();
+  // print_pid_output();
+  // print_motor_cmds();
+  // print_servo_cmds();
+  // print_pid_values();
+  // print_aircraft_state();
 }
 
-void ACS::printRadioData()
+void ACS::print_radio_data()
 {
   if (flightController.current_time - print_counter > 10000)
   {
@@ -313,7 +313,7 @@ void ACS::printRadioData()
   }
 }
 
-void ACS::printIMUdata()
+void ACS::print_imu_data()
 {
   if (flightController.current_time - print_counter > 10000)
   {
@@ -333,7 +333,7 @@ void ACS::printIMUdata()
   }
 }
 
-void ACS::printBMPdata()
+void ACS::print_baro_data()
 {
   if (flightController.current_time - print_counter > 10000)
   {
@@ -346,7 +346,7 @@ void ACS::printBMPdata()
   }
 }
 
-void ACS::printDesiredState()
+void ACS::print_desired_state()
 {
   if (flightController.current_time - print_counter > 10000)
   {
@@ -362,7 +362,7 @@ void ACS::printDesiredState()
   }
 }
 
-void ACS::printRollPitchYaw()
+void ACS::print_roll_pitch_yaw()
 {
   if (flightController.current_time - print_counter > 10000)
   {
@@ -375,7 +375,7 @@ void ACS::printRollPitchYaw()
   }
 }
 
-void ACS::printPIDoutput()
+void ACS::print_pid_output()
 {
   if (flightController.current_time - print_counter > 10000)
   {
@@ -396,7 +396,7 @@ void ACS::printPIDoutput()
   }
 }
 
-void ACS::printMotorCommands()
+void ACS::print_motor_cmds()
 {
   if (flightController.current_time - print_counter > 10000)
   {
@@ -416,7 +416,7 @@ void ACS::printMotorCommands()
   }
 }
 
-void ACS::printServoCommands()
+void ACS::print_servo_cmds()
 {
   if (flightController.current_time - print_counter > 10000)
   {
@@ -438,7 +438,7 @@ void ACS::printServoCommands()
   }
 }
 
-void ACS::printPIDvalues()
+void ACS::print_pid_values()
 {
   // Roll - Pitch - Yaw
   if (flightController.current_time - print_counter > 10000)
@@ -470,7 +470,7 @@ void ACS::printPIDvalues()
   }
 }
 
-void ACS::printAircraftState()
+void ACS::print_aircraft_state()
 {
   if (flightController.current_time - print_counter > 10000)
   {
@@ -526,7 +526,7 @@ void ACS::printAircraftState()
 }
 
 /* Command-line Functions */
-void ACS::execCallback(cmd *execmd)
+void ACS::exec_cmd_callback(cmd *execmd)
 {
   Command cmd(execmd);
   int argNum = cmd.countArgs(); // length of args
@@ -587,7 +587,7 @@ void ACS::execCallback(cmd *execmd)
   {
   case REBOOT:
     Serial.println("INFO: Rebooting...");
-    // this->setupBeep(4, 160, 70);
+    // this->setup_beep(4, 160, 70);
     delay(50);
     SCB_AIRCR = 0x05FA0004;
     break;
@@ -600,7 +600,7 @@ void ACS::execCallback(cmd *execmd)
   }
 }
 
-void ACS::handleReceivedMessage(char *msg)
+void ACS::handle_received_msg(char *msg)
 {
   String str(msg);
 
@@ -638,16 +638,16 @@ void ACS::handleReceivedMessage(char *msg)
     // Check if it's the command you're looking for
     if (cmd == this->cmdGet)
     {
-      processGetCommand(setting.c_str());
+      process_get_cmd(setting.c_str());
     }
     if (cmd == this->cmdSet)
     {
-      processSetCommand(setting.c_str(), value.c_str());
+      process_set_cmd(setting.c_str(), value.c_str());
     }
   }
 }
 
-void ACS::handleSerial()
+void ACS::handle_serial()
 {
   const int BUFF_SIZE = 100;         // make it big enough to hold your longest command
   static char buffer[BUFF_SIZE + 1]; // +1 allows space for the null terminator
@@ -667,7 +667,7 @@ void ACS::handleSerial()
 
       if (length > 0)
       {
-        handleReceivedMessage(buffer);
+        handle_received_msg(buffer);
         Serial.println();
       }
       length = 0;
@@ -688,10 +688,10 @@ void ACS::handleSerial()
       }
     }
   }
-  // Serial.println("End of handleSerial() function...");
+  // Serial.println("End of handle_serial() function...");
 }
 
-void ACS::processGetCommand(const char *setting)
+void ACS::process_get_cmd(const char *setting)
 {
   if (strcmp(setting, "buzzer") == 0)
   {
@@ -714,7 +714,7 @@ void ACS::processGetCommand(const char *setting)
   }
 }
 
-void ACS::processSetCommand(const char *setting, const char *value)
+void ACS::process_set_cmd(const char *setting, const char *value)
 {
   if (strcmp(setting, "test") == 0)
   {

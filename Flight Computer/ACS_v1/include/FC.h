@@ -204,9 +204,9 @@ public:
     void cut_throttle();
     void command_motors();
     void command_servos();
-    void getCommands(Radio receiver);
-    void updateAircraftStateStruct();
-    void sendHeartbeat();
+    void get_commands(Radio receiver);
+    void update_aircrafte_state_struct();
+    void send_heartbeat_msg();
 };
 
 FC::FC(/* args */)
@@ -799,7 +799,7 @@ void FC::loop_beep()
     }
 }
 
-void FC::sendHeartbeat()
+void FC::send_heartbeat_msg()
 {
 
 }
@@ -1100,7 +1100,7 @@ void FC::command_servos()
 #endif
 }
 
-void FC::getCommands(Radio receiver)
+void FC::get_commands(Radio receiver)
 {
     //DESCRIPTION: Get raw PWM values for every channel from the radio
     /*
@@ -1182,7 +1182,7 @@ void FC::getCommands(Radio receiver)
     channel_7_pwm_prev = channel_7_pwm;
 }
 
-void FC::updateAircraftStateStruct()
+void FC::update_aircrafte_state_struct()
 {
     FloatQuat aircraftQuaternion;
     NedCoor_f aircraftAcceleration;
