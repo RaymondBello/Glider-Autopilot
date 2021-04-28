@@ -273,7 +273,7 @@ void ACS::update_flightcontroller_pid_loop()
   // flightController.failSafe();
 
   // Update State Struct
-  flightController.update_aircrafte_state_struct();
+  flightController.update_aircraft_state_struct();
 }
 
 void ACS::print_debug_msg()
@@ -702,7 +702,22 @@ void ACS::process_get_cmd(const char *setting)
   else if (strcmp(setting, "state") == 0)
   {
     // cliAircraftState();
-    Serial.println("# State Get Command");
+    // Serial.print(flightController.setpoint_acs.throttle_pwm);
+    // Serial.print(", ");
+    // Serial.print(flightController.setpoint_acs.roll_pwm);
+    // Serial.print(", ");
+    // Serial.print(flightController.setpoint_acs.pitch_pwm);
+    // Serial.print(", ");
+    // Serial.println(flightController.setpoint_acs.yaw_pwm);
+
+    Serial.print(flightController.motor1.value_pwm);
+    Serial.print(", ");
+    Serial.print(flightController.motor2.value_pwm);
+    Serial.print(", ");
+    Serial.print(flightController.motor3.value_pwm);
+    Serial.print(", ");
+    Serial.println(flightController.motor4.value_pwm);
+    
   }
   else if ((strcmp(setting, "t_states") == 0) | (strcmp(setting, "t_state") == 0))
   {
@@ -714,38 +729,58 @@ void ACS::process_get_cmd(const char *setting)
   }
 }
 
+int map_value(std::pair<int, int> inputRange, std::pair<int,int> outputRange, int value)
+{
+  int inValNorm = value - inputRange.first;
+  int aUpperNorm = inputRange.second - inputRange.first;
+  int normPosition = inValNorm / aUpperNorm;
+  int bUpperNorm = outputRange.second - outputRange.first;
+  int bValNorm = normPosition * bUpperNorm;
+  int outVal = outputRange.first + bValNorm;
+  return outVal;
+}
+
 void ACS::process_set_cmd(const char *setting, const char *value)
 {
+  // Initialize values for value bounding
+  std::pair<int, int> outBoundPwm(1000, 2000);
+
   if (strcmp(setting, "test") == 0)
   {
     Serial.print("# TEST value: ");
     Serial.println(atoi(value));
   }
-  else if (strcmp(setting, "controller") == 0)
+
+  else if (strcmp(setting, "ctrl") == 0)
   {
-    Serial.print("#, Setpoint controller value: ");
-    Serial.println(atoi(value));
+    
 
     switch (atoi(value))
     {
     case SETPOINT_RC_RECEIVER:
     {
       flightController.setpoint_ctrl = SETPOINT_RC_RECEIVER;
+      Serial.print("# RC Receiver Mode: ");
+      Serial.println(atoi(value));
       break;
     }
     case SETPOINT_ACS:
     {
       flightController.setpoint_ctrl = SETPOINT_ACS;
-      break;
-    }
-    default:
-      Serial.print("#, ERROR: can only be 0, 1. Received: ");
+      Serial.print("# ACS Mode: ");
       Serial.println(atoi(value));
       break;
     }
+    default:
+    {
+      Serial.print("# ERROR: can only be 0, 1. Received: ");
+      Serial.println(atoi(value));
+      break;
+    }
+    }
   }
 
-  else if (strcmp(setting, "all_zero") == 0)
+  else if (strcmp(setting, "zero") == 0)
   {
     if (atoi(value) == 0)
     {
@@ -753,37 +788,46 @@ void ACS::process_set_cmd(const char *setting, const char *value)
       flightController.setpoint_acs.pitch_pwm = 1000;
       flightController.setpoint_acs.throttle_pwm = 1000;
       flightController.setpoint_acs.yaw_pwm = 1000;
-      Serial.print("#, All setpoints set to: ");
+      Serial.print("# All setpoints set to: ");
       Serial.println(atoi(value));
     }
     else{
-      Serial.print("#, 'all_zero' value must be 0 to confirm. value = ");
+      Serial.print("# 'all_zero' value must be 0 to confirm. value = ");
       Serial.println(atoi(value));
     }
     }
-  else if (strcmp(setting, "throttle") == 0)
+
+  else if (strcmp(setting, "thro") == 0)
   {
-    flightController.setpoint_acs.throttle_pwm = (atoi(value)/100) *1000 + 1000;
-    Serial.print("#, Throttle = ");
-    Serial.println(atoi(value));
+    Serial.print("# Throttle = ");
+    //Simplified normalization between 0->100 => 1000->2000
+    int throVal = 1000 + atoi(value) * 10;
+    flightController.setpoint_acs.throttle_pwm = constrain(throVal, 1000, 2000);
+    Serial.println(flightController.setpoint_acs.throttle_pwm);
   }
   else if (strcmp(setting, "roll") == 0)
   {
-    flightController.setpoint_acs.roll_pwm = ((atoi(value) + 90) / 180) * 1000 + 1000;
-    Serial.print("#, Roll = ");
-    Serial.println(atoi(value));
+    Serial.print("# Roll = ");
+    //Simplified normalization between -30->30 => 1000->2000
+    int rollVal = 1500 + atoi(value) * (50 / 3);
+    flightController.setpoint_acs.roll_pwm = constrain(rollVal, 1000, 2000);
+    Serial.println(flightController.setpoint_acs.roll_pwm);
   }
   else if (strcmp(setting, "pitch") == 0)
   {
-    flightController.setpoint_acs.pitch_pwm = ((atoi(value) + 90) / 180) * 1000 + 1000;
-    Serial.print("#, Pitch = ");
-    Serial.println(atoi(value));
+    Serial.print("# Pitch = ");
+    //Simplified normalization between -30->30 => 1000->2000
+    int pitchVal = 1500 + atoi(value) * (50 / 3);
+    flightController.setpoint_acs.pitch_pwm = constrain(pitchVal, 1000, 2000);
+    Serial.println(flightController.setpoint_acs.pitch_pwm);
   }
   else if (strcmp(setting, "yaw") == 0)
   {
-    flightController.setpoint_acs.pitch_pwm = (atoi(value)/ 360) * 1000 + 1000;
-    Serial.print("#, Yaw = ");
-    Serial.println(atoi(value));
+    // initialize the input and output bounds
+    std::pair<int, int> inBoundYaw(0, 360);
+    // flightController.setpoint_acs.yaw_pwm = map_value(inBoundYaw, outBoundPwm, atoi(value));
+    Serial.print("# Yaw = ");
+    Serial.println(map_value(inBoundYaw, outBoundPwm, atoi(value)));
   }
 }
 

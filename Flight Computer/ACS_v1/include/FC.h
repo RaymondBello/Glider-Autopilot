@@ -205,7 +205,7 @@ public:
     void command_motors();
     void command_servos();
     void get_commands(Radio receiver);
-    void update_aircrafte_state_struct();
+    void update_aircraft_state_struct();
     void send_heartbeat_msg();
 };
 
@@ -277,7 +277,8 @@ void FC::init()
     this->channel_7_pwm = CHAN6_FS; //right dial
     this->channel_8_pwm = CHAN8_FS; //right 2-way
 
-    this->setpoint_ctrl = SETPOINT_RC_RECEIVER;
+    this->setpoint_ctrl = SETPOINT_ACS;
+    // this->setpoint_ctrl = SETPOINT_RC_RECEIVER;
 #endif
 }
 
@@ -1075,14 +1076,20 @@ void FC::command_motors()
     // motor1.motorPWM.write(((1500-1000)/1000) * 180);
     // motor1.motorPWM.write(90);
 
+
     // int val = 56;
-    // Serial.println(val);
+    // Serial.print(motor1.value_pwm);
+    // Serial.print(", ");
+    // Serial.print(motor2.value_pwm);
+    // Serial.print(", ");
+    // Serial.print(motor3.value_pwm);
+    // Serial.print(", ");
+    // Serial.println(motor4.value_pwm);
+
+
     // motor2.motorPWM.write(90);
     // motor3.motorPWM.write(90);
     // motor4.motorPWM.write(90);
-
-
-
 
 #endif
 }
@@ -1137,13 +1144,12 @@ void FC::get_commands(Radio receiver)
         channel_2_pwm = setpoint_acs.pitch_pwm;
         channel_3_pwm = setpoint_acs.throttle_pwm;
         channel_4_pwm = setpoint_acs.yaw_pwm;
-
         // Serial.println("Using ACS");
         break;
     }
     default:
     {
-        this->setpoint_ctrl = SETPOINT_RC_RECEIVER;
+        this->setpoint_ctrl = SETPOINT_ACS;
         break;
     }
     }
@@ -1182,7 +1188,7 @@ void FC::get_commands(Radio receiver)
     channel_7_pwm_prev = channel_7_pwm;
 }
 
-void FC::update_aircrafte_state_struct()
+void FC::update_aircraft_state_struct()
 {
     FloatQuat aircraftQuaternion;
     NedCoor_f aircraftAcceleration;
