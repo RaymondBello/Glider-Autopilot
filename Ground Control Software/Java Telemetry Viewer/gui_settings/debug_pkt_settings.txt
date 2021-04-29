@@ -1,0 +1,650 @@
+Telemetry Viewer v0.7 Settings
+
+GUI Settings:
+
+	tile column count = 6
+	tile row count = 6
+	time format = Only Time
+	show 24-hour time = false
+	show plot tooltips = true
+	smooth scrolling = true
+	show fps and period = false
+	chart index for benchmarks = -1
+	antialiasing level = 16
+
+Communication Settings:
+
+	port = UART: ttyACM0
+	uart baud rate = 115200
+	tcp/udp port number = 8080
+	packet type = CSV
+	sample rate = 10000
+
+42 Data Structure Locations:
+
+	location = 0
+	binary processor = null
+	name = Packet type indicator
+	color = 0xFF0000
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 1
+	binary processor = null
+	name = accX
+	color = 0x308DCC
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 2
+	binary processor = null
+	name = accY
+	color = 0x31D829
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 3
+	binary processor = null
+	name = accZ
+	color = 0xDF2424
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 4
+	binary processor = null
+	name = gyroX
+	color = 0x1BA2DA
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 5
+	binary processor = null
+	name = gyroY
+	color = 0x20EC22
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 6
+	binary processor = null
+	name = gyroZ
+	color = 0xEF1818
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 7
+	binary processor = null
+	name = qW
+	color = 0x8A4E51
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 8
+	binary processor = null
+	name = qX
+	color = 0xE23A8F
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 9
+	binary processor = null
+	name = qY
+	color = 0x7667DB
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 10
+	binary processor = null
+	name = qZ
+	color = 0x11F7C5
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 11
+	binary processor = null
+	name = pitch_imu
+	color = 0x01DFFA
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 12
+	binary processor = null
+	name = roll_imu
+	color = 0xCD2A2A
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 13
+	binary processor = null
+	name = yaw_imu
+	color = 0x46E239
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 14
+	binary processor = null
+	name = pitch_des
+	color = 0x2B00FB
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 15
+	binary processor = null
+	name = roll_des
+	color = 0xEB1BDC
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 16
+	binary processor = null
+	name = yaw_des
+	color = 0xD2CC1E
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 17
+	binary processor = null
+	name = error_pitch
+	color = 0x7B16E1
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 18
+	binary processor = null
+	name = error_roll
+	color = 0xE77621
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 19
+	binary processor = null
+	name = error_yaw
+	color = 0x2E6324
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 20
+	binary processor = null
+	name = integral_pitch
+	color = 0x225961
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 21
+	binary processor = null
+	name = integral_roll
+	color = 0xAC3DA2
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 22
+	binary processor = null
+	name = integral_yaw
+	color = 0xD1B12F
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 23
+	binary processor = null
+	name = deriv_pitch
+	color = 0xEC71D5
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 24
+	binary processor = null
+	name = deriv_roll
+	color = 0x3347BF
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 25
+	binary processor = null
+	name = deriv_yaw
+	color = 0x5DD438
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 26
+	binary processor = null
+	name = PID_pitch
+	color = 0xFF0300
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 27
+	binary processor = null
+	name = PID_roll
+	color = 0x1CFF00
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 28
+	binary processor = null
+	name = PID_yaw
+	color = 0x000CFF
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 29
+	binary processor = null
+	name = m1_scaled
+	color = 0x1CCAD3
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 30
+	binary processor = null
+	name = m2_scaled
+	color = 0x60ED15
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 31
+	binary processor = null
+	name = m3_scaled
+	color = 0xD57E1E
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 32
+	binary processor = null
+	name = m4_scaled
+	color = 0xB907DD
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 33
+	binary processor = null
+	name = m1_pwm
+	color = 0x913939
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 34
+	binary processor = null
+	name = m2_pwm
+	color = 0x6AC807
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 35
+	binary processor = null
+	name = m3_pwm
+	color = 0xD220AD
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 36
+	binary processor = null
+	name = m4_pwm
+	color = 0x1503EE
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 37
+	binary processor = null
+	name = setp_thro_pwm
+	color = 0xF02020
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 38
+	binary processor = null
+	name = setp_pitch_pwm
+	color = 0x2BE51B
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 39
+	binary processor = null
+	name = setp_roll_pwm
+	color = 0x241BCF
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 40
+	binary processor = null
+	name = setp_yaw_pwm
+	color = 0xE9D916
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+	location = 41
+	binary processor = null
+	name = setp_ctrl
+	color = 0x00F9FF
+	unit = 
+	conversion factor a = 1.0
+	conversion factor b = 1.0
+
+Checksum:
+
+	location = -1
+	checksum processor = null
+
+14 Charts:
+
+	chart type = Time Domain
+	top left x = 0
+	top left y = 0
+	bottom right x = 0
+	bottom right y = 0
+	normal datasets = 1,2,3
+	bitfield edge states = 
+	bitfield level states = 
+	duration type = Samples
+	duration = 1000
+	x-axis = Sample Count
+	autoscale y-axis minimum = true
+	manual y-axis minimum = -1.0
+	autoscale y-axis maximum = true
+	manual y-axis maximum = 1.0
+	show x-axis title = true
+	show x-axis scale = true
+	show y-axis title = true
+	show y-axis scale = true
+	show legend = true
+	cached mode = false
+
+	chart type = Time Domain
+	top left x = 1
+	top left y = 0
+	bottom right x = 1
+	bottom right y = 0
+	normal datasets = 4,5,6
+	bitfield edge states = 
+	bitfield level states = 
+	duration type = Samples
+	duration = 1000
+	x-axis = Sample Count
+	autoscale y-axis minimum = true
+	manual y-axis minimum = -1.0
+	autoscale y-axis maximum = true
+	manual y-axis maximum = 1.0
+	show x-axis title = true
+	show x-axis scale = true
+	show y-axis title = true
+	show y-axis scale = true
+	show legend = true
+	cached mode = false
+
+	chart type = Time Domain
+	top left x = 4
+	top left y = 0
+	bottom right x = 5
+	bottom right y = 0
+	normal datasets = 11,12,13
+	bitfield edge states = 
+	bitfield level states = 
+	duration type = Samples
+	duration = 1000
+	x-axis = Sample Count
+	autoscale y-axis minimum = true
+	manual y-axis minimum = -1.0
+	autoscale y-axis maximum = true
+	manual y-axis maximum = 1.0
+	show x-axis title = true
+	show x-axis scale = true
+	show y-axis title = true
+	show y-axis scale = true
+	show legend = true
+	cached mode = false
+
+	chart type = Time Domain
+	top left x = 4
+	top left y = 1
+	bottom right x = 5
+	bottom right y = 1
+	normal datasets = 14,15,16
+	bitfield edge states = 
+	bitfield level states = 
+	duration type = Samples
+	duration = 1000
+	x-axis = Sample Count
+	autoscale y-axis minimum = true
+	manual y-axis minimum = -1.0
+	autoscale y-axis maximum = true
+	manual y-axis maximum = 1.0
+	show x-axis title = true
+	show x-axis scale = true
+	show y-axis title = true
+	show y-axis scale = true
+	show legend = true
+	cached mode = false
+
+	chart type = Time Domain
+	top left x = 4
+	top left y = 2
+	bottom right x = 5
+	bottom right y = 2
+	normal datasets = 17,18,19
+	bitfield edge states = 
+	bitfield level states = 
+	duration type = Samples
+	duration = 1000
+	x-axis = Sample Count
+	autoscale y-axis minimum = true
+	manual y-axis minimum = -1.0
+	autoscale y-axis maximum = true
+	manual y-axis maximum = 1.0
+	show x-axis title = true
+	show x-axis scale = true
+	show y-axis title = true
+	show y-axis scale = true
+	show legend = true
+	cached mode = false
+
+	chart type = Time Domain
+	top left x = 4
+	top left y = 3
+	bottom right x = 5
+	bottom right y = 3
+	normal datasets = 20,21,22
+	bitfield edge states = 
+	bitfield level states = 
+	duration type = Samples
+	duration = 1000
+	x-axis = Sample Count
+	autoscale y-axis minimum = true
+	manual y-axis minimum = -1.0
+	autoscale y-axis maximum = true
+	manual y-axis maximum = 1.0
+	show x-axis title = true
+	show x-axis scale = true
+	show y-axis title = true
+	show y-axis scale = true
+	show legend = true
+	cached mode = false
+
+	chart type = Time Domain
+	top left x = 4
+	top left y = 4
+	bottom right x = 5
+	bottom right y = 4
+	normal datasets = 23,24,25
+	bitfield edge states = 
+	bitfield level states = 
+	duration type = Samples
+	duration = 1000
+	x-axis = Sample Count
+	autoscale y-axis minimum = true
+	manual y-axis minimum = -1.0
+	autoscale y-axis maximum = true
+	manual y-axis maximum = 1.0
+	show x-axis title = true
+	show x-axis scale = true
+	show y-axis title = true
+	show y-axis scale = true
+	show legend = true
+	cached mode = false
+
+	chart type = Time Domain
+	top left x = 0
+	top left y = 1
+	bottom right x = 1
+	bottom right y = 2
+	normal datasets = 29,30,31,32
+	bitfield edge states = 
+	bitfield level states = 
+	duration type = Samples
+	duration = 1000
+	x-axis = Sample Count
+	autoscale y-axis minimum = true
+	manual y-axis minimum = -1.0
+	autoscale y-axis maximum = true
+	manual y-axis maximum = 1.0
+	show x-axis title = true
+	show x-axis scale = true
+	show y-axis title = true
+	show y-axis scale = true
+	show legend = true
+	cached mode = false
+
+	chart type = Time Domain
+	top left x = 2
+	top left y = 0
+	bottom right x = 3
+	bottom right y = 1
+	normal datasets = 26,27,28
+	bitfield edge states = 
+	bitfield level states = 
+	duration type = Samples
+	duration = 1000
+	x-axis = Sample Count
+	autoscale y-axis minimum = true
+	manual y-axis minimum = -1.0
+	autoscale y-axis maximum = true
+	manual y-axis maximum = 1.0
+	show x-axis title = true
+	show x-axis scale = true
+	show y-axis title = true
+	show y-axis scale = true
+	show legend = true
+	cached mode = false
+
+	chart type = Time Domain
+	top left x = 2
+	top left y = 4
+	bottom right x = 3
+	bottom right y = 5
+	normal datasets = 37,38,39,40
+	bitfield edge states = 
+	bitfield level states = 
+	duration type = Samples
+	duration = 1000
+	x-axis = Sample Count
+	autoscale y-axis minimum = true
+	manual y-axis minimum = -1.0
+	autoscale y-axis maximum = true
+	manual y-axis maximum = 1.0
+	show x-axis title = true
+	show x-axis scale = true
+	show y-axis title = true
+	show y-axis scale = true
+	show legend = true
+	cached mode = false
+
+	chart type = Quaternion
+	top left x = 2
+	top left y = 2
+	bottom right x = 3
+	bottom right y = 3
+	normal datasets = 7,8,9,10
+	bitfield edge states = 
+	bitfield level states = 
+	show text label = true
+
+	chart type = Time Domain
+	top left x = 0
+	top left y = 3
+	bottom right x = 1
+	bottom right y = 4
+	normal datasets = 33,34,35,36
+	bitfield edge states = 
+	bitfield level states = 
+	duration type = Samples
+	duration = 1000
+	x-axis = Sample Count
+	autoscale y-axis minimum = true
+	manual y-axis minimum = -1.0
+	autoscale y-axis maximum = true
+	manual y-axis maximum = 1.0
+	show x-axis title = true
+	show x-axis scale = true
+	show y-axis title = true
+	show y-axis scale = true
+	show legend = true
+	cached mode = false
+
+	chart type = Time Domain
+	top left x = 4
+	top left y = 5
+	bottom right x = 4
+	bottom right y = 5
+	normal datasets = 0,41
+	bitfield edge states = 
+	bitfield level states = 
+	duration type = Samples
+	duration = 1000
+	x-axis = Sample Count
+	autoscale y-axis minimum = true
+	manual y-axis minimum = -1.0
+	autoscale y-axis maximum = true
+	manual y-axis maximum = 1.0
+	show x-axis title = true
+	show x-axis scale = true
+	show y-axis title = true
+	show y-axis scale = true
+	show legend = true
+	cached mode = false
+
+	chart type = Timeline
+	top left x = 5
+	top left y = 5
+	bottom right x = 5
+	bottom right y = 5
+	show = Timeline and Time
+	normal datasets = 
+	bitfield edge states = 
+	bitfield level states = 

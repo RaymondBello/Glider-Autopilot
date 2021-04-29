@@ -49,7 +49,10 @@ public class Main {
 		NotificationsController.showHintUntil("Connect to a device or open a file using buttons below.", () -> false,
 				true);
 
+		// Command Window Setup
 		commandWindow.setLayout(new BorderLayout());
+		commandWindow.add(CommandView.instance, BorderLayout.WEST);
+		// commandWindow.add(MapView.instance, BorderLayout.EAST);
 
 		// size the window
 		int settingsViewWidth = SettingsView.instance.getPreferredSize().width;
@@ -70,7 +73,7 @@ public class Main {
 		commandWindow.setSize(size);
 		commandWindow.setMinimumSize(size);
 		commandWindow.setLocationRelativeTo(null);
-		commandWindow.setExtendedState(JFrame.MAXIMIZED_BOTH);
+		commandWindow.setExtendedState(JFrame.NORMAL);
 
 		// support smooth scrolling
 		window.addWindowFocusListener(new WindowFocusListener() {
