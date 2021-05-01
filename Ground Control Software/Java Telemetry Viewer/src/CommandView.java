@@ -64,12 +64,23 @@ public class CommandView extends JPanel {
       serialMonitor.setFont(new Font("Fira Code", Font.PLAIN, 17));
 
       serialMonitorPane.add("Serial Monitor Console", new JScrollPane(serialMonitor));
-      serialMonitor.setText("Empty UART Console");
+      
+      serialMonitor.setText("Available Ports:\n");
+      String portList[] = CommunicationController.getPorts();
+      for (int i = 0; i < portList.length; i++)
+         serialMonitor.append("\t-" + portList[i] + "\n");
+         
+      // Come back to this : https://github.com/winder/Universal-G-Code-Sender/blob/master/ugs-core/src/com/willwinder/universalgcodesender/connection/JSerialCommConnection.java#L61
+         
       serialMonitor.append("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+
+
 
       // scroll back to the top
       serialMonitor.setCaretPosition(0);
 
    }
+
+   
    
 }

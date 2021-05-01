@@ -62,7 +62,8 @@ public class CommunicationView extends JPanel {
 		importButton = new JButton("Import");
 		importButton.addActionListener(event -> {
 			
-			JFileChooser inputFiles = new JFileChooser(System.getProperty("user.home") + "/Desktop/");
+			// JFileChooser inputFiles = new JFileChooser(System.getProperty("user.home") + "/Desktop/");
+			JFileChooser inputFiles = new JFileChooser(System.getProperty("user.dir"));
 			inputFiles.setMultiSelectionEnabled(true);
 			inputFiles.setFileFilter(new FileNameExtensionFilter("Files Exported from Telemetry Viewer", "txt", "csv", "mjpg", "bin"));
 			JFrame parentWindow = (JFrame) SwingUtilities.windowForComponent(CommunicationView.instance);
@@ -155,7 +156,7 @@ public class CommunicationView extends JPanel {
 		helpButton.addActionListener(event -> {
 			
 			JFrame parentWindow = (JFrame) SwingUtilities.windowForComponent(CommunicationView.instance);
-			String helpText = "<html><b>Telemetry Viewer v0.7 (2020-07-17)</b><br>" +
+			String helpText = "<html><b>Avionics Telemetry v0.1 (2021-05-01)</b><br>" +
 			                  "A fast and easy tool for visualizing data received over a UART/TCP/UDP connection.<br><br>" +
 			                  "Step 1: Use the controls at the lower-right corner of the window to connect to a serial port or to start a TCP/UDP server.<br>" +
 			                  "Step 2: A \"Data Structure Definition\" screen will appear. Use it to specify how your data is laid out, then click \"Done.\"<br>" +
@@ -172,20 +173,17 @@ public class CommunicationView extends JPanel {
 			                  "Click the \"Import\" button to open previously saved files.<br>" +
 			                  "Click the \"Export\" button to save your settings and/or data to files.<br>" +
 			                  "Files can also be imported via drag-n-drop.<br><br>" +
-			                  "Author: Farrell Farahbod<br>" +
+									"Author: Ray Bello<br>" +
+			                  "Credits: Farrell Farahbod<br>" +
 			                  "This software is free and open source.</html>";
 			JLabel helpLabel = new JLabel(helpText);
-			JButton websiteButton = new JButton("<html><a href=\"http://www.farrellf.com/TelemetryViewer/\">http://www.farrellf.com/TelemetryViewer/</a></html>");
-			websiteButton.addActionListener(click -> { try { Desktop.getDesktop().browse(new URI("http://www.farrellf.com/TelemetryViewer/")); } catch(Exception ex) {} });
-			JButton paypalButton = new JButton("<html><a href=\"https://paypal.me/farrellfarahbod/\">https://paypal.me/farrellfarahbod/</a></html>");
-			paypalButton.addActionListener(click -> { try { Desktop.getDesktop().browse(new URI("https://paypal.me/farrellfarahbod/")); } catch(Exception ex) {} });
+			JButton websiteButton = new JButton("<html><a href=\"http://www.rayx.tech/\">My Website</a></html>");
+			websiteButton.addActionListener(click -> { try { Desktop.getDesktop().browse(new URI("http://www.rayx.tech")); } catch(Exception ex) {} });
 			
 			JPanel panel = new JPanel();
 			panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 			panel.add(helpLabel);
 			panel.add(websiteButton);
-			panel.add(new JLabel("<html><br>If you find this software useful and want to \"buy me a coffee\" that would be awesome!</html>"));
-			panel.add(paypalButton);
 			panel.add(new JLabel(" "));
 			JOptionPane.showMessageDialog(parentWindow, panel, "Help", JOptionPane.PLAIN_MESSAGE);
 
