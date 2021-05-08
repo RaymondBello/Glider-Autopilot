@@ -156,12 +156,17 @@ class MainWindow(QWidget):
         self.add_widgets()
         self.add_clickevents()
         
+        
         self.win.show()
         # self.win.showMaximized()
         
         # framerate variables
         self.prev_sec = 0
         self.fps_count = 0
+        
+        # Initialize communication with Java Graph Viewer
+        self.init_javaviewer_connection()
+        self.start_javaviewer_app()
         
     @classmethod
     def from_argv(cls):
@@ -234,30 +239,25 @@ class MainWindow(QWidget):
     def create_docks(self):
         self.dock1 = Dock("1) Control Logic", size=(1, 1))     ## give this dock the minimum possible size
         self.dock2 = Dock("2) Py Console", size=(500,500), closable=True)
-        self.dock3 = Dock("3) Accelerometer", size=(500,400))
-        self.dock4 = Dock("4) Gyroscope", size=(500,400))
-        self.dock5 = Dock("5) Barometer", size=(500,400))
         self.dock6 = Dock("6) Aircraft Data", size=(200,400))
         self.dock7 = Dock("7) Serial Monitor", size=(500,400))
-        self.dock8 = Dock("8) GCS Map",size=(500,300))
+        self.dock8 = Dock("8) GCS Variables",size=(500,300))
         self.dock9 = Dock("9) MatplotLib", size=(500,300))
         self.dock10 = Dock("10) 3D Trajectory",size=(300,400))
         self.dock11 = Dock("11) Primary Flight Display", size=(900,1100))
         self.dock12 = Dock("12) Instrument Panel", size=(300,400))
         
         self.area.addDock(self.dock1, 'left')      
-        self.area.addDock(self.dock2, 'right', self.dock1)     
-        self.area.addDock(self.dock3, 'above', self.dock2)
-        self.area.addDock(self.dock4, 'above',self.dock3)
-        self.area.addDock(self.dock5, 'above', self.dock4)
-        self.area.addDock(self.dock6, 'bottom', self.dock1) 
-        self.area.addDock(self.dock7, 'bottom', self.dock3)
-        # self.area.addDock(self.dock8, 'below', self.dock1)
-        self.area.addDock(self.dock10, 'below',self.dock1)     
+        self.area.addDock(self.dock2, 'right', self.dock1)
+        self.area.addDock(self.dock6, 'bottom', self.dock1)     
+        self.area.addDock(self.dock8, 'bottom', self.dock2)
+        self.area.addDock(self.dock12, 'above', self.dock8)
+        self.area.addDock(self.dock7, 'above', self.dock12)
         self.area.addDock(self.dock9, 'above', self.dock2)
-        self.area.addDock(self.dock11, 'below', self.dock3)
-        self.area.addDock(self.dock12, 'below', self.dock10)
-        self.area.moveDock(self.dock1, 'above', self.dock12)
+        self.area.addDock(self.dock10, 'above', self.dock9)
+        self.area.addDock(self.dock11, 'above', self.dock10)
+        
+        # self.area.moveDock(self.dock1, 'above', self.dock12)
         # self.area.moveDock(self.dock10, 'above', self.dock8)     # move dock4 to top edge of dock2
         
     def update_mode_comboBox(self, index):
@@ -345,91 +345,7 @@ class MainWindow(QWidget):
         # widget 2 (console)
         self.widget2 = pg.console.ConsoleWidget()
         self.dock2.addWidget(self.widget2)
-
-
-        ## widget 3 (Accelerometer Graph)
-        self.widget3 = pg.PlotWidget(title="imu_accel")
-        self.widget3.setDownsampling(mode="peak")
-        self.widget3.setClipToView(True)
-        self.widget3.addLegend(offset=(1, 1))
-        self.widget3.setRange(xRange=[-200, 0])
-        self.widget3.setLimits(xMax=0)
-        self.widget3_curve0 = self.widget3.plot(
-            pen=(150, 0, 0),
-            name="Ax",
-            labels={
-                "left": self.widget3.setLabel("left", text="Acceleration ", units="m/s^2"),
-                "bottom": self.widget3.setLabel("bottom", text="Time", units="s"),
-            },)
-        self.widget3_curve1 = self.widget3.plot(
-            pen=(0, 150, 0),
-            name="Ay",
-        )
-        self.widget3_curve2 = self.widget3.plot(
-            pen=(0, 0, 150),
-            name="Az",
-        )
-        self.dock3.addWidget(self.widget3)
-        # self.dock3.hideTitleBar()
-        self.data3_0 = np.empty(200)
-        self.data3_1 = np.empty(200)
-        self.data3_2 = np.empty(200)
-        self.ptr1 = 0
-        
-        
-        # widget 4 (Gyroscope Graph)
-        self.widget4 = pg.PlotWidget(title="imu_gyro")
-        self.widget4.setDownsampling(mode="peak")
-        self.widget4.setClipToView(True)
-        self.widget4.addLegend(offset=(1, 1))
-        self.widget4.setRange(xRange=[-200, 0])
-        self.widget4.setLimits(xMax=0)
-        self.widget4_curve0 = self.widget4.plot(
-            pen=(150, 0, 0),
-            name="Gx",
-            labels={
-                "left": self.widget4.setLabel("left", text="Angular Accel ", units="rad/s2"),
-                "bottom": self.widget4.setLabel("bottom", text="Time", units="s"),
-            },
-        )
-        self.widget4_curve1 = self.widget4.plot(
-            pen=(0, 150, 0),
-            name="Gy"
-        )
-        self.widget4_curve2 = self.widget4.plot(
-            pen=(0, 0, 150),
-            name="Gz"
-        )
-        self.dock4.addWidget(self.widget4)
-        self.data4_0 = np.empty(200)
-        self.data4_1 = np.empty(200)
-        self.data4_2 = np.empty(200)
-        self.ptr2 = 0
-        
-
-        # widget 5 (Barometer)
-        self.widget5 = pg.PlotWidget(title="barometer")
-        self.widget5.setDownsampling(mode="peak")
-        self.widget5.setClipToView(True)
-        self.widget5.addLegend(offset=(1, 1))
-        self.widget5.setRange(xRange=[-200, 0])
-        self.widget5.setLimits(xMax=0)
-        self.widget5_curve0 = self.widget5.plot(
-            pen=(150, 0, 0),
-            name="alt",
-            labels={
-                "left": self.widget5.setLabel("left", text="Pressure", units="hPa"),
-                "bottom": self.widget5.setLabel("bottom", text="Time", units="s"),
-            },
-        )
-        self.widget5_curve1 = self.widget5.plot(
-            pen=(0, 150, 0),
-            name="int. temp"
-        )
-        self.dock5.addWidget(self.widget5)
-        self.data5_0 = np.empty(200)
-        self.data5_1 = np.empty(200)
-        self.ptr3 = 0
+        self.dock2.hideTitleBar()
 
 
         # widget 6 (Aircraft Data)
@@ -523,8 +439,6 @@ class MainWindow(QWidget):
         self.dock7.addWidget(self.widget7)
         
         
-        
-        
         # Load PyLeaflet Map
         # self.load_map()  # Loads map and disables button, uncomment to manually load map
         
@@ -613,7 +527,6 @@ class MainWindow(QWidget):
     def load_map(self):
         # Map
         self.widget8 = pg.LayoutWidget()
-        
         self.mapWidget= MapWidget()
         self.widget8.addWidget(self.mapWidget)
         self.map = L.map(self.mapWidget)
@@ -743,126 +656,7 @@ class MainWindow(QWidget):
         self.raw_data = self.ws_socket.receive_data()
 
         return self.raw_data
-    
-    def update_widget3(self,accel_values):
-        if self.ptr1 < self.random_plot_step:
-            self.data3_0[self.ptr1] = np.random.normal()
-            self.data3_1[self.ptr1] = np.random.normal()
-            self.data3_2[self.ptr1] = np.random.normal()
-            
-        else:
-            if len(accel_values) == 3:
-                try:
-                    data3_0_value = round(float(accel_values[0]),3)
-                    data3_1_value = round(float(accel_values[1]),3)
-                    data3_2_value = round(float(accel_values[2]),3)
-                    
-                    self.data3_0[self.ptr1] = data3_0_value
-                    self.data3_1[self.ptr1] = data3_1_value
-                    self.data3_2[self.ptr1] = data3_2_value
-                except ValueError as error:
-                    self.serialText.append(f"[VALUE ERROR]: {error}")
-                    
-        self.ptr1 += 1
-        
-        if self.ptr1 >= self.data3_0.shape[0]:
-            tmp1_0 = self.data3_0
-            tmp1_1 = self.data3_1
-            tmp1_2 = self.data3_2
-            
-            self.data3_0 = np.empty(self.data3_0.shape[0] * 2)
-            self.data3_1 = np.empty(self.data3_1.shape[0] * 2)
-            self.data3_2 = np.empty(self.data3_2.shape[0] * 2)
-            
-            self.data3_0[: tmp1_0.shape[0]] = tmp1_0
-            self.data3_1[: tmp1_1.shape[0]] = tmp1_1
-            self.data3_2[: tmp1_2.shape[0]] = tmp1_2
-        
-        self.widget3_curve0.setData(self.data3_0[:self.ptr1])
-        self.widget3_curve1.setData(self.data3_1[:self.ptr1])
-        self.widget3_curve2.setData(self.data3_2[:self.ptr1])
-        
-        self.widget3_curve0.setPos(-self.ptr1, 0)
-        self.widget3_curve1.setPos(-self.ptr1, 0)
-        self.widget3_curve2.setPos(-self.ptr1, 0)
-    
-    def update_widget4(self, gyro_values):
-        if self.ptr2 < self.random_plot_step:
-            self.data4_0[self.ptr2] = np.random.normal()
-            self.data4_1[self.ptr2] = np.random.normal()
-            self.data4_2[self.ptr2] = np.random.normal() 
-            
-        else:
-            if len(gyro_values) == 3:
-                try:
-                    data4_0_value = round(float(gyro_values[0]), 3)
-                    data4_1_value = round(float(gyro_values[1]), 3)
-                    data4_2_value = round(float(gyro_values[2]), 3)
-                    
-                    self.data4_0[self.ptr2] = data4_0_value
-                    self.data4_1[self.ptr2] = data4_1_value
-                    self.data4_2[self.ptr2] = data4_2_value
-                except ValueError as error:
-                    self.serialText.append(f"[VALUE ERROR]: {error}")
-                    
-        self.ptr2 += 1
-        
-        if self.ptr2 >= self.data4_0.shape[0]:
-            tmp1_0 = self.data4_0
-            tmp1_1 = self.data4_1
-            tmp1_2 = self.data4_2
-            
-            self.data4_0 = np.empty(self.data4_0.shape[0]*2)
-            self.data4_1 = np.empty(self.data4_1.shape[0]*2)
-            self.data4_2 = np.empty(self.data4_2.shape[0]*2)
-            
-            self.data4_0[: tmp1_0.shape[0]] = tmp1_0
-            self.data4_1[: tmp1_1.shape[0]] = tmp1_1
-            self.data4_2[: tmp1_2.shape[0]] = tmp1_2
-        
-        self.widget4_curve0.setData(self.data4_0[:self.ptr2])
-        self.widget4_curve1.setData(self.data4_1[:self.ptr2])
-        self.widget4_curve2.setData(self.data4_2[:self.ptr2])
-        
-        self.widget4_curve0.setPos(-self.ptr2, 0)
-        self.widget4_curve1.setPos(-self.ptr2, 0)
-        self.widget4_curve2.setPos(-self.ptr2, 0)
-        
-    def update_widget5(self, baro_values):
-        if self.ptr3 < self.random_plot_step:
-            self.data5_0[self.ptr3] = np.random.normal()
-            self.data5_1[self.ptr3] = np.random.normal()
-            
-        else:
-            if len(baro_values) == 2:
-                try:
-                    data5_0_value = round(float(baro_values[0]),3)
-                    data5_1_value = round(float(baro_values[1]),3)
-                    
-                    self.data5_0[self.ptr3] = data5_0_value
-                    self.data5_1[self.ptr3] = data5_1_value
-                    
-                except ValueError as error:
-                    self.serialText.append(f"[VALUE ERROR]: {error}")
-                    
-        self.ptr3 += 1
-        
-        if self.ptr3 >= self.data5_0.shape[0]:
-            tmp1_0 = self.data5_0
-            tmp1_1 = self.data5_1
-            
-            self.data5_0 = np.empty(self.data5_0.shape[0]*2)
-            self.data5_1 = np.empty(self.data5_1.shape[0]*2)
-            
-            self.data5_0[: tmp1_0.shape[0]] = tmp1_0
-            self.data5_1[: tmp1_1.shape[0]] = tmp1_1
-
-        self.widget5_curve0.setData(self.data5_0[:self.ptr3])
-        self.widget5_curve1.setData(self.data5_1[:self.ptr3])
-        
-        self.widget5_curve0.setPos(-self.ptr3, 0)
-        self.widget5_curve1.setPos(-self.ptr3, 0)
-                    
+                           
     def update_widget6(self, aircraft_values):
         
         # clear current values
@@ -924,6 +718,21 @@ class MainWindow(QWidget):
         self.stateGraphic.addItem(self.texttoState)
         self.timeGraphic.addItem(self.texttoTime)
     
+    def init_javaviewer_connection(self):
+        self.UDP_IP = "192.168.0.30"
+        self.UDP_PORT = 8080
+        self.MESSAGE = "10,10,10,10\r\n"
+        print("UDP target IP:", self.UDP_IP)
+        print("UDP target port:", self.UDP_PORT)
+        print("message:", self.MESSAGE)
+
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+        self.sock.sendto(bytes(self.MESSAGE, "utf-8"), (self.UDP_IP, self.UDP_PORT))
+        pass
+    
+    def start_javaviewer_app(self):
+        pass
+    
     def mode_arbitration(self):
         if self.tcp_mode:
             serial_data = self.tcp_handleshack("STATE", self.current_state)
@@ -941,7 +750,6 @@ class MainWindow(QWidget):
                 serial_data = None
                 if self.serial_handler.ser.inWaiting():
                     serial_data = self.serial_handler.getData()
-                
                     # print(serial_data)
                     
                 return serial_data
@@ -982,9 +790,6 @@ class MainWindow(QWidget):
             # Display based on state
             if not self.fsm.is_idle:
                 self.update_essential()
-                self.update_widget3(self.serial_data[0:3])
-                self.update_widget4(self.serial_data[3:6])
-                self.update_widget5(self.serial_data[6:8])
                 self.update_widget6(self.serial_data[0:3])
                 
                 if self.serial_data != None:
@@ -999,7 +804,7 @@ class MainWindow(QWidget):
     def animation(self):
         timer = pg.QtCore.QTimer()
         timer.timeout.connect(self.update)
-        timer.start(250)
+        timer.start(20)
         self.start()
         
 

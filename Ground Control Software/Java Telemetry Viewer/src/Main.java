@@ -23,7 +23,7 @@ public class Main {
 
 	static JFrame window = new JFrame("Avionics Telemetry");
 	static LogitechSmoothScrolling mouse = new LogitechSmoothScrolling();
-	static JFrame commandWindow = new JFrame("Command Window");
+
 	
 	/**
 	 * Entry point for the program.
@@ -38,6 +38,11 @@ public class Main {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (Exception e) {
 		}
+		
+		for (int i = 0; i < args.length; i++) {
+			System.out.println(args[i]);
+			System.out.println("Done");
+		}
 
 		// populate the window
 		window.setLayout(new BorderLayout());
@@ -46,13 +51,10 @@ public class Main {
 		window.add(SettingsView.instance, BorderLayout.WEST);
 		window.add(CommunicationView.instance, BorderLayout.SOUTH);
 		window.add(ConfigureView.instance, BorderLayout.EAST);
+
 		NotificationsController.showHintUntil("Connect to a device or open a file using buttons below.", () -> false,
 				true);
-
-		// Command Window Setup
-		commandWindow.setLayout(new BorderLayout());
-		commandWindow.add(CommandView.instance, BorderLayout.WEST);
-		// commandWindow.add(MapView.instance, BorderLayout.EAST);
+		NotificationsController.showHintUntil("Select UDP, and port :8080 in the bottom bar to allow communication with python gui", () -> false, true);
 
 		// size the window
 		int settingsViewWidth = SettingsView.instance.getPreferredSize().width;
@@ -65,15 +67,12 @@ public class Main {
 		int width = settingsViewWidth + dataStructureViewWidth + configureViewWidth + (4 * Theme.padding);
 		int height = notificationHeight + settingsViewHeight + controlsViewHeight + (8 * Theme.padding);
 		Dimension size = new Dimension(width, height);
+
 		window.setSize(size);
 		window.setMinimumSize(size);
 		window.setLocationRelativeTo(null);
 		window.setExtendedState(JFrame.MAXIMIZED_BOTH);
 
-		commandWindow.setSize(size);
-		commandWindow.setMinimumSize(size);
-		commandWindow.setLocationRelativeTo(null);
-		commandWindow.setExtendedState(JFrame.NORMAL);
 
 		// support smooth scrolling
 		window.addWindowFocusListener(new WindowFocusListener() {
@@ -127,9 +126,6 @@ public class Main {
 		// show the window
 		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		window.setVisible(true);
-
-		commandWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		commandWindow.setVisible(true);
 		
 	}
 

@@ -250,7 +250,11 @@ public class CommunicationView extends JPanel {
 				portNumberCombobox.setSelectedItem(portNumberString);
 			}
 		});
-		CommunicationController.setPortNumber(Integer.parseInt(portNumberCombobox.getSelectedItem().toString().substring(1)));
+		CommunicationController
+				.setPortNumber(Integer.parseInt(portNumberCombobox.getSelectedItem().toString().substring(1)));
+		
+		
+		
 		
 		// connect/disconnect
 		connectButton = new JButton("Connect");
