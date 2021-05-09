@@ -277,8 +277,8 @@ void FC::init()
     this->channel_7_pwm = CHAN6_FS; //right dial
     this->channel_8_pwm = CHAN8_FS; //right 2-way
 
-    this->setpoint_ctrl = SETPOINT_ACS;
-    // this->setpoint_ctrl = SETPOINT_RC_RECEIVER;
+    // this->setpoint_ctrl = SETPOINT_ACS;
+    this->setpoint_ctrl = SETPOINT_RC_RECEIVER;
 #endif
 }
 
@@ -904,11 +904,17 @@ void FC::control_mixer()
     s5_command_scaled = 0;
     s6_command_scaled = 0;
     s7_command_scaled = 0;
+
 #elif defined(AIRFRAME_QUADCOPTER)
     motor1.value_scaled = thro_des - pitch_PID + roll_PID + yaw_PID;
     motor2.value_scaled = thro_des - pitch_PID - roll_PID - yaw_PID;
     motor3.value_scaled = thro_des + pitch_PID - roll_PID + yaw_PID;
     motor4.value_scaled = thro_des + pitch_PID + roll_PID - yaw_PID;
+
+    motor1.value_scaled = 0 + ((180 - 0) / (1.5 - 0)) * (motor1.value_scaled - 0);
+    motor2.value_scaled = 0 + ((180 - 0) / (1.5 - 0)) * (motor2.value_scaled - 0);
+    motor3.value_scaled = 0 + ((180 - 0) / (1.5 - 0)) * (motor3.value_scaled - 0);
+    motor4.value_scaled = 0 + ((180 - 0) / (1.5 - 0)) * (motor4.value_scaled - 0);
 
     s1_command_scaled = motor1.value_scaled;
     s2_command_scaled = motor2.value_scaled;
@@ -962,10 +968,10 @@ void FC::scale_commands()
 #elif defined(AIRFRAME_QUADCOPTER)
 
     //Scaled to 0-180 for servo library
-    motor1.value_pwm = motor1.value_scaled * 1000;
-    motor2.value_pwm = motor2.value_scaled * 1000;
-    motor3.value_pwm = motor3.value_scaled * 1000;
-    motor4.value_pwm = motor4.value_scaled * 1000;
+    motor1.value_pwm = motor1.value_scaled * 2000;
+    motor2.value_pwm = motor2.value_scaled * 2000;
+    motor3.value_pwm = motor3.value_scaled * 2000;
+    motor4.value_pwm = motor4.value_scaled * 2000;
 
     //Constrain commands to servos within servo library bounds
     motor1.value_pwm = constrain(motor1.value_pwm, 1000, 2000);
@@ -983,95 +989,30 @@ void FC::cut_throttle()
     minimum for oneshot125 protocol, 0 is minimum for standard PWM servo library used) if channel 5 is high. This is the last function called before command_motors() is called so that the last thing checked is if the user is giving permission to 
     command the motors to anything other than minimum value. Safety first. 
     */
-    if (channel_6_pwm < 1500)
-    {
-        m1_command_PWM = 120;
-        m2_command_PWM = 120;
+    // if (channel_6_pwm < 1500)
+    // {
+    //     m1_command_PWM = 120;
+    //     m2_command_PWM = 120;
 
-        //uncomment if using servo PWM variables to control motor ESCs
-        //s1_command_PWM = 0;
-        //s2_command_PWM = 0;
-        s3_command_PWM = 0;
-        //s4_command_PWM = 0;
-        //s5_command_PWM = 0;
-        //s6_command_PWM = 0;
-        //s7_command_PWM = 0;
-    }
+    //     //uncomment if using servo PWM variables to control motor ESCs
+    //     //s1_command_PWM = 0;
+    //     //s2_command_PWM = 0;
+    //     s3_command_PWM = 0;
+    //     //s4_command_PWM = 0;
+    //     //s5_command_PWM = 0;
+    //     //s6_command_PWM = 0;
+    //     //s7_command_PWM = 0;
+    // }
 }
 
 void FC::command_motors()
 {
-//DESCRIPTION: Send pulses to motor pins, oneshot125 protocol
-/*
-   * My crude implimentation of OneShot125 protocol which sends 125 - 250us pulses to the ESCs (mXPin). The pulselengths being
-   * sent are mX_command_PWM, computed in scale_commands(). This may be replaced by something more efficient in the future.
-   */
-// int wentLow = 0;
-// int pulseStart, timer;
-// int flagM1 = 0;
-// int flagM2 = 0;
-// int flagM3 = 0;
-// int flagM4 = 0;
-// int flagM5 = 0;
-// int flagM6 = 0;
-
-// //Write all motor pins high
-// digitalWrite(m1Pin, HIGH);
-// digitalWrite(m2Pin, HIGH);
-// digitalWrite(m3Pin, HIGH);
-// digitalWrite(m4Pin, HIGH);
-// digitalWrite(m5Pin, HIGH);
-// digitalWrite(m6Pin, HIGH);
-
-// pulseStart = micros();
-
-// //Write each motor pin low as correct pulse length is reached
-// while (wentLow < 6)
-// { //keep going until final (6th) pulse is finished, then done
-//     timer = micros();
-//     if ((m1_command_PWM <= timer - pulseStart) && (flagM1 == 0))
-//     {
-//         digitalWrite(m1Pin, LOW);
-//         wentLow = wentLow + 1;
-//         flagM1 = 1;
-//     }
-//     if ((m2_command_PWM <= timer - pulseStart) && (flagM2 == 0))
-//     {
-//         digitalWrite(m2Pin, LOW);
-//         wentLow = wentLow + 1;
-//         flagM2 = 1;
-//     }
-//     if ((m3_command_PWM <= timer - pulseStart) && (flagM3 == 0))
-//     {
-//         digitalWrite(m3Pin, LOW);
-//         wentLow = wentLow + 1;
-//         flagM3 = 1;
-//     }
-//     if ((m4_command_PWM <= timer - pulseStart) && (flagM4 == 0))
-//     {
-//         digitalWrite(m4Pin, LOW);
-//         wentLow = wentLow + 1;
-//         flagM4 = 1;
-//     }
-//     if ((m5_command_PWM <= timer - pulseStart) && (flagM5 == 0))
-//     {
-//         digitalWrite(m5Pin, LOW);
-//         wentLow = wentLow + 1;
-//         flagM5 = 1;
-//     }
-//     if ((m6_command_PWM <= timer - pulseStart) && (flagM6 == 0))
-//     {
-//         digitalWrite(m6Pin, LOW);
-//         wentLow = wentLow + 1;
-//         flagM6 = 1;
-//     }
-// }
 #if defined(AIRFRAME_QUADCOPTER)
 
-    // motor1.motorPWM.write_pwm(motor1.value_pwm);
-    // motor2.motorPWM.write_pwm(motor2.value_pwm);
-    // motor3.motorPWM.write_pwm(motor3.value_pwm);
-    // motor4.motorPWM.write_pwm(motor4.value_pwm);
+    motor1.motorPWM.write(int(motor1.value_scaled));
+    motor2.motorPWM.write(int(motor2.value_scaled));
+    motor3.motorPWM.write(int(motor3.value_scaled));
+    motor4.motorPWM.write(int(motor4.value_scaled));
 
     // motor1.motorPWM.write(((1500-1000)/1000) * 180);
     // motor1.motorPWM.write(90);
@@ -1135,6 +1076,8 @@ void FC::get_commands(Radio receiver)
         channel_2_pwm = receiver.getRadioPWM(2);
         channel_3_pwm = receiver.getRadioPWM(3);
         channel_4_pwm = receiver.getRadioPWM(4);
+        channel_5_pwm = receiver.getRadioPWM(5);
+        channel_6_pwm = receiver.getRadioPWM(6);
         // Serial.println("Using RC");
         break;
     }
@@ -1149,7 +1092,7 @@ void FC::get_commands(Radio receiver)
     }
     default:
     {
-        this->setpoint_ctrl = SETPOINT_ACS;
+        this->setpoint_ctrl = SETPOINT_RC_RECEIVER;
         break;
     }
     }

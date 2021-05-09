@@ -18,7 +18,7 @@ import socket
 import json
 import numpy as np
 from datetime import datetime
-from pyqtlet import L, MapWidget
+# from pyqtlet import L, MapWidget
 from os.path import dirname, realpath, join
 
 from submodules.model import *
@@ -35,7 +35,7 @@ import pyqtgraph.opengl as gl
 from pyqtgraph.Qt import QtCore, QtGui
 from pyqtgraph.dockarea import *
 
-from PyQt5.QtWidgets import QPushButton,QWidget, QBoxLayout, QVBoxLayout, QFileDialog, QAction, QComboBox, QLineEdit, QTextEdit
+from PyQt5.QtWidgets import QPushButton,QWidget, QBoxLayout, QVBoxLayout, QFileDialog, QAction, QComboBox, QLineEdit, QTextEdit, QGroupBox, QGridLayout, QLabel
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 
@@ -499,6 +499,19 @@ class MainWindow(QWidget):
         
         # Text Input
         self.widget12 = pg.LayoutWidget()
+        # self.widget12 = QGroupBox()
+        btn = QPushButton("Pause View")
+        btn1 = QPushButton("Start View")
+        
+        self.label1 = QLabel("Yes")
+        
+        self.paramater_view = QTextEdit()
+        self.paramater_view.setReadOnly(True)
+        self.paramater_view.setText("Empty")
+        
+        self.widget12.addWidget(self.paramater_view,0,0,4,1)
+        self.widget12.addWidget(btn,0,1)
+        self.widget12.addWidget(btn1,1,1)
         
         self.dock12.addWidget(self.widget12)
         
@@ -718,6 +731,36 @@ class MainWindow(QWidget):
         self.stateGraphic.addItem(self.texttoState)
         self.timeGraphic.addItem(self.texttoTime)
     
+    def update_parameter_viewer(self, packet_data):
+        
+        
+        # parameter_text_struct = f"MODE MONITORING\nFC Mode : {str(packet_data[0])}\nFC Mode : {str(packet_data[0])}\n1"
+        
+        
+        # parameter_text_struct = f""" this is a very/
+        # long string if I had the
+        # energy to type more and more ..."""
+        
+        parameter_text_struct = (
+            f"MODE MONITORING\t\tFLIGHT VARIABLES\n"
+            f"FC Mode: {packet_data[0]:.2f}\t\timu_pitch:   {packet_data[0]:.2f}\n"
+            f"ACS Mode: {packet_data[0]:.2f}\t\timu_roll:   {packet_data[0]:.2f}\n"
+            f"GCS Mode: {self.selected_mode}\t\timu_yaw:   {packet_data[0]:.2f}\n"
+        )
+        
+        if self.selected_mode == "Debug":
+            if len(packet_data) == 19:
+                self.paramater_view.setText(parameter_text_struct)
+        
+        if self.selected_mode == "Serial":
+            self.paramater_view.setText(parameter_text_struct)
+        
+        
+        if self.selected_mode == "Network":
+            self.paramater_view.setText("Nothing")
+        
+        
+    
     def init_javaviewer_connection(self):
         self.UDP_IP = "192.168.0.30"
         self.UDP_PORT = 8080
@@ -791,6 +834,7 @@ class MainWindow(QWidget):
             if not self.fsm.is_idle:
                 self.update_essential()
                 self.update_widget6(self.serial_data[0:3])
+                self.update_parameter_viewer(self.serial_data)
                 
                 if self.serial_data != None:
                     self.serialText.append(str(self.serial_data))

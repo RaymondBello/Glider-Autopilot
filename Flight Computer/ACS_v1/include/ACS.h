@@ -285,10 +285,10 @@ void ACS::print_debug_msg()
   // print_desired_state();
   // print_roll_pitch_yaw();
   // print_pid_output();
-  // print_motor_cmds();
+  print_motor_cmds();
   // print_servo_cmds();
   // print_pid_values();
-  print_serial_pkt();
+  // print_serial_pkt();
 }
 
 void ACS::print_radio_data()
@@ -401,18 +401,29 @@ void ACS::print_motor_cmds()
   if (flightController.current_time - print_counter > 10000)
   {
     print_counter = micros();
+
+    #if defined(AIRFRAME_QUADCOPTER)
     Serial.print(F("m1_command: "));
-    Serial.print(flightController.m1_command_PWM);
+    Serial.print(flightController.motor1.value_scaled);
     Serial.print(F(" m2_command: "));
-    Serial.print(flightController.m2_command_PWM);
+    Serial.print(flightController.motor2.value_scaled);
     Serial.print(F(" m3_command: "));
-    Serial.print(flightController.m3_command_PWM);
+    Serial.print(flightController.motor3.value_scaled);
     Serial.print(F(" m4_command: "));
-    Serial.print(flightController.m4_command_PWM);
-    Serial.print(F(" m5_command: "));
-    Serial.print(flightController.m5_command_PWM);
-    Serial.print(F(" m6_command: "));
-    Serial.println(flightController.m6_command_PWM);
+    Serial.println(flightController.motor4.value_scaled);
+
+    // Serial.print(F("m1_command: "));
+    // Serial.print(flightController.motor1.value_pwm);
+    // Serial.print(F(" m2_command: "));
+    // Serial.print(flightController.motor2.value_pwm);
+    // Serial.print(F(" m3_command: "));
+    // Serial.print(flightController.motor3.value_pwm);
+    // Serial.print(F(" m4_command: "));
+    // Serial.println(flightController.motor4.value_pwm);
+    #endif
+
+    #if defined(AIRFRAME_FIXEDWING)
+    #endif
   }
 }
 
