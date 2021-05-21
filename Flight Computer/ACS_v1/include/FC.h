@@ -1009,28 +1009,27 @@ void FC::command_motors()
 {
 #if defined(AIRFRAME_QUADCOPTER)
 
-    motor1.motorPWM.write(int(motor1.value_scaled));
-    motor2.motorPWM.write(int(motor2.value_scaled));
-    motor3.motorPWM.write(int(motor3.value_scaled));
-    motor4.motorPWM.write(int(motor4.value_scaled));
+    // Throttle Arm Check
+    if (this->channel_6_pwm > 1700){
+        motor1.motorPWM.write(int(motor1.value_scaled));
+        motor2.motorPWM.write(int(motor2.value_scaled));
+        motor3.motorPWM.write(int(motor3.value_scaled));
+        motor4.motorPWM.write(int(motor4.value_scaled));
 
-    // motor1.motorPWM.write(((1500-1000)/1000) * 180);
-    // motor1.motorPWM.write(90);
+        // motor1.motorPWM.write(40);
+        // motor2.motorPWM.write(30);
+        // motor3.motorPWM.write(30);
+        // motor4.motorPWM.write(30);
+    }
+    else
+    {
+        motor1.motorPWM.write(0);
+        motor2.motorPWM.write(0);
+        motor3.motorPWM.write(0);
+        motor4.motorPWM.write(0);
+    }
 
-
-    // int val = 56;
-    // Serial.print(motor1.value_pwm);
-    // Serial.print(", ");
-    // Serial.print(motor2.value_pwm);
-    // Serial.print(", ");
-    // Serial.print(motor3.value_pwm);
-    // Serial.print(", ");
-    // Serial.println(motor4.value_pwm);
-
-
-    // motor2.motorPWM.write(90);
-    // motor3.motorPWM.write(90);
-    // motor4.motorPWM.write(90);
+    
 
 #endif
 }

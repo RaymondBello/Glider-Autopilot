@@ -124,6 +124,12 @@ BoolInt ACS::setup_flightcontroller()
   if (passErr.flag)
   {
     passErr = this->flightController.initBaro();
+
+    // Step all motors to zero
+    flightController.motor1.motorPWM.write(0);
+    flightController.motor2.motorPWM.write(0);
+    flightController.motor3.motorPWM.write(0);
+    flightController.motor4.motorPWM.write(0);
   }
   return passErr;
 }
@@ -284,8 +290,8 @@ void ACS::print_debug_msg()
   // print_baro_data();
   // print_desired_state();
   // print_roll_pitch_yaw();
-  // print_pid_output();
-  print_motor_cmds();
+  print_pid_output();
+  // print_motor_cmds();
   // print_servo_cmds();
   // print_pid_values();
   // print_serial_pkt();
