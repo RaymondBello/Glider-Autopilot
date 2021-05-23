@@ -290,10 +290,10 @@ BoolInt FC::initIMU()
     Wire.begin();
     Wire.setClock(1000000); //Note this is 2.5 times the spec sheet 400 kHz max...
     // Wire.setClock(400000);       // 400kHz I2C clock. Comment this line if having compilation difficulties
-    Serial.println("INFO, MPU6050 initialization...");
+    Serial.println("INFO: MPU6050 initialization...");
     this->IMU.initialize(GYRO_SCALE, ACCEL_SCALE);
 
-    Serial.println("INFO, Initializing DMP...");
+    Serial.println("INFO: Initializing DMP...");
     pass_err.ErrCode = this->IMU.dmpInitialize();
 
     // Enter offsets here
@@ -309,14 +309,14 @@ BoolInt FC::initIMU()
         this->IMU.CalibrateGyro(6);
         this->IMU.PrintActiveOffsets();
         // turn on the DMP, now that it's ready
-        Serial.println(F("INFO, Enabling DMP..."));
+        Serial.println(F("\n\nINFO: Enabling DMP..."));
         this->IMU.setDMPEnabled(true);
         // Serial.print(F("Enabling interrupt detection (Teensy external interrupt "));
         // Serial.print(digitalPinToInterrupt(INTERRUPT_PIN));
         // Serial.println(F(""));
         // attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), dmpDataReady, RISING);
         mpuIntStatus = this->IMU.getIntStatus();
-        Serial.println("INFO, DMP ready!");
+        Serial.println("INFO: DMP ready!");
         dmpReady = true;
         pass_err.flag = true;
         packetSize = this->IMU.dmpGetFIFOPacketSize();
@@ -326,7 +326,7 @@ BoolInt FC::initIMU()
         // ERROR!
         // 1 = initial memory load failed
         // 2 = DMP configuration updates failed
-        Serial.print("INFO, DMP Initialization failed (code ");
+        Serial.print("INFO: DMP Initialization failed (code ");
         Serial.print(pass_err.ErrCode);
         Serial.println(")");
     }
@@ -358,7 +358,7 @@ BoolInt FC::initBaro()
                          Adafruit_BMP280::SAMPLING_X2,    /* Pressure oversampling */
                          Adafruit_BMP280::FILTER_X2,      /* Filtering. */
                          Adafruit_BMP280::STANDBY_MS_63); /* Standby time. */
-        Serial.println("INFO, Barometer Sampling Settings SET");
+        Serial.println("INFO: Barometer Sampling Settings SET");
         pass_err.ErrCode = 0;
         pass_err.flag = true;
     }
@@ -377,7 +377,7 @@ void FC::calculate_imu_error()
     // int16_t AcX, AcY, AcZ, GyX, GyY, GyZ, MgX, MgY, MgZ;
     int16_t AcX, AcY, AcZ, GyX, GyY, GyZ;
 
-    Serial.println("INFO, Calculating IMU error...");
+    Serial.println("INFO: Calculating IMU error...");
 
     //Read IMU values 12000 times
     int c = 0;
@@ -418,7 +418,7 @@ void FC::calibrate_attitude(bool verbose)
 {
     //Used to warm up the main loop to allow the madwick filter to converge before commands can be sent to the actuators assuming vehicle is powered up on level surface!
 
-    Serial.println("INFO, Calibrating Attitude. Warming up madgwick filter...");
+    Serial.println("INFO: Calibrating Attitude. Warming up madgwick filter...");
     //Warm up IMU and madgwick filter in simulated main loop
 
     int verbose_count = 0;
@@ -443,7 +443,7 @@ void FC::calibrate_attitude(bool verbose)
             verbose_count++;
         }
     }
-    Serial.println("INFO, Calibration Complete\n");
+    Serial.println("INFO: Calibration Complete\n");
 }
 
 void FC::get_imu_data()
@@ -802,7 +802,6 @@ void FC::loop_beep()
 
 void FC::send_heartbeat_msg()
 {
-
 }
 
 void FC::get_desired_aircraft_state()
@@ -1010,7 +1009,8 @@ void FC::command_motors()
 #if defined(AIRFRAME_QUADCOPTER)
 
     // Throttle Arm Check
-    if (this->channel_6_pwm > 1700){
+    if (this->channel_6_pwm > 1700)
+    {
         motor1.motorPWM.write(int(motor1.value_scaled));
         motor2.motorPWM.write(int(motor2.value_scaled));
         motor3.motorPWM.write(int(motor3.value_scaled));
@@ -1028,8 +1028,6 @@ void FC::command_motors()
         motor3.motorPWM.write(0);
         motor4.motorPWM.write(0);
     }
-
-    
 
 #endif
 }

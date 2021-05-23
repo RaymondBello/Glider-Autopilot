@@ -166,13 +166,13 @@ void ACS::loop()
   }
   case Initialization:
   {
-    Serial.println("INFO, ACS-Mode: Initialization");
+    Serial.println("INFO: ACS-Mode: Initialization");
     this->setup_radio_receiver();
     BoolInt boolint = this->setup_flightcontroller();
     boolint.flag ? (0) : (this->mode = Mode::Error);
     BoolInt boolint1 = this->calibrate_flightcontroller();
     boolint1.flag ? (this->mode = Mode::Active) : (this->mode = Mode::Error);
-    Serial.println("INFO, ACS boot SR completed");
+    Serial.println("INFO: ACS boot SR completed");
     delay(1000);
     break;
   }
@@ -195,12 +195,12 @@ void ACS::loop()
   }
   case Idle:
   {
-    Serial.println("INFO, ACS-Mode: Idle");
+    Serial.println("INFO: ACS-Mode: Idle");
     break;
   }
   case Error:
   {
-    Serial.println("INFO, ACS-Mode: Error");
+    Serial.println("INFO: ACS-Mode: Error");
     flightController.loop_beep();
     break;
   }
@@ -290,7 +290,7 @@ void ACS::print_debug_msg()
   // print_baro_data();
   // print_desired_state();
   // print_roll_pitch_yaw();
-  print_pid_output();
+  // print_pid_output();
   // print_motor_cmds();
   // print_servo_cmds();
   // print_pid_values();
@@ -408,7 +408,7 @@ void ACS::print_motor_cmds()
   {
     print_counter = micros();
 
-    #if defined(AIRFRAME_QUADCOPTER)
+#if defined(AIRFRAME_QUADCOPTER)
     Serial.print(F("m1_command: "));
     Serial.print(flightController.motor1.value_scaled);
     Serial.print(F(" m2_command: "));
@@ -418,18 +418,18 @@ void ACS::print_motor_cmds()
     Serial.print(F(" m4_command: "));
     Serial.println(flightController.motor4.value_scaled);
 
-    // Serial.print(F("m1_command: "));
-    // Serial.print(flightController.motor1.value_pwm);
-    // Serial.print(F(" m2_command: "));
-    // Serial.print(flightController.motor2.value_pwm);
-    // Serial.print(F(" m3_command: "));
-    // Serial.print(flightController.motor3.value_pwm);
-    // Serial.print(F(" m4_command: "));
-    // Serial.println(flightController.motor4.value_pwm);
-    #endif
+// Serial.print(F("m1_command: "));
+// Serial.print(flightController.motor1.value_pwm);
+// Serial.print(F(" m2_command: "));
+// Serial.print(flightController.motor2.value_pwm);
+// Serial.print(F(" m3_command: "));
+// Serial.print(flightController.motor3.value_pwm);
+// Serial.print(F(" m4_command: "));
+// Serial.println(flightController.motor4.value_pwm);
+#endif
 
-    #if defined(AIRFRAME_FIXEDWING)
-    #endif
+#if defined(AIRFRAME_FIXEDWING)
+#endif
   }
 }
 
@@ -491,144 +491,143 @@ void ACS::print_serial_pkt()
 {
   if (flightController.current_time - print_counter > 10000)
   {
-    // Add mode values here
-    #ifdef AIRFRAME_FIXEDWING
-      Serial.print(flightController.stateFC.ned_accel_f.x);
-      Serial.print(",");
-      Serial.print(flightController.stateFC.ned_accel_f.y);
-      Serial.print(",");
-      Serial.print(flightController.stateFC.ned_accel_f.z);
-      Serial.print(",");
-      Serial.print(flightController.stateFC.body_gyro_f.p);
-      Serial.print(",");
-      Serial.print(flightController.stateFC.body_gyro_f.q);
-      Serial.print(",");
-      Serial.print(flightController.stateFC.body_gyro_f.r);
-      Serial.print(",");
-      Serial.print(flightController.stateFC.ned_speed_f.x);
-      Serial.print(",");
-      Serial.print(flightController.stateFC.ned_speed_f.y);
-      Serial.print(",");
-      Serial.print(flightController.stateFC.ned_speed_f.z);
-      Serial.print(",");
-      Serial.print(flightController.stateFC.quat_f.qi);
-      Serial.print(",");
-      Serial.print(flightController.stateFC.quat_f.qx);
-      Serial.print(",");
-      Serial.print(flightController.stateFC.quat_f.qy);
-      Serial.print(",");
-      Serial.print(flightController.stateFC.quat_f.qz);
-      Serial.print(",");
-      Serial.print(flightController.stateFC.eulers_f.theta);
-      Serial.print(",");
-      Serial.print(flightController.stateFC.eulers_f.psi);
-      Serial.print(",");
-      Serial.print(flightController.stateFC.eulers_f.phi);
-      Serial.print(",");
-      Serial.print(flightController.stateFC.lla_pos_f.lat);
-      Serial.print(",");
-      Serial.print(flightController.stateFC.lla_pos_f.lon);
-      Serial.print(",");
-      Serial.print(flightController.stateFC.lla_pos_f.alt);
-      Serial.print(",");
-      Serial.print(flightController.stateFC.actuator.throttle);
-      Serial.print(",");
-      Serial.print(flightController.stateFC.actuator.aileron);
-      Serial.print(",");
-      Serial.print(flightController.stateFC.actuator.elevator);
-      Serial.print(",");
-      Serial.print(flightController.stateFC.actuator.rudder);
-      Serial.print(",");
-      Serial.println(flightController.stateFC.actuator.flaps);
-    #endif
+// Add mode values here
+#ifdef AIRFRAME_FIXEDWING
+    Serial.print(flightController.stateFC.ned_accel_f.x);
+    Serial.print(",");
+    Serial.print(flightController.stateFC.ned_accel_f.y);
+    Serial.print(",");
+    Serial.print(flightController.stateFC.ned_accel_f.z);
+    Serial.print(",");
+    Serial.print(flightController.stateFC.body_gyro_f.p);
+    Serial.print(",");
+    Serial.print(flightController.stateFC.body_gyro_f.q);
+    Serial.print(",");
+    Serial.print(flightController.stateFC.body_gyro_f.r);
+    Serial.print(",");
+    Serial.print(flightController.stateFC.ned_speed_f.x);
+    Serial.print(",");
+    Serial.print(flightController.stateFC.ned_speed_f.y);
+    Serial.print(",");
+    Serial.print(flightController.stateFC.ned_speed_f.z);
+    Serial.print(",");
+    Serial.print(flightController.stateFC.quat_f.qi);
+    Serial.print(",");
+    Serial.print(flightController.stateFC.quat_f.qx);
+    Serial.print(",");
+    Serial.print(flightController.stateFC.quat_f.qy);
+    Serial.print(",");
+    Serial.print(flightController.stateFC.quat_f.qz);
+    Serial.print(",");
+    Serial.print(flightController.stateFC.eulers_f.theta);
+    Serial.print(",");
+    Serial.print(flightController.stateFC.eulers_f.psi);
+    Serial.print(",");
+    Serial.print(flightController.stateFC.eulers_f.phi);
+    Serial.print(",");
+    Serial.print(flightController.stateFC.lla_pos_f.lat);
+    Serial.print(",");
+    Serial.print(flightController.stateFC.lla_pos_f.lon);
+    Serial.print(",");
+    Serial.print(flightController.stateFC.lla_pos_f.alt);
+    Serial.print(",");
+    Serial.print(flightController.stateFC.actuator.throttle);
+    Serial.print(",");
+    Serial.print(flightController.stateFC.actuator.aileron);
+    Serial.print(",");
+    Serial.print(flightController.stateFC.actuator.elevator);
+    Serial.print(",");
+    Serial.print(flightController.stateFC.actuator.rudder);
+    Serial.print(",");
+    Serial.println(flightController.stateFC.actuator.flaps);
+#endif
 
-    #ifdef AIRFRAME_QUADCOPTER
-      Serial.print(0); // Packet Type Indicator
-      Serial.print(",");
-      Serial.print(flightController.AccX);
-      Serial.print(",");
-      Serial.print(flightController.AccY);
-      Serial.print(",");
-      Serial.print(flightController.AccZ);
-      Serial.print(",");
-      Serial.print(flightController.GyroX);
-      Serial.print(",");
-      Serial.print(flightController.GyroY);
-      Serial.print(",");
-      Serial.print(flightController.GyroZ);
-      Serial.print(",");
-      Serial.print(flightController.q0);
-      Serial.print(",");
-      Serial.print(flightController.q1);
-      Serial.print(",");
-      Serial.print(flightController.q2);
-      Serial.print(",");
-      Serial.print(flightController.q3);
-      Serial.print(",");
-      Serial.print(flightController.pitch_IMU);
-      Serial.print(",");
-      Serial.print(flightController.roll_IMU);
-      Serial.print(",");
-      Serial.print(flightController.GyroZ);
-      Serial.print(",");
-      Serial.print(flightController.pitch_des);
-      Serial.print(",");
-      Serial.print(flightController.roll_des);
-      Serial.print(",");
-      Serial.print(flightController.yaw_des);
-      Serial.print(",");
-      Serial.print(flightController.error_pitch);
-      Serial.print(",");
-      Serial.print(flightController.error_roll);
-      Serial.print(",");
-      Serial.print(flightController.error_yaw);
-      Serial.print(",");
-      Serial.print(flightController.integral_pitch);
-      Serial.print(",");
-      Serial.print(flightController.integral_roll);
-      Serial.print(",");
-      Serial.print(flightController.integral_yaw);
-      Serial.print(",");
-      Serial.print(flightController.derivative_pitch);
-      Serial.print(",");
-      Serial.print(flightController.derivative_roll);
-      Serial.print(",");
-      Serial.print(flightController.derivative_yaw);
-      Serial.print(",");
-      Serial.print(flightController.pitch_PID);
-      Serial.print(",");
-      Serial.print(flightController.roll_PID);
-      Serial.print(",");
-      Serial.print(flightController.yaw_PID);
-      Serial.print(",");
-      Serial.print(flightController.motor1.value_scaled);
-      Serial.print(",");
-      Serial.print(flightController.motor2.value_scaled);
-      Serial.print(",");
-      Serial.print(flightController.motor3.value_scaled);
-      Serial.print(",");
-      Serial.print(flightController.motor4.value_scaled);
-      Serial.print(",");
-      Serial.print(flightController.motor1.value_pwm);
-      Serial.print(",");
-      Serial.print(flightController.motor2.value_pwm);
-      Serial.print(",");
-      Serial.print(flightController.motor3.value_pwm);
-      Serial.print(",");
-      Serial.print(flightController.motor4.value_pwm);
-      Serial.print(",");
-      Serial.print(flightController.setpoint_acs.throttle_pwm);
-      Serial.print(",");
-      Serial.print(flightController.setpoint_acs.pitch_pwm);
-      Serial.print(",");
-      Serial.print(flightController.setpoint_acs.roll_pwm);
-      Serial.print(",");
-      Serial.print(flightController.setpoint_acs.yaw_pwm);
-      Serial.print(",");
-      Serial.println(flightController.setpoint_ctrl);
-      
-    #endif
-    
+#ifdef AIRFRAME_QUADCOPTER
+    Serial.print(0); // Packet Type Indicator
+    Serial.print(",");
+    Serial.print(flightController.AccX);
+    Serial.print(",");
+    Serial.print(flightController.AccY);
+    Serial.print(",");
+    Serial.print(flightController.AccZ);
+    Serial.print(",");
+    Serial.print(flightController.GyroX);
+    Serial.print(",");
+    Serial.print(flightController.GyroY);
+    Serial.print(",");
+    Serial.print(flightController.GyroZ);
+    Serial.print(",");
+    Serial.print(flightController.q0);
+    Serial.print(",");
+    Serial.print(flightController.q1);
+    Serial.print(",");
+    Serial.print(flightController.q2);
+    Serial.print(",");
+    Serial.print(flightController.q3);
+    Serial.print(",");
+    Serial.print(flightController.pitch_IMU);
+    Serial.print(",");
+    Serial.print(flightController.roll_IMU);
+    Serial.print(",");
+    Serial.print(flightController.GyroZ);
+    Serial.print(",");
+    Serial.print(flightController.pitch_des);
+    Serial.print(",");
+    Serial.print(flightController.roll_des);
+    Serial.print(",");
+    Serial.print(flightController.yaw_des);
+    Serial.print(",");
+    Serial.print(flightController.error_pitch);
+    Serial.print(",");
+    Serial.print(flightController.error_roll);
+    Serial.print(",");
+    Serial.print(flightController.error_yaw);
+    Serial.print(",");
+    Serial.print(flightController.integral_pitch);
+    Serial.print(",");
+    Serial.print(flightController.integral_roll);
+    Serial.print(",");
+    Serial.print(flightController.integral_yaw);
+    Serial.print(",");
+    Serial.print(flightController.derivative_pitch);
+    Serial.print(",");
+    Serial.print(flightController.derivative_roll);
+    Serial.print(",");
+    Serial.print(flightController.derivative_yaw);
+    Serial.print(",");
+    Serial.print(flightController.pitch_PID);
+    Serial.print(",");
+    Serial.print(flightController.roll_PID);
+    Serial.print(",");
+    Serial.print(flightController.yaw_PID);
+    Serial.print(",");
+    Serial.print(flightController.motor1.value_scaled);
+    Serial.print(",");
+    Serial.print(flightController.motor2.value_scaled);
+    Serial.print(",");
+    Serial.print(flightController.motor3.value_scaled);
+    Serial.print(",");
+    Serial.print(flightController.motor4.value_scaled);
+    Serial.print(",");
+    Serial.print(flightController.motor1.value_pwm);
+    Serial.print(",");
+    Serial.print(flightController.motor2.value_pwm);
+    Serial.print(",");
+    Serial.print(flightController.motor3.value_pwm);
+    Serial.print(",");
+    Serial.print(flightController.motor4.value_pwm);
+    Serial.print(",");
+    Serial.print(flightController.setpoint_acs.throttle_pwm);
+    Serial.print(",");
+    Serial.print(flightController.setpoint_acs.pitch_pwm);
+    Serial.print(",");
+    Serial.print(flightController.setpoint_acs.roll_pwm);
+    Serial.print(",");
+    Serial.print(flightController.setpoint_acs.yaw_pwm);
+    Serial.print(",");
+    Serial.println(flightController.setpoint_ctrl);
+
+#endif
   }
 }
 
@@ -824,7 +823,6 @@ void ACS::process_get_cmd(const char *setting)
     Serial.print(flightController.motor3.value_pwm);
     Serial.print(", ");
     Serial.println(flightController.motor4.value_pwm);
-    
   }
   else if ((strcmp(setting, "t_states") == 0) | (strcmp(setting, "t_state") == 0))
   {
@@ -836,7 +834,7 @@ void ACS::process_get_cmd(const char *setting)
   }
 }
 
-int map_value(std::pair<int, int> inputRange, std::pair<int,int> outputRange, int value)
+int map_value(std::pair<int, int> inputRange, std::pair<int, int> outputRange, int value)
 {
   int inValNorm = value - inputRange.first;
   int aUpperNorm = inputRange.second - inputRange.first;
@@ -860,7 +858,6 @@ void ACS::process_set_cmd(const char *setting, const char *value)
 
   else if (strcmp(setting, "ctrl") == 0)
   {
-    
 
     switch (atoi(value))
     {
@@ -898,11 +895,12 @@ void ACS::process_set_cmd(const char *setting, const char *value)
       Serial.print("# All setpoints set to: ");
       Serial.println(atoi(value));
     }
-    else{
+    else
+    {
       Serial.print("# 'all_zero' value must be 0 to confirm. value = ");
       Serial.println(atoi(value));
     }
-    }
+  }
 
   else if (strcmp(setting, "thro") == 0)
   {
