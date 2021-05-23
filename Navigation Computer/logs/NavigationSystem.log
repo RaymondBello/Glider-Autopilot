@@ -1,0 +1,5 @@
+2021-05-23 03:48:26,141 | NavigationSystem - DEBUG - debug tyryemessage
+2021-05-23 03:48:26,141 | NavigationSystem - INFO - info message
+2021-05-23 03:48:26,141 | NavigationSystem - WARNING - warn message
+2021-05-23 03:48:26,141 | NavigationSystem - ERROR - error message
+2021-05-23 03:48:26,141 | NavigationSystem - CRITICAL - critical message
