@@ -39,6 +39,9 @@ private:
   bool ground_detected;    // automatic detection of landing
   bool detect_ground_once; // enable automatic detection of ground (one shot)
 
+  bool mode1_complete;     // Flag to ensure init mode is executed once in loop()
+  bool mode2_complete;
+
 public:
   unsigned long print_counter, serial_counter;
   Mode mode; // current autopilot mode
@@ -92,6 +95,11 @@ public:
 ACS::ACS(/* args */)
 {
   mode = Uninitialized;
+
+  // Flags to ensure certain mode functions are executed once
+  mode1_complete = false;
+  mode2_complete = false;
+
   cmdGet = cli.addCommand("get");
   cmdGet.addPositionalArgument("setting");
   // cmdGet.addPositionalArgument("value");
@@ -153,65 +161,78 @@ BoolInt ACS::calibrate_flightcontroller()
 
 void ACS::loop()
 {
-
   switch (this->mode)
   {
-  case Uninitialized:
-  {
-    delay(1000);
-    Serial.println("Uninitialized");
-    this->setup_mcu();
-    this->mode = Mode::Initialization;
-    break;
-  }
-  case Initialization:
-  {
-    Serial.println("INFO: ACS-Mode: Initialization");
-    this->setup_radio_receiver();
-    BoolInt boolint = this->setup_flightcontroller();
-    boolint.flag ? (0) : (this->mode = Mode::Error);
-    BoolInt boolint1 = this->calibrate_flightcontroller();
-    boolint1.flag ? (this->mode = Mode::Active) : (this->mode = Mode::Error);
-    Serial.println("INFO: ACS boot SR completed");
-    delay(1000);
-    break;
-  }
-  case Active:
-  {
-    // Serial.println("Active");
-    flightController.loop_blink();
-    update_flightcontroller_time();
-    update_flightcontroller_orientation();
-    update_flightcontroller_pid_loop();
-    print_debug_msg();
+    case Uninitialized:
+    {
+      while (!mode1_complete){
+        delay(1000);
+        Serial.println("Uninitialized");
+        this->setup_mcu();
+        // this->mode = Mode::Initialization;
 
-    /** Handle CLI message **/
-    // Serial.println("Wrote to Motors");
+        Serial.println("INFO: UNINITIALIZED complete");
+        mode1_complete = true;
+      }
+      handle_serial(); 
+      break;
+    }
+    case Initialization:
+    {
+      while (!mode2_complete)
+      {
+        Serial.println("INFO: ACS-Mode: Initialization");
+        this->setup_radio_receiver();
+        
+        BoolInt boolint = this->setup_flightcontroller();
+        boolint.flag ? (0) : (this->mode = Mode::Error); // If setup fails, restart FC
 
-    handle_serial();
+        BoolInt boolint1 = this->calibrate_flightcontroller();
+        boolint1.flag ? (0) : (this->mode = Mode::Error);
 
-    flightController.loop_rate(2000);
-    break;
-  }
-  case Idle:
-  {
-    Serial.println("INFO: ACS-Mode: Idle");
-    break;
-  }
-  case Error:
-  {
-    Serial.println("INFO: ACS-Mode: Error");
-    flightController.loop_beep();
-    break;
-  }
-  default:
-  {
-    Serial.println("FATAL, FATAL ACS-Mode Error! Rebooting...");
-    this->setup_beep(4, 160, 70);
-    delay(50);
-    SCB_AIRCR = 0x05FA0004;
-    break;
-  }
+        // this->mode = Mode::Active;
+        Serial.println("INFO: INITIALIZATION complete");
+        mode2_complete = true;
+      }
+      handle_serial();
+      break;
+    }
+    case Active:
+    {
+      // Serial.println("Active");
+      flightController.loop_blink();
+      update_flightcontroller_time();
+      update_flightcontroller_orientation();
+      update_flightcontroller_pid_loop();
+      print_debug_msg();
+
+      /** Handle CLI message **/
+      // Serial.println("Wrote to Motors");
+
+      handle_serial();
+
+      flightController.loop_rate(2000);
+      break;
+    }
+    case Idle:
+    {
+      Serial.println("INFO: ACS-Mode: Idle");
+      break;
+    }
+    case Error:
+    {
+      Serial.println("INFO: ACS-Mode: Error");
+      flightController.loop_beep();
+      break;
+    }
+    default:
+    {
+      Serial.println("FATAL, FATAL ACS-Mode Error! Rebooting...");
+      this->setup_beep(4, 160, 70);
+      delay(50);
+      SCB_AIRCR = 0x05FA0004; // Force Restart
+      break;
+    }
   }
 }
 
@@ -545,6 +566,8 @@ void ACS::print_serial_pkt()
 #ifdef AIRFRAME_QUADCOPTER
     Serial.print(0); // Packet Type Indicator
     Serial.print(",");
+    Serial.print(this->mode); // ACS Mode
+    Serial.print(",");
     Serial.print(flightController.AccX);
     Serial.print(",");
     Serial.print(flightController.AccY);
@@ -710,8 +733,10 @@ void ACS::handle_received_msg(char *msg)
 {
   String str(msg);
 
-  Serial.printf("$ %s", msg);
-  Serial.println("");
+  #ifdef ECHO_CMD
+    Serial.printf("$ %s", msg);
+    Serial.println("");
+  #endif
 
   this->cli.parse(str.c_str());
 
@@ -850,10 +875,43 @@ void ACS::process_set_cmd(const char *setting, const char *value)
   // Initialize values for value bounding
   std::pair<int, int> outBoundPwm(1000, 2000);
 
-  if (strcmp(setting, "test") == 0)
+  if (strcmp(setting, "mode") == 0)
   {
-    Serial.print("# TEST value: ");
-    Serial.println(atoi(value));
+
+    Mode selected_mode = (Mode)atoi(value);
+
+    switch (selected_mode)
+    {
+      case Uninitialized:
+        if (this->mode == Uninitialized){
+          Serial.println("ERROR: Already in UNINITIALIZED");
+        }else {
+          Serial.println("INFO: Setting mode to -> UNINITIALIZED");
+          this->mode = Mode::Uninitialized;
+          mode1_complete = false;  // Reset flag to only init once
+        }
+        break;
+      
+      case Initialization:
+        if (this->mode == Initialization){
+          Serial.println("ERROR: Already in INITIALIZATION");
+        }else {
+          Serial.println("INFO: Setting mode to -> INITIALIZATION");
+          this->mode = Mode::Initialization;
+          mode2_complete = false;  // Reset flag to only init once
+        }
+        break;
+
+      case Active:
+        if (this->mode == Active){
+          Serial.println("ERROR: Already in ACTIVE");
+        }else {
+          Serial.println("INFO: Setting mode to -> ACTIVE");
+          this->mode = Mode::Active;
+        }
+        break;
+    }
+
   }
 
   else if (strcmp(setting, "ctrl") == 0)

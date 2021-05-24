@@ -161,6 +161,7 @@
 #endif
 
 
+// #define ECHO_CMD // Whether or not to echo incoming command
 
 
 
