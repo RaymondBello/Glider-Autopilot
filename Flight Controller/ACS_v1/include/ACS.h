@@ -18,7 +18,8 @@ enum Mode
   Uninitialized = 1 << 0,
   Initialization = 1 << 1,
   Active = 1 << 2,
-  Idle = 1 << 3
+  Idle = 1 << 3,
+  Reboot = 1 << 4
 };
 
 /**
@@ -199,15 +200,11 @@ void ACS::loop()
     }
     case Active:
     {
-      // Serial.println("Active");
       flightController.loop_blink();
       update_flightcontroller_time();
       update_flightcontroller_orientation();
       update_flightcontroller_pid_loop();
       print_debug_msg();
-
-      /** Handle CLI message **/
-      // Serial.println("Wrote to Motors");
 
       handle_serial();
 
@@ -217,12 +214,24 @@ void ACS::loop()
     case Idle:
     {
       Serial.println("INFO: ACS-Mode: Idle");
+      delay(10000);
+      handle_serial();
       break;
     }
     case Error:
     {
       Serial.println("INFO: ACS-Mode: Error");
+      delay(10000);
       flightController.loop_beep();
+      handle_serial();
+      break;
+    }
+    case Reboot:
+    {
+      Serial.println("INFO: REBOOTING");
+      this->setup_beep(4, 160, 70);
+      delay(50);
+      SCB_AIRCR = 0x05FA0004; // Force Restart
       break;
     }
     default:
@@ -908,6 +917,20 @@ void ACS::process_set_cmd(const char *setting, const char *value)
         }else {
           Serial.println("INFO: Setting mode to -> ACTIVE");
           this->mode = Mode::Active;
+        }
+        break;
+      
+      case Reboot:
+        Serial.println("INFO: Setting mode to -> REBOOT");
+        this->mode = Mode::Reboot;
+        break;
+      
+      case Error:
+        if (this->mode == Error){
+          Serial.println("ERROR: Already in ERROR");
+        }else {
+          Serial.println("INFO: Setting mode to -> ERROR");
+          this->mode = Mode::Error;
         }
         break;
     }
