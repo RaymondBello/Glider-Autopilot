@@ -54,11 +54,16 @@ class NavigationComputer:
         :type selected_mode: int
         '''
         self.serial.sendData(f'set mode {selected_mode} \n')
+    
+    def fc_get_mode(self):
+        self.serial.sendData(f'get mode \n')
+
         
     def fc_init(self):
         '''
-        flight controller init
+        initialize flight controller 
         '''
+        self.log.info('Setting up flight controller')
         self.serial.connect('COM7')
         
         self.fc_set_mode(self.UNINITIALIZED)
@@ -71,18 +76,27 @@ class NavigationComputer:
             self.print_log(line)
             if 'INITIALIZATION complete' in str(line):
                 done = True
-
+    
+    def fc_arm(self):
+        '''
+        arm flight controller 
+        '''
+        self.log.info('Arming flight controller')
         self.fc_set_mode(self.ACTIVE)
         self.print_log(self.serial.getData())
-    
-    def main(self):
-        '''
-        Main entry point
-        '''
-        self.log.info('Setting up flight controller')
-        self.fc_init()
+        
+        self.fc_get_mode()
+        self.print_log(self.serial.getData())
+        
         
         
 if __name__ == '__main__':
+    
+    # Setup Navigation Computer
     nav = NavigationComputer()
-    nav.main()
+    
+    # Initialize flight controller
+    nav.fc_init()
+    
+    # Arm flight controller
+    nav.fc_arm()

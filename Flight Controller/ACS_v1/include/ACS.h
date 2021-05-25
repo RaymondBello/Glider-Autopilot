@@ -168,11 +168,8 @@ void ACS::loop()
     {
       while (!mode1_complete){
         delay(1000);
-        Serial.println("Uninitialized");
         this->setup_mcu();
         // this->mode = Mode::Initialization;
-
-        Serial.println("INFO: UNINITIALIZED complete");
         mode1_complete = true;
       }
       handle_serial(); 
@@ -182,7 +179,6 @@ void ACS::loop()
     {
       while (!mode2_complete)
       {
-        Serial.println("INFO: ACS-Mode: Initialization");
         this->setup_radio_receiver();
         
         BoolInt boolint = this->setup_flightcontroller();
@@ -192,7 +188,6 @@ void ACS::loop()
         boolint1.flag ? (0) : (this->mode = Mode::Error);
 
         // this->mode = Mode::Active;
-        Serial.println("INFO: INITIALIZATION complete");
         mode2_complete = true;
       }
       handle_serial();
@@ -213,14 +208,14 @@ void ACS::loop()
     }
     case Idle:
     {
-      Serial.println("INFO: ACS-Mode: Idle");
+
       delay(10000);
       handle_serial();
       break;
     }
     case Error:
     {
-      Serial.println("INFO: ACS-Mode: Error");
+
       delay(10000);
       flightController.loop_beep();
       handle_serial();
@@ -228,7 +223,6 @@ void ACS::loop()
     }
     case Reboot:
     {
-      Serial.println("INFO: REBOOTING");
       this->setup_beep(4, 160, 70);
       delay(50);
       SCB_AIRCR = 0x05FA0004; // Force Restart
@@ -808,7 +802,7 @@ void ACS::handle_serial()
       if (length > 0)
       {
         handle_received_msg(buffer);
-        Serial.println();
+        // Serial.println();
       }
       length = 0;
       // newData = true;
@@ -829,6 +823,17 @@ void ACS::handle_serial()
     }
   }
   // Serial.println("End of handle_serial() function...");
+}
+
+int map_value(std::pair<int, int> inputRange, std::pair<int, int> outputRange, int value)
+{
+  int inValNorm = value - inputRange.first;
+  int aUpperNorm = inputRange.second - inputRange.first;
+  int normPosition = inValNorm / aUpperNorm;
+  int bUpperNorm = outputRange.second - outputRange.first;
+  int bValNorm = normPosition * bUpperNorm;
+  int outVal = outputRange.first + bValNorm;
+  return outVal;
 }
 
 void ACS::process_get_cmd(const char *setting)
@@ -862,32 +867,44 @@ void ACS::process_get_cmd(const char *setting)
   {
     Serial.println("# [IDLE, TAXI, TAKEOFF, IN_FLIGHT, DESCENT, TOUCHDOWN, POWERDOWN]");
   }
+  else if (strcmp(setting, "mode") == 0)
+  {
+    Serial.print("INFO: Current mode =");
+    Serial.println(ACS::mode);
+  }
+  else if (strcmp(setting, "thro_des") == 0)
+  {
+    Serial.println(flightController.thro_des);
+  }
+  else if (strcmp(setting, "pitch_des") == 0)
+  {
+    Serial.println(flightController.pitch_des);
+  }
+  else if (strcmp(setting, "roll_des") == 0)
+  {
+    Serial.println(flightController.roll_des);
+  }
+  else if (strcmp(setting, "yaw_des") == 0)
+  {
+    Serial.println(flightController.yaw_des);
+  }
   else
   {
     Serial.println("# Unrecognized `get <setting>` supplied");
   }
 }
 
-int map_value(std::pair<int, int> inputRange, std::pair<int, int> outputRange, int value)
-{
-  int inValNorm = value - inputRange.first;
-  int aUpperNorm = inputRange.second - inputRange.first;
-  int normPosition = inValNorm / aUpperNorm;
-  int bUpperNorm = outputRange.second - outputRange.first;
-  int bValNorm = normPosition * bUpperNorm;
-  int outVal = outputRange.first + bValNorm;
-  return outVal;
-}
-
 void ACS::process_set_cmd(const char *setting, const char *value)
 {
   // Initialize values for value bounding
   std::pair<int, int> outBoundPwm(1000, 2000);
+  int value_int = atoi(value);
+  float value_float = (float) value_int / 100;
 
   if (strcmp(setting, "mode") == 0)
   {
 
-    Mode selected_mode = (Mode)atoi(value);
+    Mode selected_mode = (Mode)value_int;
 
     switch (selected_mode)
     {
@@ -936,58 +953,56 @@ void ACS::process_set_cmd(const char *setting, const char *value)
     }
 
   }
-
   else if (strcmp(setting, "ctrl") == 0)
   {
 
-    switch (atoi(value))
+    switch (value_int)
     {
     case SETPOINT_RC_RECEIVER:
     {
       flightController.setpoint_ctrl = SETPOINT_RC_RECEIVER;
       Serial.print("# RC Receiver Mode: ");
-      Serial.println(atoi(value));
+      Serial.println(value_int);
       break;
     }
     case SETPOINT_ACS:
     {
       flightController.setpoint_ctrl = SETPOINT_ACS;
       Serial.print("# ACS Mode: ");
-      Serial.println(atoi(value));
+      Serial.println(value_int);
       break;
     }
     default:
     {
       Serial.print("# ERROR: can only be 0, 1. Received: ");
-      Serial.println(atoi(value));
+      Serial.println(value_int);
       break;
     }
     }
   }
-
   else if (strcmp(setting, "zero") == 0)
   {
-    if (atoi(value) == 0)
+    if (value_int == 0)
     {
       flightController.setpoint_acs.roll_pwm = 1000;
       flightController.setpoint_acs.pitch_pwm = 1000;
       flightController.setpoint_acs.throttle_pwm = 1000;
       flightController.setpoint_acs.yaw_pwm = 1000;
       Serial.print("# All setpoints set to: ");
-      Serial.println(atoi(value));
+      Serial.println(value_int);
     }
     else
     {
       Serial.print("# 'all_zero' value must be 0 to confirm. value = ");
-      Serial.println(atoi(value));
+      Serial.println(value_int);
     }
   }
-
+  
   else if (strcmp(setting, "thro") == 0)
   {
     Serial.print("# Throttle = ");
     //Simplified normalization between 0->100 => 1000->2000
-    int throVal = 1000 + atoi(value) * 10;
+    int throVal = 1000 + value_int * 10;
     flightController.setpoint_acs.throttle_pwm = constrain(throVal, 1000, 2000);
     Serial.println(flightController.setpoint_acs.throttle_pwm);
   }
@@ -995,7 +1010,7 @@ void ACS::process_set_cmd(const char *setting, const char *value)
   {
     Serial.print("# Roll = ");
     //Simplified normalization between -30->30 => 1000->2000
-    int rollVal = 1500 + atoi(value) * (50 / 3);
+    int rollVal = 1500 + value_int * (50 / 3);
     flightController.setpoint_acs.roll_pwm = constrain(rollVal, 1000, 2000);
     Serial.println(flightController.setpoint_acs.roll_pwm);
   }
@@ -1003,7 +1018,7 @@ void ACS::process_set_cmd(const char *setting, const char *value)
   {
     Serial.print("# Pitch = ");
     //Simplified normalization between -30->30 => 1000->2000
-    int pitchVal = 1500 + atoi(value) * (50 / 3);
+    int pitchVal = 1500 + value_int * (50 / 3);
     flightController.setpoint_acs.pitch_pwm = constrain(pitchVal, 1000, 2000);
     Serial.println(flightController.setpoint_acs.pitch_pwm);
   }
@@ -1011,9 +1026,31 @@ void ACS::process_set_cmd(const char *setting, const char *value)
   {
     // initialize the input and output bounds
     std::pair<int, int> inBoundYaw(0, 360);
-    // flightController.setpoint_acs.yaw_pwm = map_value(inBoundYaw, outBoundPwm, atoi(value));
+    // flightController.setpoint_acs.yaw_pwm = map_value(inBoundYaw, outBoundPwm, value_int);
     Serial.print("# Yaw = ");
-    Serial.println(map_value(inBoundYaw, outBoundPwm, atoi(value)));
+    Serial.println(map_value(inBoundYaw, outBoundPwm, value_int));
+  }
+  
+  else if (strcmp(setting, "thro_des") == 0)
+  {
+    flightController.thro_des = value_float;
+    // Serial.println(value_int);
+    // Serial.println(value_float);
+  }
+  else if (strcmp(setting, "pitch_des") == 0)
+  {
+    flightController.pitch_des = value_float;
+    // Serial.println(value_float);
+  }
+  else if (strcmp(setting, "roll_des") == 0)
+  {
+    flightController.roll_des = value_float;
+    // Serial.println(value_float);
+  }
+  else if (strcmp(setting, "yaw_des") == 0)
+  {
+    flightController.yaw_des = value_float;
+    // Serial.println(value_float);
   }
 }
 

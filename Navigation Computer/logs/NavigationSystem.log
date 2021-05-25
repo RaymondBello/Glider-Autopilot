@@ -1,3 +1,3 @@
-2021-05-24 20:25:59,598 | NavigationSystem - INFO - Initializing Navigation Computer
-2021-05-24 20:25:59,598 | NavigationSystem - INFO - Setting up serial handler
-2021-05-24 20:25:59,598 | NavigationSystem - DEBUG - Available serial ports ['COM7 - USB Serial Device (COM7)', 'COM6 - Standard Serial over Bluetooth link (COM6)']
+2021-05-25 01:11:52,156 | NavigationSystem - INFO - Initializing Navigation Computer
+2021-05-25 01:11:52,156 | NavigationSystem - INFO - Setting up serial handler
+2021-05-25 01:11:52,156 | NavigationSystem - DEBUG - Available serial ports ['COM7 - USB Serial Device (COM7)', 'COM6 - Standard Serial over Bluetooth link (COM6)']

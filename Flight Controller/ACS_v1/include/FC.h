@@ -815,10 +815,10 @@ void FC::get_desired_aircraft_state()
     yaw_passthru variables, to be used in commanding motors/servos with direct un-stabilized commands in control_mixer().
     */
 
-    roll_des = (channel_1_pwm - 1500.0) / 500.0;  //between -1 and 1
-    pitch_des = (channel_2_pwm - 1500.0) / 500.0; //between -1 and 1
-    thro_des = (channel_3_pwm - 1000.0) / 1000.0; //between 0 and 1
-    yaw_des = (channel_4_pwm - 1500.0) / 500.0;   //between -1 and 1
+    // roll_des = (channel_1_pwm - 1500.0) / 500.0;  //between -1 and 1
+    // pitch_des = (channel_2_pwm - 1500.0) / 500.0; //between -1 and 1
+    // thro_des = (channel_3_pwm - 1000.0) / 1000.0; //between 0 and 1
+    // yaw_des = (channel_4_pwm - 1500.0) / 500.0;   //between -1 and 1
 
     //Constrain within normalized bounds
     thro_des = constrain(thro_des, 0.0, 1.0);               //between 0 and 1
