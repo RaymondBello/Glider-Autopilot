@@ -34,10 +34,7 @@ class NavigationComputer:
         self.serial = SerialComms(baudrate=115200, timeout= 20)
         self.serial_ports = [str(i) for i in self.serial.ports]
         self.log.debug(f'Available serial ports {self.serial_ports}')
-        
-        # Main entry point
-        self.main()
-        
+
     def print_log(self, buffer):
         '''
         Print and log
@@ -86,7 +83,6 @@ class NavigationComputer:
         self.fc_init()
         
         
-        
-        
 if __name__ == '__main__':
     nav = NavigationComputer()
+    nav.main()
