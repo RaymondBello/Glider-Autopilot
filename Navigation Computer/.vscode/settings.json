@@ -1,3 +1,9 @@
 {
-    "python.pythonPath": "C:\\Users\\raymo\\AppData\\Local\\Programs\\Python\\Python37\\python.exe"
+    "python.pythonPath": "C:\\Users\\raymo\\AppData\\Local\\Programs\\Python\\Python37\\python.exe",
+    "python.testing.pytestArgs": [
+        "tests"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.nosetestsEnabled": false,
+    "python.testing.pytestEnabled": true
 }

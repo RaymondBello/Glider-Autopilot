@@ -47,8 +47,7 @@ class NavigationComputer:
 
     def fc_set_mode(self, selected_mode:int):
         '''
-        construct a set mode command with the 
-        selected_mode
+        construct and send a 'set mode <x>' command with the selected_mode
 
         :param selected_mode: mode to be set
         :type selected_mode: int
@@ -56,6 +55,9 @@ class NavigationComputer:
         self.serial.sendData(f'set mode {selected_mode} \n')
     
     def fc_get_mode(self):
+        '''
+        construct and send a 'get mode' command 
+        '''
         self.serial.sendData(f'get mode \n')
 
         
@@ -74,7 +76,7 @@ class NavigationComputer:
         while not done:
             line = self.serial.getData()
             self.print_log(line)
-            if 'INITIALIZATION complete' in str(line):
+            if 'INFO: Calibration Complete' in str(line):
                 done = True
     
     def fc_arm(self):
@@ -82,8 +84,11 @@ class NavigationComputer:
         arm flight controller 
         '''
         self.log.info('Arming flight controller')
+        
+        # Arm flight controller by setting its mode to ACTIVE
         self.fc_set_mode(self.ACTIVE)
-        self.print_log(self.serial.getData())
+        for i in range(2):
+            self.print_log(self.serial.getData())
         
         self.fc_get_mode()
         self.print_log(self.serial.getData())

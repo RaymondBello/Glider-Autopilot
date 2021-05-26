@@ -84,7 +84,10 @@ private:
     float B_gyro = 0.17;     //Gyro LP filter paramter, (MPU6050 default: 0.1. MPU9250 default: 0.17)
     float B_mag = 1.0;       //Magnetometer LP filter parameter
 
-    //Controller parameters (take note of defaults before modifying!):
+    
+
+public:
+//Controller parameters (take note of defaults before modifying!):
     float i_limit = 25.0;  //Integrator saturation level, mostly for safety (default 25.0)
     float maxRoll = 30.0;  //Max roll angle in degrees for angle mode (maximum 60 degrees), deg/sec for rate mode
     float maxPitch = 30.0; //Max pitch angle in degrees for angle mode (maximum 60 degrees), deg/sec for rate mode
@@ -109,8 +112,7 @@ private:
     float Kp_yaw = 0.3;     //Yaw P-gain
     float Ki_yaw = 0.05;    //Yaw I-gain
     float Kd_yaw = 0.00015; //Yaw D-gain (be careful when increasing too high, motors will begin to overheat!)
-
-public:
+    
     unsigned long channel_1_pwm, channel_2_pwm, channel_3_pwm, channel_4_pwm, channel_5_pwm, channel_6_pwm, channel_7_pwm, channel_8_pwm;
     unsigned long channel_1_pwm_prev, channel_2_pwm_prev, channel_3_pwm_prev, channel_4_pwm_prev, channel_5_pwm_prev, channel_6_pwm_prev, channel_7_pwm_prev, channel_8_pwm_prev;
     float AccX, AccY, AccZ;

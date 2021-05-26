@@ -5,12 +5,13 @@ from nav import NavigationComputer
 nav = NavigationComputer()
 
 # Read Write delay in seconds
-rw_delay = 0.5
+rw_delay = 0.0
 
 
 def test_fc_modes():
-    current_time = time.strftime("%H:%M:%S", time.localtime())
-    print(current_time)
+
+    print(f"Test started @ {time.strftime('%H:%M:%S', time.localtime())}")
+    
     assert nav.ERROR == 0, f'Mode:ERROR should be 0. Actual={nav.ERROR}'
     assert nav.UNINITIALIZED == 1, f'Mode:UNINITIALIZED should be 1. Actual={nav.UNINITIALIZED}'
     assert nav.INITIALIZED == 2, f'Mode:UNINITIALIZED should be 2. Actual={nav.INITIALIZED}'
@@ -21,6 +22,8 @@ def test_fc_modes():
 nav.serial.connect('COM7')
 
 def test_fc_mode_transitions():
+    
+    print(f"Test started @ {time.strftime('%H:%M:%S', time.localtime())}")
     
     nav.fc_set_mode(nav.UNINITIALIZED)
     serial_str = str(nav.serial.getData())
